@@ -1,0 +1,1484 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<title>PedeRV | Cardápio digital, delivery e gestão para restaurantes</title>
+<meta name="description" content="Cardápio digital, delivery próprio, comandas, mesas e gestão de pedidos em uma plataforma simples. Planos a partir de R$ 149/mês.">
+<meta property="og:title" content="PedeRV — Seu restaurante vende. A PedeRV organiza.">
+<meta property="og:description" content="Cardápio digital, delivery próprio, comandas, mesas e gestão de pedidos em uma plataforma simples.">
+<meta property="og:url" content="https://pederv.com.br/">
+<link rel="canonical" href="https://pederv.com.br/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"PedeRV","applicationCategory":"BusinessApplication","operatingSystem":"Web","description":"Cardápio digital, delivery e gestão para restaurantes.","offers":[{"@type":"Offer","name":"Assinatura Pró","price":"149","priceCurrency":"BRL"},{"@type":"Offer","name":"Sistema Premium","price":"199","priceCurrency":"BRL"}],"provider":{"@type":"Organization","name":"PEDE RV","url":"https://pederv.com.br","email":"atendimento@pederv.com.br","telephone":"+55 13 99754-0052"}}</script>
+<style>
+:root{
+  --ink:#101317; --ink2:#0a0d12;
+  --o:#fb6b21; --o2:#ff8b3d; --osoft:#fff3ea; --oline:#ffd2b9;
+  --paper:#f7f5f1; --line:#e7e3dc; --mut:#6b7280; --gr:#16a06d;
+  --disp:'Manrope',sans-serif; --body:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:86px}
+body{font-family:var(--body);background:#fff;color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+button{font:inherit;cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--o);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.container{width:min(1220px,calc(100% - 40px));margin:auto}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;color:var(--o);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.eyebrow:before{content:'';width:22px;height:2px;background:currentColor}
+h1,h2,h3,h4{font-family:var(--disp);letter-spacing:-.045em;line-height:1.06}
+.btn{min-height:56px;padding:0 28px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:800;font-size:15.5px;letter-spacing:.01em;transition:transform .2s,background .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn-primary{background:var(--o);color:#fff;box-shadow:0 16px 38px rgba(251,107,33,.35),inset 0 1px 0 rgba(255,255,255,.2)}
+.btn-primary:hover{background:var(--o2);box-shadow:0 20px 44px rgba(251,107,33,.45)}
+.btn-ghost{border:2px solid #c8c3bc;background:#fff;color:var(--ink);font-weight:700}
+.btn-ghost:hover{border-color:var(--o);color:var(--o);background:#fff9f5}
+
+/* ---------- TOPBAR + NAV ---------- */
+.topbar{background:var(--o);color:#fff;text-align:center;font-size:12.5px;font-weight:700;padding:9px 16px}
+.nav{position:sticky;top:0;z-index:40;height:74px;background:rgba(255,255,255,.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.nav-inner{height:100%;display:flex;align-items:center;gap:34px}
+.logo{display:flex;align-items:center;gap:11px}
+.brand-logo{width:84px;height:58px;object-fit:contain}
+.nav .brand-logo{mix-blend-mode:multiply}
+footer .brand-logo{background:#fff;border-radius:12px;padding:3px}
+.logo .mark{width:40px;height:40px;border-radius:11px;background:var(--ink);color:var(--o);display:grid;place-items:center;font-family:var(--disp);font-weight:800;font-size:19px}
+.logo-text{font-family:var(--disp);font-weight:800;font-size:19px;letter-spacing:-.04em}
+.logo-text b{color:var(--o)}
+.nav-links{display:flex;align-items:center;gap:28px;margin-left:auto}
+.nav-links>a{font-size:14px;font-weight:600;color:#30343a}
+.nav-links>a:hover{color:var(--o)}
+.nav-cta{min-height:44px;padding:0 18px;border-radius:11px;font-size:14px}
+.menu-btn{display:none;margin-left:auto;width:44px;height:44px;border:1px solid var(--line);border-radius:11px}
+
+/* ---------- HERO ---------- */
+.hero{position:relative;padding:54px 0 24px;overflow:hidden;color:var(--ink);background:
+  radial-gradient(circle at 50% 29%,rgba(251,107,33,.16),transparent 32%),
+  radial-gradient(circle at 8% 78%,rgba(251,107,33,.08),transparent 28%),
+  linear-gradient(135deg,#fff 0%,#fffaf6 52%,#fff 100%)}
+.hero:before{content:'';position:absolute;inset:0;opacity:.55;pointer-events:none;background-image:
+  linear-gradient(rgba(251,107,33,.045) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(251,107,33,.045) 1px,transparent 1px),
+  linear-gradient(115deg,transparent 35%,rgba(251,107,33,.05) 50%,transparent 66%);background-size:48px 48px,48px 48px,100% 100%;mask-image:linear-gradient(to bottom,#000,transparent 92%)}
+.hero:after{content:'';position:absolute;left:50%;bottom:-240px;width:1100px;height:430px;transform:translateX(-50%);border-radius:50%;background:rgba(251,107,33,.12);filter:blur(55px);pointer-events:none}
+.hero-layout{position:relative;z-index:2;display:block;text-align:center}
+.hero-top{text-align:center;position:relative;z-index:5;max-width:990px;margin:0 auto}
+.hero .eyebrow{color:var(--o);font-size:12px;letter-spacing:.11em}
+.hero .eyebrow:before{display:none}
+.hero h1{font-size:clamp(42px,5.2vw,72px);font-weight:800;margin:10px auto 14px;max-width:980px;line-height:.98;text-wrap:balance}
+.hero h1 span{display:block;color:var(--o)}
+.hero-lead{font-size:clamp(14px,1.35vw,18px);line-height:1.5;color:#5f6670;max-width:660px;margin:0 auto 22px;font-weight:600}
+.hero-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.hero .hero-actions .btn-primary{min-width:286px;background:var(--o);color:#fff;border-radius:999px;box-shadow:0 18px 42px rgba(251,107,33,.32);text-transform:uppercase;letter-spacing:.025em}
+.hero .hero-actions .btn-primary:hover{background:var(--o2);box-shadow:0 22px 48px rgba(251,107,33,.4)}
+@media(max-width:600px){
+  .hero-actions{flex-direction:column;gap:10px}
+  .hero-actions .btn{width:100%;min-height:58px;font-size:17px;letter-spacing:.02em;border-radius:16px;justify-content:center}
+  .hero-actions .btn-primary{box-shadow:0 18px 40px rgba(251,107,33,.4)}
+  .hero-actions .btn-ghost{border-width:2px;font-weight:800}
+}
+.hero-checks{display:none}
+
+/* ---------- CARROSSEL ---------- */
+.stage{position:relative;z-index:2;margin:0;min-width:0}
+.carousel{background:#fff;border:1px solid var(--line);border-radius:24px;padding:12px;
+  box-shadow:0 34px 90px rgba(57,37,21,.18);position:relative;transform:perspective(1400px) rotateY(-2deg)}
+.c-bar{height:44px;background:var(--ink2);border-radius:14px 14px 0 0;display:flex;align-items:center;gap:7px;padding:0 16px;position:relative;z-index:3}
+.c-bar i{width:8px;height:8px;border-radius:50%;background:#3a4048;display:block}
+.c-bar i:first-child{background:var(--o)}
+.c-bar strong{margin-left:8px;font-family:var(--disp);font-weight:700;font-size:12px;color:#fff}
+.c-body{position:relative;height:430px;background:#f3f5f7;border-radius:0 0 14px 14px;overflow:hidden}
+.slide{position:absolute;inset:0;opacity:0;visibility:hidden;transform:translateX(16px);
+  transition:opacity .5s,transform .5s,visibility .5s;display:grid;place-items:center;padding:22px}
+.slide.active{opacity:1;visibility:visible;transform:none}
+.slide img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
+.slide.desk img{width:100%;height:100%;object-fit:contain}
+.slide.duo{display:flex;align-items:center;justify-content:center;gap:26px;flex-wrap:wrap}
+.slide .ph{width:214px;background:#0a0d12;border:7px solid #0a0d12;border-radius:26px;overflow:hidden;
+  box-shadow:0 20px 44px rgba(16,19,23,.24)}
+.slide .ph img{width:100%;border-radius:20px}
+.slide .duo-copy{max-width:270px}
+.slide .duo-copy h4{font-size:20px;font-weight:800;margin-bottom:9px}
+.slide .duo-copy p{font-size:13.5px;line-height:1.55;color:#5f6670}
+.slide .journey{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+.slide .journey span{background:#fff;border:1px solid var(--line);border-radius:99px;padding:6px 10px;font-size:10.5px;font-weight:700;color:#4a5058}
+.slide .journey span.on{background:var(--osoft);border-color:var(--oline);color:#c8500e}
+.cap{position:absolute;left:24px;bottom:22px;z-index:4;background:rgba(10,13,18,.92);color:#fff;
+  border-radius:12px;padding:11px 15px;box-shadow:0 10px 28px rgba(0,0,0,.24)}
+.cap b{display:block;font-family:var(--disp);font-weight:700;font-size:13px}
+.cap small{display:block;color:#b8bec6;font-size:10.5px;margin-top:3px}
+.c-dots{position:absolute;top:12px;right:20px;z-index:5;display:flex;gap:5px}
+.c-dots button{width:7px;height:7px;border-radius:99px;background:#5a616b;transition:.25s}
+.c-dots button.on{width:22px;background:var(--o)}
+.c-arrows{position:absolute;right:22px;bottom:22px;z-index:5;display:flex;gap:7px}
+.c-arrows button{width:36px;height:36px;border-radius:10px;background:#fff;color:var(--ink);
+  box-shadow:0 6px 18px rgba(0,0,0,.16);font-size:17px;line-height:1}
+
+/* ---------- BENEFÍCIOS ---------- */
+.trust{background:#fff;padding:32px 0 76px}
+.trust-inner{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.trust-item{min-width:0;border:1px solid var(--line);border-radius:18px;padding:22px 20px;background:#fff;position:relative;overflow:hidden;transition:.25s}
+.trust-item:before{content:attr(data-icon);width:42px;height:42px;border-radius:12px;background:var(--osoft);border:1px solid var(--oline);display:grid;place-items:center;font-size:18px;margin-bottom:20px}
+.trust-item:after{content:'';position:absolute;width:100px;height:100px;border-radius:50%;right:-58px;top:-58px;background:rgba(251,107,33,.08);transition:.25s}
+.trust-item:hover{transform:translateY(-4px);border-color:var(--oline);box-shadow:0 18px 44px rgba(33,27,21,.08)}
+.trust-item:hover:after{transform:scale(1.35)}
+.trust-item strong{display:block;font-family:var(--disp);font-weight:800;font-size:18px;color:var(--ink);letter-spacing:-.03em;margin-bottom:7px}
+.trust-item span{font-size:13px;line-height:1.5;color:#6b7280}
+
+/* ---------- SHOWCASE ---------- */
+.showcase{padding:90px 0 104px;background:var(--paper)}
+.sec-head{max-width:660px;margin-bottom:42px}
+.sec-head h2{font-size:clamp(30px,4.4vw,50px);font-weight:800;margin:14px 0 16px}
+.sec-head p{font-size:17px;line-height:1.62;color:#5f6670}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:7px;margin-bottom:22px;scrollbar-width:none;background:rgba(255,255,255,.78);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 34px rgba(33,27,21,.06);backdrop-filter:blur(10px)}
+.tabs::-webkit-scrollbar{display:none}
+.tab{white-space:nowrap;border:1px solid transparent;background:transparent;color:#535a63;
+  font-weight:700;font-size:13px;padding:12px 16px;border-radius:10px;transition:.2s}
+.tab:hover{background:#fff;color:var(--ink)}
+.tab.active{background:var(--o);color:#fff;border-color:var(--o);box-shadow:0 8px 20px rgba(251,107,33,.22)}
+.view{display:none;background:#fff;border:1px solid var(--line);border-radius:22px;padding:26px;
+  box-shadow:0 24px 60px rgba(33,27,21,.07);grid-template-columns:1.35fr .65fr;gap:34px;align-items:center}
+.view.active{display:grid;animation:fade .3s ease}
+.view.mob{grid-template-columns:.55fr 1.45fr}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.shot-browser{border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#f1f3f5}
+.shot-bar{height:38px;background:var(--ink2);display:flex;align-items:center;gap:7px;padding:0 14px}
+.shot-bar i{width:8px;height:8px;border-radius:50%;background:#3a4048;display:block}
+.shot-bar i:first-child{background:var(--o)}
+.shot-bar span{margin-left:10px;font-size:10.5px;color:#c3c8ce}
+.shot-phone{width:min(250px,100%);margin:auto;background:#0a0d12;border:7px solid #0a0d12;border-radius:28px;
+  overflow:hidden;box-shadow:0 22px 46px rgba(16,19,23,.24)}
+.shot-phone img{width:100%;border-radius:21px}
+.view-copy h3{font-size:23px;font-weight:800;margin-bottom:12px}
+.view-copy p{font-size:14.5px;line-height:1.6;color:#5f6670;margin-bottom:16px}
+.vlist{display:grid;gap:10px}
+.vlist span{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:#3d434a;line-height:1.45}
+.vlist i{color:var(--o);font-weight:800;font-style:normal;flex:none}
+
+/* ---------- RECURSOS ---------- */
+.features{padding:104px 0;background:#fff}
+.fgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.fcard{border:1px solid var(--line);border-radius:18px;padding:24px;background:#fff;transition:.25s}
+.fcard:hover{border-color:var(--oline);box-shadow:0 18px 44px rgba(33,27,21,.08);transform:translateY(-4px)}
+.fcard .ic{width:46px;height:46px;border-radius:13px;background:var(--osoft);border:1px solid var(--oline);
+  display:grid;place-items:center;font-size:21px;margin-bottom:16px}
+.fcard h4{font-size:16px;font-weight:800;margin-bottom:7px}
+.fcard p{font-size:13px;line-height:1.55;color:#5f6670}
+
+/* ---------- PASSOS (círculo preto, número branco) ---------- */
+.steps{padding:0 0 104px;background:#fff}
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);position:relative}
+.sgrid:before{content:'';position:absolute;top:26px;left:8%;right:8%;height:2px;
+  background:repeating-linear-gradient(90deg,var(--line) 0 8px,transparent 8px 16px)}
+.step{padding:0 16px;position:relative}
+.step .num{width:54px;height:54px;border-radius:50%;background:var(--ink);color:#fff;
+  font-family:var(--disp);font-weight:800;font-size:17px;display:grid;place-items:center;margin-bottom:18px;position:relative;z-index:1}
+.step h4{font-size:16px;font-weight:800;margin-bottom:7px}
+.step p{font-size:13.5px;line-height:1.55;color:#5f6670}
+
+/* ---------- HERO SHOWCASE ---------- */
+.hero-showcase{position:relative;width:min(1200px,100%);margin:18px auto 0;outline:none}
+.hero-viewport{position:relative;height:530px;overflow:hidden;border-radius:0;background:transparent}
+.hero-track{position:relative;width:100%;height:100%}
+.hero-slide{position:absolute;inset:0;display:grid;place-items:center;opacity:0;visibility:hidden;transform:translateX(42px) scale(.985);transition:opacity .62s ease,transform .62s cubic-bezier(.2,.8,.2,1),visibility .62s}
+.hero-slide.is-active{opacity:1;visibility:visible;transform:none;z-index:2}
+.hero-slide.is-before{transform:translateX(-42px) scale(.985)}
+.hero-montage{position:relative;width:100%;height:100%;display:grid;grid-template-columns:130px 170px minmax(440px,1fr) 120px 190px;gap:20px;align-items:end;padding:45px 6px 72px;filter:none;background:transparent}
+.hm-device{position:relative;inset:auto;width:auto;margin:0;min-width:0}
+.hm-screen{position:relative;display:block;width:100%;height:100%;overflow:hidden;background:#f6f6f6}
+.hm-screen img,.hi-screen img{display:block;width:100%;height:100%;object-fit:contain;object-position:center;background:#fff}
+.hm-device figcaption{position:absolute;z-index:8;left:50%;bottom:-11px;transform:translateX(-50%);white-space:nowrap;background:rgba(222,84,15,.94);border:1px solid rgba(255,255,255,.65);color:#fff;border-radius:999px;padding:7px 13px;font:800 12px/1.1 var(--body);box-shadow:0 8px 20px rgba(251,107,33,.24);backdrop-filter:blur(8px)}
+.hm-tablet{width:150px;height:220px;justify-self:center;z-index:2;background:#161719;border:9px solid #17181a;border-radius:20px;box-shadow:0 24px 45px rgba(35,29,24,.22)}
+.hm-tablet:before{content:'';position:absolute;z-index:4;top:-6px;left:50%;width:4px;height:4px;transform:translateX(-50%);border-radius:50%;background:#44484c;box-shadow:0 0 0 1px #090a0b}
+.hm-tablet .hm-screen{border-radius:11px;background:#0f1012}
+.hm-tablet .hm-screen img{width:100%;height:100%;object-fit:cover;object-position:center top;background:#0f1012}
+.hm-qr{height:275px;z-index:5;display:flex;align-items:flex-end;justify-content:center}
+.hm-qr-phone{position:absolute;right:0;bottom:0;width:54%;aspect-ratio:9/19.5;padding:5px;background:#121315;border:1px solid #34363a;border-radius:15px;box-shadow:0 18px 32px rgba(35,29,24,.26)}
+.hm-qr-phone .hm-screen{border-radius:10px;background:#111}
+.hm-qr-stand,.hi-qr-stand{position:relative;color:#fff;background:linear-gradient(145deg,#2b2c2f,#090a0b 78%);border:1px solid #34363a;box-shadow:12px 16px 24px rgba(23,18,14,.28);transform:perspective(420px) rotateY(7deg) skewY(-1.5deg);overflow:visible}
+.hm-qr-stand{position:absolute;left:0;bottom:7%;width:64%;height:70%;padding:13px 8px 10px;border-radius:5px 5px 2px 2px}
+.hm-qr-stand:after,.hi-qr-stand:after{content:'';position:absolute;z-index:-1;right:-17%;bottom:-2%;width:34%;height:94%;background:linear-gradient(135deg,#34363a,#090a0b);clip-path:polygon(0 8%,100% 0,100% 100%,0 92%)}
+.qr-brand{display:block;text-align:center;font:800 10px/1 var(--disp);letter-spacing:.04em}
+.qr-brand b{color:var(--o)}
+.qr-title{display:block;margin:8px 0 7px;text-align:center;font:700 6px/1.2 var(--body);color:#e4e5e7;text-transform:uppercase;letter-spacing:.08em}
+.qr-code{position:relative;display:block;width:82%;aspect-ratio:1;margin:auto;border:5px solid #fff;background:#fff url('index/imagens/qr-code-pederv.png') center/contain no-repeat;box-shadow:0 6px 14px rgba(0,0,0,.24)}
+.qr-code:before{content:none}
+.hm-laptop{height:315px;z-index:3}
+.hm-laptop-shell{height:calc(100% - 15px);background:#17181b;border:8px solid #17181b;border-radius:15px 15px 7px 7px;overflow:hidden;box-shadow:0 27px 55px rgba(35,29,24,.25)}
+.hm-laptop-shell .hm-screen{border-radius:5px}
+.hm-laptop-base{height:15px;width:108%;margin-left:-4%;border-radius:0 0 15px 15px;background:linear-gradient(#d7d6d3,#959594);box-shadow:0 8px 12px rgba(35,29,24,.18)}
+.hm-delivery{height:270px;display:flex;align-items:flex-end;justify-content:center}
+.hm-delivery-phone{position:relative;width:112px;aspect-ratio:9/19.5;background:#121315;border:6px solid #121315;border-radius:19px;overflow:visible;box-shadow:0 20px 35px rgba(35,29,24,.26)}
+.hm-phone{aspect-ratio:9/19.5;z-index:7;background:#121315;border:6px solid #121315;border-radius:18px;overflow:visible;box-shadow:0 22px 42px rgba(35,29,24,.26)}
+.hm-delivery-phone:before,.hm-phone:before,.hm-qr-phone:before{content:'';position:absolute;z-index:5;top:5px;left:50%;width:30%;height:7px;transform:translateX(-50%);background:#050607;border-radius:999px;box-shadow:0 1px 0 rgba(255,255,255,.08)}
+.hm-delivery-phone:after,.hm-phone:after,.hm-qr-phone:after{content:none}
+.hm-delivery-phone .hm-screen,.hm-phone .hm-screen{border-radius:12px}
+.hm-motoboy{height:300px;display:grid;grid-template-columns:76px 1fr;gap:0;align-items:end;justify-items:start}
+.hm-motoboy .hm-phone{position:relative;width:76px;margin-bottom:5px}
+.hm-rider{position:relative;z-index:6;width:122px;height:300px;margin-left:-14px;object-fit:contain;object-position:left bottom;pointer-events:none;filter:drop-shadow(0 20px 22px rgba(35,29,24,.2))}
+.hero-individual{width:100%;height:100%;display:grid;grid-template-rows:1fr auto;align-items:center;justify-items:center;padding:7px 70px 12px}
+.hi-device{position:relative;display:grid;place-items:center;min-height:0}
+.hi-device.is-phone{width:210px;aspect-ratio:9/19.5;padding:7px;background:#121315;border-radius:23px;box-shadow:0 28px 60px rgba(35,29,24,.24)}
+.hi-device.is-phone:before{content:'';position:absolute;z-index:3;top:7px;left:50%;width:34%;height:10px;transform:translateX(-50%);background:#121315;border-radius:0 0 8px 8px}
+.hi-device.is-phone .hi-screen{height:100%;border-radius:16px;overflow:hidden;background:#fff}
+.hi-device.is-phone .hi-screen img{object-fit:contain;background:#111}
+.hi-device.is-desktop{width:min(760px,74vw);align-self:center}
+.hi-device.is-desktop .hi-shell{width:100%;aspect-ratio:16/9;padding:9px;background:#151619;border-radius:17px 17px 7px 7px;box-shadow:0 28px 60px rgba(35,29,24,.24)}
+.hi-device.is-desktop .hi-screen{height:100%;overflow:hidden;border-radius:8px;background:#fff}
+.hi-device.is-desktop .hi-base{height:14px;width:108%;margin-left:-4%;border-radius:0 0 17px 17px;background:linear-gradient(#d8d7d4,#999)}
+.hi-device.is-qr{width:min(520px,82vw);height:435px;display:flex;align-items:flex-end;justify-content:center;gap:28px}
+.hi-qr-stand{z-index:2;width:180px;height:290px;padding:28px 18px 18px;border-radius:8px 8px 3px 3px;margin-bottom:16px}
+.hi-qr-stand .qr-brand{font-size:19px}.hi-qr-stand .qr-title{font-size:9px;margin:20px 0 14px}.hi-qr-stand .qr-code{border-width:9px}
+.hi-qr-phone,.hi-motoboy-phone{position:relative;z-index:4;aspect-ratio:9/19.5;padding:7px;background:#121315;border-radius:23px;box-shadow:0 28px 55px rgba(35,29,24,.24)}
+.hi-qr-phone{width:205px}
+.hi-qr-phone:before,.hi-motoboy-phone:before{content:'';position:absolute;z-index:3;top:7px;left:50%;width:34%;height:10px;transform:translateX(-50%);background:#121315;border-radius:0 0 8px 8px}
+.hi-qr-phone .hi-screen,.hi-motoboy-phone .hi-screen{height:100%;border-radius:16px;overflow:hidden;background:#111}
+.hi-device.is-motoboy{width:min(650px,86vw);height:430px;display:flex;align-items:flex-end;justify-content:center;gap:28px}
+.hi-motoboy-phone{flex:0 0 205px;width:205px;height:auto;z-index:5}
+.hi-rider{width:min(270px,34vw);height:410px;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 24px 24px rgba(35,29,24,.18))}
+.hi-caption{position:relative;z-index:4;display:flex;align-items:center;gap:10px;max-width:min(720px,90vw);margin-top:9px;padding:9px 16px;border:1px solid var(--oline);border-radius:999px;background:rgba(255,255,255,.92);color:var(--ink);box-shadow:0 12px 25px rgba(35,29,24,.12);backdrop-filter:blur(10px)}
+.hi-caption b{font:800 14px/1.2 var(--disp)}
+.hi-caption span{font-size:12px;opacity:.82}
+.hero-controls{position:relative;z-index:7;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:3px}
+.hero-arrow{flex:0 0 42px;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:var(--o);background:#fff;border:1px solid var(--oline);box-shadow:0 7px 20px rgba(35,29,24,.09);font-size:20px;transition:.2s}
+.hero-arrow:hover{color:#fff;background:var(--o);transform:translateY(-2px)}
+.hero-tabs{display:flex;gap:6px;max-width:min(820px,calc(100vw - 150px));overflow-x:auto;overflow-y:hidden;padding:5px;scrollbar-width:none;scroll-snap-type:x proximity;overscroll-behavior:contain}
+.hero-tabs::-webkit-scrollbar{display:none}
+.hero-tab{flex:0 0 auto;scroll-snap-align:center;min-height:34px;padding:0 12px;border-radius:999px;color:#6b7280;background:#fff;border:1px solid var(--line);font-size:11px;font-weight:800;transition:.25s}
+.hero-tab:hover{color:var(--o);border-color:var(--oline);background:var(--osoft)}
+.hero-tab.is-active{color:#fff;background:var(--o);border-color:var(--o);box-shadow:0 7px 18px rgba(251,107,33,.22)}
+.hero-progress{position:absolute;left:12%;right:12%;bottom:-11px;height:2px;border-radius:99px;overflow:hidden;background:rgba(251,107,33,.12)}
+.hero-progress span{display:block;width:100%;height:100%;transform:scaleX(0);transform-origin:left;background:var(--o)}
+.hero-showcase.is-running .hero-progress span{animation:heroProgress 5.4s linear forwards}
+@keyframes heroProgress{to{transform:scaleX(1)}}
+
+/* ---------- PLANOS ---------- */
+.pricing{padding:104px 0;background:var(--paper)}
+.pricing .sec-head{margin:0 auto 46px;text-align:center}
+.pricing .sec-head p{margin:auto}
+.pricing .eyebrow{justify-content:center}
+.billing-toggle{display:flex;align-items:center;justify-content:center;gap:4px;width:max-content;max-width:100%;
+  margin:0 auto 34px;padding:5px;background:#eceae7;border:1px solid #e1ded9;border-radius:999px}
+.billing-toggle button{border:0;background:transparent;color:#5f6670;border-radius:999px;padding:12px 20px;
+  font:700 13px/1 var(--body);cursor:pointer;transition:background .2s,color .2s,box-shadow .2s}
+.billing-toggle button:hover{color:var(--ink)}
+.billing-toggle button.active{background:#fff;color:var(--ink);box-shadow:0 4px 14px rgba(25,29,33,.12)}
+.billing-toggle button:focus-visible{outline:3px solid rgba(251,107,33,.3);outline-offset:2px}
+.plans{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;max-width:960px;margin:auto;align-items:start}
+.plan{background:#fff;border:1px solid var(--line);border-radius:22px;padding:34px;position:relative}
+.plan.premium{border:2px solid var(--o);box-shadow:0 24px 60px rgba(251,107,33,.14)}
+.popular{position:absolute;right:24px;top:24px;background:var(--o);color:#fff;border-radius:99px;
+  padding:7px 12px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.plan-kicker{font-size:12px;color:var(--o);font-weight:700;text-transform:uppercase;letter-spacing:.12em}
+.plan h3{font-size:29px;font-weight:800;margin:10px 0 8px}
+.plan-desc{font-size:14px;color:#6b727a;line-height:1.5;min-height:44px}
+.price{display:flex;align-items:flex-end;gap:7px;margin:24px 0 6px}
+.price sup{font-size:17px;font-weight:700;margin-bottom:12px}
+.price strong{font-family:var(--disp);font-weight:800;font-size:52px;line-height:.9;letter-spacing:-.055em}
+.price span{font-size:13px;color:#6b727a;margin-bottom:5px}
+.price-note{font-size:11.5px;color:#858c95}
+.annual-total-label{margin-top:24px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#858c95}
+.annual-price .price{margin-top:8px}
+.annual-installments{font-size:13px;color:#5f6670}
+.annual-installments strong{color:var(--ink);font-size:15px}
+.annual-saving{display:inline-flex;margin-top:9px;padding:6px 9px;border-radius:999px;background:rgba(22,160,109,.1);
+  color:#0f8059;font-size:11px;font-weight:800}
+.plan .btn{width:100%;margin:22px 0 24px}
+.feature-list{display:grid;gap:11px;list-style:none}
+.feature-list li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:#2f353b;line-height:1.45}
+.check{width:19px;height:19px;flex:none;border-radius:50%;background:rgba(22,160,109,.13);
+  color:var(--gr);display:grid;place-items:center;font-size:11px;font-weight:800}
+.feature-list li.no{color:#9aa0a7}
+.feature-list li.no .check{background:#f1f0ee;color:#a8aeb5}
+.feature-list li.no .excluded{text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:#d14f3c;font-weight:700;color:#858c95}
+
+/* ---------- PLANOS — novos elementos ---------- */
+.pay-methods{font-size:12px;color:#6b727a;margin:2px 0 0;font-weight:500}
+.annual-opt-block{margin-top:18px}
+.annual-opt-block:first-child{margin-top:24px}
+.annual-opt-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#858c95;margin:0 0 4px}
+.annual-opt-block .price{margin-top:6px}
+.annual-divider{text-align:center;font-size:12px;color:#a8aeb5;font-weight:700;margin:14px 0 0;position:relative}
+.annual-divider::before,.annual-divider::after{content:'';display:inline-block;width:36%;height:1px;background:#e5e3df;vertical-align:middle;margin:0 8px}
+.monthly-cta,.annual-cta{display:flex;flex-direction:column;gap:8px;margin:16px 0 8px}
+.monthly-cta[hidden],.annual-cta[hidden]{display:none!important}
+.monthly-cta .btn,.annual-cta .btn,.monthly-cta .btn-assinar-parc,.annual-cta .btn-assinar-parc{margin:0}
+
+/* ---------- BOTÃO ASSINAR ---------- */
+.btn-assinar{background:#141210;color:#fff;font-size:14px;min-height:46px;padding:0 20px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:700;transition:background .2s,transform .2s;width:100%}
+.btn-assinar:hover{background:#2a2520;transform:translateY(-1px)}
+.btn-assinar-parc{background:transparent;color:#141210;border:2px solid #d6d3ce;font-size:14px;min-height:46px;padding:0 20px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:700;transition:background .2s,border-color .2s,transform .2s;width:100%;text-decoration:none}
+.btn-assinar-parc:hover{background:#f8f7f5;border-color:#a8aeb5;transform:translateY(-1px)}
+
+/* ---------- MODAL DE PAGAMENTO ---------- */
+.rv-pay-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto}
+.rv-pay-modal.open{display:flex}
+.rv-pay-modal .rv-modal-bg{position:fixed;inset:0;background:rgba(12,10,8,.62);backdrop-filter:blur(3px)}
+.rv-pay-modal .rv-modal-card{position:relative;z-index:2;width:min(540px,100%);background:#fff;border-radius:20px;padding:30px 28px;box-shadow:0 40px 90px rgba(20,15,10,.35);margin:auto}
+.pay-tabs{display:flex;gap:0;background:#f4f1ec;border-radius:10px;padding:4px;margin:16px 0 20px}
+.pay-tab{flex:1;padding:10px;border-radius:8px;font-size:13px;font-weight:700;color:#6b7280;cursor:pointer;text-align:center;transition:all .18s}
+.pay-tab.active{background:#fff;color:#141210;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.card-type-toggle{display:flex;gap:8px;margin:0 0 14px}
+.ct-btn{flex:1;padding:10px;border:2px solid #e5e0d8;background:#fff;border-radius:10px;font-size:13px;font-weight:700;color:#6b7280;cursor:pointer;transition:all .18s}
+.ct-btn.active{border-color:var(--o);background:#FFF3EC;color:#141210}
+.pay-pane{display:none}.pay-pane.active{display:block}
+.pix-box{background:#f0faf4;border:1.5px solid #a7e8c6;border-radius:14px;padding:20px;text-align:center;margin:14px 0}
+.pix-qr-wrap{margin:12px auto 14px;width:fit-content}
+.pix-qr-wrap img{width:180px;height:180px;border-radius:10px;border:3px solid #fff;box-shadow:0 4px 18px rgba(0,0,0,.12);display:block}
+.pix-qr-label{font-size:11px;color:#4a7a62;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+.pix-key-display{background:#fff;border:1px solid #d0d9d4;border-radius:9px;padding:12px 14px;font-size:13px;font-weight:700;font-family:monospace;color:#141210;margin:10px 0;word-break:break-all;text-align:left}
+.pix-copy-btn{background:#16a06d;color:#fff;border-radius:9px;padding:11px 18px;font-weight:700;font-size:13px;cursor:pointer;width:100%;margin-top:6px}
+.pix-copy-btn:hover{background:#128555}
+@media(min-width:600px){.pix-mobile-hint{display:none}}
+@media(max-width:599px){.pix-desktop-note{display:none}}
+.pay-field{margin:12px 0}
+.pay-field label{display:block;font-size:12px;font-weight:700;color:#3a3833;margin-bottom:6px}
+.pay-field input{width:100%;border:1px solid #ddd6cd;border-radius:10px;padding:12px 13px;font-size:14px;background:#fbfaf8;color:#141210;font-family:inherit}
+.pay-field input:focus{outline:none;border-color:var(--o);background:#fff}
+.pay-row{display:flex;gap:10px}.pay-row .pay-field{flex:1}
+.pay-total{background:#f7f5f1;border:1px solid #e7e3dc;border-radius:12px;padding:14px 16px;margin:16px 0;display:flex;justify-content:space-between;align-items:center}
+.pay-total span{font-size:13px;color:#6b7280}
+.pay-total b{font-size:18px;font-weight:800;color:#141210}
+.pay-submit{background:var(--o);color:#fff;width:100%;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px}
+.pay-submit:hover{background:var(--o2)}
+.pay-success-box{text-align:center;padding:16px 0}
+.pay-success-icon{width:64px;height:64px;border-radius:50%;background:#e7f8ef;color:#16a06d;font-size:32px;display:grid;place-items:center;margin:0 auto 14px;font-weight:800}
+@media(max-width:500px){.rv-pay-modal .rv-modal-card{padding:22px 16px}}
+
+/* ---------- CTA (preto, texto branco) ---------- */
+.final{padding:0 0 100px;background:var(--paper)}
+.cta-box{background:var(--ink);color:#fff;border-radius:26px;padding:60px;display:flex;
+  justify-content:space-between;align-items:center;gap:46px;position:relative;overflow:hidden}
+.cta-box:before{content:'';position:absolute;width:340px;height:340px;border-radius:50%;
+  background:rgba(251,107,33,.18);right:-130px;top:-150px}
+.cta-box h2{font-size:clamp(28px,4.2vw,46px);font-weight:800;margin-bottom:14px;max-width:660px;color:#fff}
+.cta-box p{color:#c3c8ce;font-size:15.5px;line-height:1.55;max-width:520px}
+.cta-box .btn{flex:none;position:relative;z-index:1}
+
+/* ---------- FOOTER ---------- */
+footer{background:var(--ink2);color:#c3c8ce;padding:26px 0 14px}
+footer .logo-text{color:#fff}
+footer .logo-text b{color:#fff}
+.fgridf{display:grid;grid-template-columns:1.4fr .7fr .7fr;gap:28px}
+.fbrand p{font-size:13px;line-height:1.6;max-width:340px;margin-top:14px;color:#9299a2}
+.fcol h4{color:#fff;font-size:14px;font-weight:800;margin-bottom:15px}
+.fcol a,.fcol p{display:block;font-size:13px;margin:10px 0;color:#c3c8ce}
+.fcol a:hover{color:#fff}
+.fbot{border-top:1px solid rgba(255,255,255,.12);margin-top:18px;padding-top:14px;
+  display:flex;justify-content:space-between;gap:12px;font-size:11.5px;flex-wrap:wrap;color:#9299a2}
+.wa{position:fixed;right:22px;bottom:22px;z-index:30;width:58px;height:58px;border-radius:50%;
+  background:#20b56f;color:#fff;display:grid;place-items:center;font-size:26px;
+  box-shadow:0 12px 32px rgba(0,0,0,.28);transition:.2s}
+.wa:hover{transform:scale(1.07)}
+
+/* ---------- MOVIMENTO E INTERAÇÃO ---------- */
+.scroll-progress{position:fixed;inset:0 0 auto;z-index:100;height:3px;pointer-events:none}
+.scroll-progress span{display:block;width:100%;height:100%;background:linear-gradient(90deg,var(--o),#ff9b5e);transform:scaleX(0);transform-origin:left;box-shadow:0 0 14px rgba(251,107,33,.45)}
+.nav{transition:height .25s,box-shadow .25s,background .25s}
+.nav.scrolled{height:68px;background:rgba(255,255,255,.98);box-shadow:0 12px 34px rgba(26,20,15,.09)}
+.motion-ready .reveal{opacity:0;transform:translateY(28px) scale(.985);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);transition-delay:var(--delay,0ms)}
+.motion-ready .reveal.from-left{transform:translateX(-34px)}
+.motion-ready .reveal.from-right{transform:translateX(34px)}
+.motion-ready .reveal.is-visible{opacity:1;transform:none}
+.btn{position:relative;overflow:hidden;isolation:isolate}
+.btn .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.38);transform:scale(0);animation:ripple .58s ease-out;pointer-events:none;z-index:0}
+.btn-ghost .ripple{background:rgba(251,107,33,.16)}
+@keyframes ripple{to{transform:scale(3.4);opacity:0}}
+.carousel.is-dragging{cursor:grabbing;user-select:none}
+.carousel:focus-visible{outline:3px solid rgba(251,107,33,.35);outline-offset:5px}
+.c-progress{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.12);overflow:hidden}
+.c-progress span{display:block;width:100%;height:100%;background:var(--o);transform:scaleX(0);transform-origin:left}
+.c-progress.run span{animation:carouselProgress 5.2s linear forwards}
+@keyframes carouselProgress{to{transform:scaleX(1)}}
+.trust-item,.fcard,.plan{--mx:50%;--my:50%;background:radial-gradient(circle at var(--mx) var(--my),rgba(251,107,33,.09),transparent 42%),#fff}
+.tab{position:relative}
+.tab:after{content:'';position:absolute;left:18%;right:18%;bottom:5px;height:2px;border-radius:99px;background:currentColor;transform:scaleX(0);transition:transform .2s}
+.tab:hover:after,.tab.active:after{transform:scaleX(1)}
+.rv-modal.open .rv-modal-bg{animation:modalFade .25s ease both}
+.rv-modal.open .rv-modal-card{animation:modalIn .38s cubic-bezier(.2,.8,.2,1) both}
+@keyframes modalFade{from{opacity:0}}
+@keyframes modalIn{from{opacity:0;transform:translateY(24px) scale(.97)}}
+
+@media(prefers-reduced-motion:reduce){
+  .motion-ready .reveal{opacity:1;transform:none}
+  .c-progress.run span{animation:none;transform:scaleX(1)}
+}
+
+/* ---------- RESPONSIVO ---------- */
+@media(max-width:1080px){.hero-top{text-align:center}.hero h1,.hero-lead{margin-left:auto;margin-right:auto}.hero-actions{justify-content:center}.stage{width:100%}.carousel{transform:none}.trust-inner{grid-template-columns:repeat(2,1fr)}.fgrid{grid-template-columns:repeat(2,1fr)}.sgrid{grid-template-columns:1fr 1fr;gap:30px}.sgrid:before{display:none}}
+@media(max-width:980px){
+  .nav-links{position:fixed;inset:74px 0 auto;background:#fff;border-bottom:1px solid var(--line);
+    padding:22px 20px;display:none;flex-direction:column;align-items:stretch;gap:4px}
+  .nav-links.open{display:flex}
+  .nav-links>a{padding:12px}
+  .menu-btn{display:grid;place-items:center}
+  .c-body{height:470px}
+  .view,.view.mob{grid-template-columns:1fr;gap:24px}
+  .view-copy{order:2}
+  .plans{grid-template-columns:1fr}
+  .cta-box{flex-direction:column;align-items:flex-start;padding:40px 30px}
+  .cta-box .btn{width:100%}
+  .fgridf{grid-template-columns:1fr 1fr}
+  .fbrand{grid-column:span 2}
+}
+@media(max-width:680px){
+  .container{width:min(100% - 26px,1220px)}
+  .hero{padding:34px 0 22px}
+  .hero h1{width:100%;max-width:100%;font-size:clamp(32px,9.8vw,42px);line-height:1.01;margin:8px auto 14px}
+  .hero-lead{font-size:14px;margin-bottom:18px}
+  .hero .hero-actions .btn-primary{min-width:0;width:min(100%,330px)}
+  .hero-showcase{margin-top:17px}
+  .hero-viewport{height:360px;border-radius:0}
+  .hero-slide{transform:translateX(24px) scale(.985)}
+  .hero-slide.is-before{transform:translateX(-24px) scale(.985)}
+  .hero-montage{grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:120px 160px;gap:17px 7px;align-content:end;padding:10px 8px 42px}
+  .hm-device figcaption{display:block;bottom:-10px;font-size:7px;padding:4px 6px;line-height:1;box-shadow:0 4px 10px rgba(251,107,33,.2)}
+  .hm-qr{grid-column:1/3;grid-row:1;height:120px}
+  .hm-qr-stand{padding:8px 4px 5px}.hm-qr-stand .qr-title{display:none}.hm-qr-stand .qr-code{border-width:3px}.hm-qr-phone{padding:2px;border-radius:9px}
+  .hm-tablet{grid-column:3/6;grid-row:1;width:76px;height:108px;margin-bottom:1px;border-width:5px;border-radius:11px}
+  .hm-laptop{grid-column:1/4;grid-row:2;height:145px}
+  .hm-laptop-shell{border-width:5px;border-radius:8px 8px 4px 4px;height:calc(100% - 8px)}
+  .hm-laptop-base{height:8px}
+  .hm-delivery{grid-column:6/8;grid-row:1;height:120px}
+  .hm-delivery-phone{width:46px;border-width:3px;border-radius:9px}
+  .hm-motoboy{grid-column:4/8;grid-row:2;height:155px;grid-template-columns:38px 98px;gap:0;justify-content:center;justify-items:start}
+  .hm-motoboy .hm-phone{width:38px;max-width:none;border-width:3px;border-radius:9px}
+  .hm-rider{width:98px;height:155px;margin-left:-4px;object-position:left bottom}
+  .hi-device.is-desktop{width:min(92vw,620px)}
+  .hi-device.is-desktop .hi-shell{aspect-ratio:16/10;padding:5px;border-radius:10px 10px 4px 4px}
+  .hi-device.is-desktop .hi-base{height:9px}
+  .hi-device.is-phone{width:145px;border-radius:17px;padding:5px}
+  .hi-device.is-phone .hi-screen{border-radius:12px}
+  .hi-device.is-qr{width:94vw;height:300px;gap:18px}
+  .hi-qr-stand{width:105px;height:175px;padding:14px 8px 8px;margin-bottom:8px}
+  .hi-qr-stand .qr-brand{font-size:11px}.hi-qr-stand .qr-title{font-size:6px;margin:9px 0 7px}.hi-qr-stand .qr-code{border-width:5px}
+  .hi-qr-phone{width:120px;padding:4px;border-radius:16px}
+  .hi-device.is-motoboy{width:96vw;height:300px}
+  .hi-motoboy-phone{flex-basis:130px;width:130px;padding:4px;border-radius:16px}
+  .hi-rider{width:150px;height:280px}
+  .hero-individual{padding:0 15px 8px}
+  .hi-caption{max-width:94vw;padding:7px 11px;margin-top:5px}
+  .hi-caption b{font-size:11px}.hi-caption span{display:none}
+  .hero-controls{gap:4px}
+  .hero-arrow{width:38px;height:38px;flex-basis:38px}
+  .hero-tabs{max-width:calc(100vw - 105px);gap:4px}
+  .hero-tab{min-height:31px;padding:0 10px;font-size:10px}
+  .carousel{padding:7px;border-radius:17px}
+  .c-bar{height:38px;border-radius:11px 11px 0 0}
+  .c-body{height:390px;border-radius:0 0 11px 11px}
+  .slide{padding:12px}
+  .slide.duo{gap:12px}
+  .slide .ph{width:130px;border-width:5px;border-radius:18px}
+  .slide .duo-copy{max-width:150px}
+  .slide .duo-copy h4{font-size:14px}
+  .slide .duo-copy p{font-size:10.5px}
+  .slide .journey{display:none}
+  .cap{left:12px;bottom:12px;padding:8px 11px}
+  .cap b{font-size:11px}.cap small{font-size:9px}
+  .c-arrows{right:12px;bottom:12px}
+  .trust{padding:20px 0 58px}
+  .trust-inner{grid-template-columns:1fr}
+  .fgrid{grid-template-columns:1fr}
+  .sgrid{grid-template-columns:1fr}
+  .showcase,.features,.pricing{padding:70px 0}
+  .view{padding:16px}
+  .cta-box{padding:34px 24px}
+  .plan{padding:26px}
+  .billing-toggle{width:100%}
+  .billing-toggle button{flex:1;padding:12px 10px;font-size:12px}
+}
+</style>
+<style>
+/* Hero em duas colunas */
+.hero .stage{padding-bottom:0}
+/* Modal de cadastro */
+.rv-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto}
+.rv-modal.open{display:flex}
+.rv-modal-bg{position:fixed;inset:0;background:rgba(12,10,8,.62);backdrop-filter:blur(3px)}
+.rv-modal-card{position:relative;z-index:2;width:min(560px,100%);background:#fff;border-radius:20px;padding:30px 28px;box-shadow:0 40px 90px rgba(20,15,10,.35);margin:auto}
+.rv-modal-x{position:absolute;top:12px;right:14px;width:36px;height:36px;border-radius:9px;font-size:22px;color:#8a7f76;background:#f4f1ec}
+.rv-modal-x:hover{background:#ece7e0}
+.rv-form-wrap h3,.rv-success h3{font-family:var(--disp,'Manrope',sans-serif);font-size:23px;font-weight:800;letter-spacing:-.03em;line-height:1.15;color:#141210}
+.rv-sub{font-size:13.5px;color:#6b7280;margin:8px 0 20px}
+.rv-row{display:flex;gap:11px;margin-bottom:11px;flex-wrap:wrap}
+.rv-row>input{flex:1;min-width:170px}
+#rvSignupForm input[type=text],#rvSignupForm input:not([type=radio]),#rvSignupForm select{width:100%;border:1px solid #ddd6cd;border-radius:11px;padding:13px 14px;font-size:14px;font-family:inherit;background:#fbfaf8;color:#141210}
+#rvSignupForm input:focus,#rvSignupForm select:focus{outline:none;border-color:var(--o,#fb6b21);background:#fff}
+.rv-field{margin:14px 0}
+.rv-field>label{display:block;font-size:12.5px;font-weight:700;color:#3a3833;margin-bottom:8px}
+.rv-radios{display:flex;gap:22px}
+.rv-radios label{display:flex;align-items:center;gap:7px;font-size:14px;color:#333}
+.rv-radios input{width:auto!important}
+.rv-trial-plan{display:grid;gap:5px;margin:14px 0;padding:14px 15px;border:1px solid rgba(251,107,33,.28);
+  border-radius:12px;background:#fff6f0}
+.rv-trial-plan strong{font-size:13.5px;color:#141210}
+.rv-trial-plan span{font-size:12.5px;line-height:1.5;color:#6b5b51}
+.rv-err{background:#fdecea;border:1px solid #f5c2b8;color:#b3341f;border-radius:10px;padding:11px 13px;font-size:13px;margin:6px 0 12px}
+.rv-submit{width:100%;margin-top:6px;justify-content:center}
+.rv-fine{display:block;font-size:11px;color:#9a938a;margin-top:12px;line-height:1.5}
+.rv-success{text-align:center;padding:8px 0}
+.rv-check{width:64px;height:64px;border-radius:50%;background:#e7f8ef;color:#16a06d;font-size:34px;display:grid;place-items:center;margin:0 auto 16px;font-weight:800}
+.rv-success p{font-size:14px;color:#5f6670;margin:8px auto 18px;max-width:400px;line-height:1.55}
+.rv-access{text-align:left;background:#f7f5f1;border:1px solid #e7e3dc;border-radius:14px;padding:14px 16px;margin:0 0 18px;display:grid;gap:12px}
+.rv-access>div{display:grid;gap:2px}
+.rv-access span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9a938a}
+.rv-access a{color:var(--o,#fb6b21);font-weight:700;font-size:14px;word-break:break-all}
+.rv-access b{font-size:14px;color:#141210}
+</style>
+
+</head>
+<body>
+
+<div class="topbar">🚀 Teste grátis por 7 dias · Sem cartão de crédito</div>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a class="logo" href="#" aria-label="PedeRV"><img class="brand-logo" src="index/imagens/logo-pederv.png" alt="PedeRV"></a>
+    <div class="nav-links" id="navlinks">
+      <a href="#sistema">O sistema</a>
+      <a href="#recursos">Recursos</a>
+      <a href="#planos">Planos</a>
+      <a class="btn btn-primary nav-cta" href="#signup" onclick="openSignup();return false;">Testar grátis</a>
+    </div>
+    <button class="menu-btn" id="menubtn" aria-label="Menu">☰</button>
+  </div>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="container hero-layout">
+    <div class="hero-top">
+      <h1>Cardápio Digital para <span>Delivery e Restaurante</span></h1>
+      <p class="hero-lead">PedeRV, feito para quem vive de pedidos.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#signup" onclick="openSignup();return false;">Teste grátis 7 dias</a>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="hero-showcase" id="heroShowcase" tabindex="0" role="region" aria-roledescription="carrossel" aria-label="Telas da plataforma PedeRV">
+        <div class="hero-viewport" aria-live="polite">
+          <div class="hero-track" id="heroTrack">
+            <article class="hero-slide is-active" data-title="Todos os recursos" aria-label="1 de 11: todos os recursos">
+              <div class="hero-montage">
+                <figure class="hm-device hm-qr">
+                  <span class="hm-qr-stand" aria-hidden="true">
+                    <span class="qr-brand">PEDE<b>RV</b></span>
+                    <span class="qr-title">Aponte a câmera e peça</span>
+                    <span class="qr-code"></span>
+                  </span>
+                  <span class="hm-qr-phone"><span class="hm-screen" data-hero-source="v2"></span></span>
+                  <figcaption>Cardápio QR Code</figcaption>
+                </figure>
+                <figure class="hm-device hm-tablet">
+                  <div class="hm-screen" data-hero-source="v5"></div>
+                  <figcaption>Cardápio no Tablet</figcaption>
+                </figure>
+                <figure class="hm-device hm-laptop">
+                  <div class="hm-laptop-shell"><div class="hm-screen" data-hero-source="v1"></div></div>
+                  <div class="hm-laptop-base"></div>
+                  <figcaption>Painel de controle</figcaption>
+                </figure>
+                <figure class="hm-device hm-delivery">
+                  <span class="hm-delivery-phone"><span class="hm-screen" data-hero-source="v2"></span></span>
+                  <figcaption>Cardápio Delivery</figcaption>
+                </figure>
+                <figure class="hm-device hm-motoboy">
+                  <span class="hm-phone"><span class="hm-screen" data-hero-source="v6"></span></span>
+                  <img class="hm-rider" src="index/imagens/motoboy-pederv.png" alt="" aria-hidden="true">
+                  <figcaption>App do motoboy</figcaption>
+                </figure>
+              </div>
+            </article>
+          </div>
+        </div>
+        <div class="hero-controls">
+          <button class="hero-arrow" id="heroPrev" type="button" aria-label="Tela anterior">‹</button>
+          <div class="hero-tabs" id="heroTabs" role="tablist" aria-label="Escolha uma tela do sistema"></div>
+          <button class="hero-arrow" id="heroNext" type="button" aria-label="Próxima tela">›</button>
+        </div>
+        <div class="hero-progress" aria-hidden="true"><span></span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="trust">
+  <div class="container trust-inner">
+    <div class="trust-item" data-icon="◎"><strong>Todos os canais</strong><span>Cardápio, balcão, mesas e iFood reunidos em um só fluxo.</span></div>
+    <div class="trust-item" data-icon="%"><strong>Sem comissão</strong><span>Mensalidade previsível e todo o valor das vendas fica com você.</span></div>
+    <div class="trust-item" data-icon="◷"><strong>Cozinha KDS</strong><span>Produção organizada por tempo, etapa e prioridade.</span></div>
+    <div class="trust-item" data-icon="🛵"><strong>App para motoboy</strong><span>Entregas, recebimentos e ocorrências acompanhados pelo celular.</span></div>
+  </div>
+</div>
+
+<!-- ================= SHOWCASE ================= -->
+<section class="showcase" id="sistema">
+  <div class="container">
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-v="v1">Painel de pedidos</button>
+      <button class="tab" data-v="v2">Cardápio do cliente</button>
+      <button class="tab" data-v="v3">Cozinha KDS</button>
+      <button class="tab" data-v="v4">Mesas e comandas</button>
+      <button class="tab" data-v="v5">App do garçom</button>
+      <button class="tab" data-v="v6">Entregas</button>
+      <button class="tab" data-v="v7">Área de entrega</button>
+      <button class="tab" data-v="v8">Chatbot</button>
+      <button class="tab" data-v="v9">Frente de caixa</button>
+    </div>
+
+    <div class="view active" id="v1">
+      <div class="shot-browser"><div class="shot-bar"><i></i><i></i><i></i><span>pederv.com.br/pedidos</span></div>
+        <img src="index/imagens/painel-pedidos-pederv.jpg" alt="Painel de pedidos em kanban"></div>
+      <div class="view-copy">
+        <h3>O pedido anda sozinho pela cozinha</h3>
+        <p>Quatro colunas, atualização automática e a contagem de cada etapa sempre à vista.</p>
+        <div class="vlist">
+          <span><i>✓</i>Novo → Em preparo → Saiu para entrega → Concluído</span>
+          <span><i>✓</i>Forma de pagamento visível antes de aceitar</span>
+          <span><i>✓</i>Para despachar, você escolhe o motoboy</span>
+          <span><i>✓</i>Cardápio, balcão (PDV), mesas e iFood no mesmo quadro</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="view mob" id="v2">
+      <div class="shot-phone"><img src="index/imagens/cardapio-digital-cliente-pederv.jpg" alt="Cardápio digital no celular"></div>
+      <div class="view-copy">
+        <h3>O cliente pede pelo próprio celular</h3>
+        <p>Abre pelo QR Code ou pelo link, monta o carrinho e escolhe como pagar. Sem baixar aplicativo.</p>
+        <div class="vlist">
+          <span><i>✓</i>Banner promocional e faixa de promoção no topo</span>
+          <span><i>✓</i>Categorias, fotos dos produtos e destaques</span>
+          <span><i>✓</i>Pix, cartão ou pagar na entrega</span>
+          <span><i>✓</i>Frete calculado pelo bairro do cliente</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="v3">
+      <div class="shot-browser"><div class="shot-bar"><i></i><i></i><i></i><span>pederv.com.br/kds</span></div>
+        <img src="index/imagens/cozinha-kds-pederv.jpg" alt="Cozinha KDS"></div>
+      <div class="view-copy">
+        <h3>A cozinha enxerga a fila inteira</h3>
+        <p>Cada pedido vira um card que muda de cor conforme o tempo passa — quem está atrasado aparece primeiro.</p>
+        <div class="vlist">
+          <span><i>✓</i>Organização por tempo e prioridade</span>
+          <span><i>✓</i>Observações do item bem visíveis</span>
+          <span><i>✓</i>Status de produção em tempo real</span>
+          <span><i>✓</i>Mais agilidade entre salão e cozinha</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="v4">
+      <div class="shot-browser"><div class="shot-bar"><i></i><i></i><i></i><span>pederv.com.br/mesas</span></div>
+        <img src="index/imagens/mesas-comandas-pederv.jpg" alt="Mesas e comandas"></div>
+      <div class="view-copy">
+        <h3>O salão inteiro em um mapa</h3>
+        <p>Mesa livre fica branca; ocupada mostra o valor consumido e quem está atendendo.</p>
+        <div class="vlist">
+          <span><i>✓</i>QR Code por mesa para o cliente pedir sozinho</span>
+          <span><i>✓</i>Clique na mesa e veja tudo que foi consumido</span>
+          <span><i>✓</i>Fechar a mesa manda a venda para o caixa</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="view mob" id="v5">
+      <div class="shot-phone"><img src="index/imagens/app-garcom-pederv.jpg" alt="Comanda digital do garçom"></div>
+      <div class="view-copy">
+        <h3>Comanda digital na mão do garçom</h3>
+        <p>Ele entra, escolhe o próprio nome e abre a mesa. O pedido vai para a cozinha na hora.</p>
+        <div class="vlist">
+          <span><i>✓</i>Adiciona itens com filtro por categoria</span>
+          <span><i>✓</i>Total da mesa sempre atualizado</span>
+          <span><i>✓</i>Fecha a conta e libera a mesa em um toque</span>
+          <span><i>✓</i>Fica registrado quem atendeu cada mesa</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="view mob" id="v6">
+      <div class="shot-phone"><img src="index/imagens/app-motoboy-pederv.jpg" alt="App do motoboy"></div>
+      <div class="view-copy">
+        <h3>O motoboy sabe se recebe ou já está pago</h3>
+        <p>Aceita a entrega, fala com o cliente pelo WhatsApp e confirma — com trava para não marcar sem querer.</p>
+        <div class="vlist">
+          <span><i>✓</i>Endereço, bairro e ponto de referência</span>
+          <span><i>✓</i>Mostra se está pago ou é para receber</span>
+          <span><i>✓</i>Ocorrências: cliente não atende ou não localizado</span>
+          <span><i>✓</i>A ocorrência aparece no seu painel</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="v7">
+      <div class="shot-browser"><div class="shot-bar"><i></i><i></i><i></i><span>pederv.com.br/taxas-de-entrega</span></div>
+        <img src="index/imagens/area-entrega-pederv.jpg" alt="Taxas e área de entrega no mapa"></div>
+      <div class="view-copy">
+        <h3>Você desenha até onde entrega</h3>
+        <p>Igual ao iFood: marque a área no mapa, defina a taxa de cada faixa e bloqueie as regiões que não atende.</p>
+        <div class="vlist">
+          <span><i>✓</i>Desenho livre ou alcance em quilômetros</span>
+          <span><i>✓</i>Taxa diferente para cada região</span>
+          <span><i>✓</i>Regiões bloqueadas não recebem pedido</span>
+          <span><i>✓</i>O bairro continua funcionando como plano B</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="v8">
+      <div class="shot-browser"><div class="shot-bar"><i></i><i></i><i></i><span>pederv.com.br/chatbot</span></div>
+        <img src="index/imagens/chatbot-whatsapp-pederv.jpg" alt="Chatbot do WhatsApp por palavras-chave"></div>
+      <div class="view-copy">
+        <h3>Seu atendimento trabalhando no automático</h3>
+        <p>Cadastre as palavras que o cliente costuma escrever e a resposta que ele deve receber.</p>
+        <div class="vlist">
+          <span><i>✓</i>Horário, cardápio, taxa e formas de pagamento na hora</span>
+          <span><i>✓</i>Responde sozinho mesmo com a equipe ocupada</span>
+          <span><i>✓</i>Quando foge do script, a conversa vai para o atendente</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="v9">
+      <div class="shot-browser"><div class="shot-bar"><i></i><i></i><i></i><span>pederv.com.br/caixa</span></div>
+        <img src="index/imagens/frente-caixa-pederv.jpg" alt="Frente de caixa"></div>
+      <div class="view-copy">
+        <h3>Fecha o dia sabendo se bateu</h3>
+        <p>Abre com o nome do operador, registra tudo que entra e sai e compara o contado com o esperado.</p>
+        <div class="vlist">
+          <span><i>✓</i>Vendas entram no caixa automaticamente</span>
+          <span><i>✓</i>Gastos por categoria: mercadoria, combustível, embalagem</span>
+          <span><i>✓</i>Clique na venda e veja o que foi vendido</span>
+          <span><i>✓</i>Histórico mostra quem operou em cada dia</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= RECURSOS ================= -->
+<section class="features" id="recursos">
+  <div class="container">
+    <div class="sec-head">
+      <span class="eyebrow">Recursos</span>
+      <h2>Cada tela resolve<br>uma parte do seu dia.</h2>
+      <p>E todas conversam entre si — a venda que o garçom fecha aparece no caixa, e o pedido que entra vai direto para a cozinha.</p>
+    </div>
+    <div class="fgrid">
+      <div class="fcard"><div class="ic">🍔</div><h4>Cardápio digital completo</h4><p>Banner, promoções, categorias e fotos. O cliente pede sem instalar nada.</p></div>
+      <div class="fcard"><div class="ic">🛵</div><h4>Delivery e retirada</h4><p>Pedido para entrega ou retirada no balcão, com frete por região.</p></div>
+      <div class="fcard"><div class="ic">🧾</div><h4>Pedidos em balcão (PDV)</h4><p>Atendimento presencial lançado direto no sistema, sem papel.</p></div>
+      <div class="fcard"><div class="ic">⛶</div><h4>QR Code para mesas</h4><p>Cada mesa com sua placa; o cliente abre o cardápio e pede sozinho.</p></div>
+      <div class="fcard"><div class="ic">🍽</div><h4>App do garçom</h4><p>Comanda digital na mesa, com total atualizado e fechamento em um toque.</p></div>
+      <div class="fcard"><div class="ic">🤖</div><h4>Chatbot no WhatsApp</h4><p>Respostas por palavras-chave para horário, cardápio, taxa e pagamento.</p></div>
+      <div class="fcard"><div class="ic">💳</div><h4>Pagamento online</h4><p>O cliente paga na hora do pedido e você já recebe confirmado.</p></div>
+      <div class="fcard"><div class="ic">🔁</div><h4>Recuperação de vendas</h4><p>Quem abandonou o carrinho recebe um empurrãozinho para voltar.</p></div>
+      <div class="fcard"><div class="ic">⏰</div><h4>Agendamento de pedidos</h4><p>O cliente escolhe a hora que quer receber e a cozinha se organiza.</p></div>
+      <div class="fcard"><div class="ic">📍</div><h4>Área de entrega no mapa</h4><p>Desenhe onde entrega, defina a taxa e bloqueie regiões.</p></div>
+      <div class="fcard"><div class="ic">🍳</div><h4>Cozinha KDS</h4><p>Produção por tempo e prioridade, com status em tempo real.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PASSOS ================= -->
+<section class="steps">
+  <div class="container">
+    <div class="sec-head">
+      <span class="eyebrow">Como funciona</span>
+      <h2>Do QR Code ao caixa fechado.</h2>
+    </div>
+    <div class="sgrid">
+      <div class="step"><div class="num">1</div><h4>O cliente escaneia</h4><p>Abre o cardápio no celular, monta o pedido e escolhe como quer pagar.</p></div>
+      <div class="step"><div class="num">2</div><h4>Cai no seu painel</h4><p>Aparece na coluna Novos e vai direto para a tela da cozinha.</p></div>
+      <div class="step"><div class="num">3</div><h4>Sai para entrega</h4><p>Você escolhe o motoboy; ele aceita e confirma a entrega pelo app.</p></div>
+      <div class="step"><div class="num">4</div><h4>Entra no caixa</h4><p>A venda é registrada sozinha e o cliente recebe o aviso no WhatsApp.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PLANOS ================= -->
+<section class="pricing" id="planos">
+  <div class="container">
+    <div class="sec-head">
+      <span class="eyebrow">Planos</span>
+      <h2>Preço fixo. Sem comissão por pedido.</h2>
+      <p>Você não divide o seu faturamento com a gente. O que vender é seu.</p>
+    </div>
+    <div class="billing-toggle" role="group" aria-label="Escolha a forma de pagamento">
+      <button type="button" data-billing="annual" aria-pressed="false">Economize com o plano anual</button>
+      <button type="button" class="active" data-billing="monthly" aria-pressed="true">Plano mensal</button>
+    </div>
+    <div class="plans">
+
+      <article class="plan">
+        <span class="plan-kicker">Essencial para crescer</span>
+        <h3>Assinatura Pró</h3>
+        <p class="plan-desc">Para vender e organizar toda a operação do restaurante.</p>
+        <div class="monthly-price">
+          <div class="price"><sup>R$</sup><strong>149</strong><span>/mês</span></div>
+          <p class="pay-methods">✔ PIX, débito ou crédito à vista</p>
+        </div>
+        <div class="annual-price" hidden>
+          <div class="annual-opt-block">
+            <p class="annual-opt-label">No PIX ou débito</p>
+            <div class="price"><sup>R$</sup><strong>1.500</strong><span>,00/ano</span></div>
+            <span class="annual-saving">🎁 Economia de R$ 288,00</span>
+          </div>
+          <div class="annual-divider">ou</div>
+          <div class="annual-opt-block">
+            <p class="annual-opt-label">No cartão sem juros</p>
+            <div class="annual-installments"><strong>6x de R$ 270,00</strong></div>
+          </div>
+        </div>
+        <a class="btn btn-primary" href="#signup" onclick="openSignup();return false;">Testar grátis 7 dias →</a>
+        <div class="monthly-cta">
+          <a class="btn btn-assinar" href="#" onclick="openPay('pro','monthly');return false;">💳 Assinar agora</a>
+        </div>
+        <div class="annual-cta" hidden>
+          <a class="btn btn-assinar" href="#" onclick="openPay('pro','annual');return false;">💳 Assinar agora</a>
+        </div>
+        <ul class="feature-list">
+          <li><span class="check">✓</span>Cardápio digital completo</li>
+          <li><span class="check">✓</span>Delivery e retirada</li>
+          <li><span class="check">✓</span>Pedidos em balcão (PDV)</li>
+          <li><span class="check">✓</span>QR Code para mesas</li>
+          <li><span class="check">✓</span>App do garçom com comanda digital</li>
+          <li><span class="check">✓</span>Chatbot para WhatsApp por palavras-chave</li>
+          <li><span class="check">✓</span>Pagamento online</li>
+          <li><span class="check">✓</span>Recuperação de vendas</li>
+          <li><span class="check">✓</span>Agendamento de pedidos</li>
+          <li><span class="check">✓</span>Cadastro de entregadores</li>
+          <li><span class="check">✓</span>Frente de caixa</li>
+          <li class="no"><span class="check">×</span><span class="excluded">Cozinha KDS</span></li>
+        </ul>
+      </article>
+
+      <article class="plan premium">
+        <span class="popular">Mais completo</span>
+        <span class="plan-kicker">Operação completa</span>
+        <h3>Sistema Premium</h3>
+        <p class="plan-desc">Tudo do Pró, com a cozinha integrada para sua operação ganhar velocidade.</p>
+        <div class="monthly-price">
+          <div class="price"><sup>R$</sup><strong>199</strong><span>/mês</span></div>
+          <p class="pay-methods">✔ PIX, débito ou crédito à vista</p>
+        </div>
+        <div class="annual-price" hidden>
+          <div class="annual-opt-block">
+            <p class="annual-opt-label">No PIX ou débito</p>
+            <div class="price"><sup>R$</sup><strong>2.100</strong><span>,00/ano</span></div>
+            <span class="annual-saving">🎁 Economia de R$ 288,00</span>
+          </div>
+          <div class="annual-divider">ou</div>
+          <div class="annual-opt-block">
+            <p class="annual-opt-label">No cartão sem juros</p>
+            <div class="annual-installments"><strong>6x de R$ 379,00</strong></div>
+          </div>
+        </div>
+        <a class="btn btn-primary" href="#signup" onclick="openSignup();return false;">Testar grátis 7 dias →</a>
+        <div class="monthly-cta">
+          <a class="btn btn-assinar" href="#" onclick="openPay('premium','monthly');return false;">💳 Assinar agora</a>
+        </div>
+        <div class="annual-cta" hidden>
+          <a class="btn btn-assinar" href="#" onclick="openPay('premium','annual');return false;">💳 Assinar agora</a>
+        </div>
+        <ul class="feature-list">
+          <li><span class="check">✓</span>Cardápio digital completo</li>
+          <li><span class="check">✓</span>Delivery e retirada</li>
+          <li><span class="check">✓</span>Pedidos em balcão (PDV)</li>
+          <li><span class="check">✓</span>QR Code para mesas</li>
+          <li><span class="check">✓</span>App do garçom com comanda digital</li>
+          <li><span class="check">✓</span>Chatbot para WhatsApp por palavras-chave</li>
+          <li><span class="check">✓</span>Pagamento online</li>
+          <li><span class="check">✓</span>Recuperação de vendas</li>
+          <li><span class="check">✓</span>Agendamento de pedidos</li>
+          <li><span class="check">✓</span>Cadastro de entregadores</li>
+          <li><span class="check">✓</span>Frente de caixa</li>
+          <li><span class="check">✓</span>Cozinha KDS integrada</li>
+          <li><span class="check">✓</span>Organização por tempo e prioridade</li>
+          <li><span class="check">✓</span>Status de produção em tempo real</li>
+          <li><span class="check">✓</span>Mais agilidade entre salão e cozinha</li>
+        </ul>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  var buttons=[].slice.call(document.querySelectorAll('[data-billing]'));
+  var monthly=[].slice.call(document.querySelectorAll('.monthly-price,.monthly-cta'));
+  var annual=[].slice.call(document.querySelectorAll('.annual-price,.annual-cta'));
+  function setBilling(mode){
+    var showAnnual=mode==='annual';
+    buttons.forEach(function(button){
+      var active=button.dataset.billing===mode;
+      button.classList.toggle('active',active);
+      button.setAttribute('aria-pressed',String(active));
+    });
+    monthly.forEach(function(el){el.hidden=showAnnual;});
+    annual.forEach(function(el){el.hidden=!showAnnual;});
+  }
+  buttons.forEach(function(button){
+    button.addEventListener('click',function(){setBilling(button.dataset.billing);});
+  });
+  setBilling('monthly');
+})();
+</script>
+
+<footer>
+  <div class="container">
+    <div class="fgridf">
+      <div class="fbrand">
+        <a class="logo" href="#" aria-label="PedeRV"><img class="brand-logo" src="index/imagens/logo-pederv.png" alt="PedeRV"></a>
+        <p>Cardápio digital, delivery e gestão para restaurantes, lanchonetes e pizzarias. Um sistema feito para o dia a dia de quem trabalha no balcão.</p>
+      </div>
+      <div class="fcol">
+        <h4>Sistema</h4>
+        <a href="#sistema">Telas do sistema</a>
+        <a href="#recursos">Recursos</a>
+        <a href="#planos">Planos</a>
+      </div>
+      <div class="fcol">
+        <h4>Contato</h4>
+        <a href="https://wa.me/5513955400775?text=Ol%C3%A1%2C+vim+pelo+site+e+tenho+interesse+no+plano" target="_blank" rel="noopener">(13) 95540-0775</a>
+        <a href="mailto:atendimento@pederv.com.br">atendimento@pederv.com.br</a>
+        <p>PEDE RV</p>
+      </div>
+    </div>
+    <div class="fbot"><span>© 2026 PEDE RV</span><span>Todos os direitos reservados</span></div>
+  </div>
+</footer>
+
+<a class="wa" href="https://wa.me/5513955400775?text=Ol%C3%A1%2C+vim+pelo+site+e+tenho+interesse+no+plano" target="_blank" rel="noopener" aria-label="WhatsApp">✆</a>
+
+<script>
+// navegação mobile
+(function(){
+  var menu=document.getElementById('menubtn'),links=document.getElementById('navlinks');
+  menu.setAttribute('aria-expanded','false');
+  menu.addEventListener('click',function(){
+    var open=links.classList.toggle('open');
+    menu.setAttribute('aria-expanded',String(open));
+    menu.textContent=open?'×':'☰';
+  });
+  document.querySelectorAll('#navlinks a').forEach(function(a){
+    a.addEventListener('click',function(){
+      links.classList.remove('open');menu.setAttribute('aria-expanded','false');menu.textContent='☰';
+    });
+  });
+})();
+
+// movimento de rolagem, cards e botões
+(function(){
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var progress=document.createElement('div');
+  progress.className='scroll-progress';progress.setAttribute('aria-hidden','true');
+  progress.innerHTML='<span></span>';document.body.prepend(progress);
+  var progressBar=progress.firstElementChild,nav=document.querySelector('.nav'),ticking=false;
+  function onScroll(){
+    if(ticking)return;ticking=true;
+    requestAnimationFrame(function(){
+      var max=document.documentElement.scrollHeight-innerHeight;
+      progressBar.style.transform='scaleX('+(max>0?Math.min(scrollY/max,1):0)+')';
+      nav.classList.toggle('scrolled',scrollY>16);ticking=false;
+    });
+  }
+  addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+  var revealGroups=[
+    ['.hero-top > *','from-left'],['.hero-showcase','from-right'],['.trust-item',''],
+    ['.showcase .tabs',''],['.view.active',''],['.sec-head',''],
+    ['.fcard',''],['.step',''],['.plan',''],['footer .fbrand,footer .fcol','']
+  ];
+  var reveal=[];
+  revealGroups.forEach(function(group){
+    document.querySelectorAll(group[0]).forEach(function(el,n){
+      el.classList.add('reveal');if(group[1])el.classList.add(group[1]);
+      el.style.setProperty('--delay',(n%5)*75+'ms');reveal.push(el);
+    });
+  });
+  document.body.classList.add('motion-ready');
+  if(reduce||!('IntersectionObserver' in window)){
+    reveal.forEach(function(el){el.classList.add('is-visible');});
+  }else{
+    var observer=new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){entry.target.classList.add('is-visible');observer.unobserve(entry.target);}
+      });
+    },{threshold:.12,rootMargin:'0px 0px -5% 0px'});
+    reveal.forEach(function(el){observer.observe(el);});
+  }
+
+  document.querySelectorAll('.btn').forEach(function(btn){
+    btn.addEventListener('pointerdown',function(e){
+      var old=btn.querySelector('.ripple');if(old)old.remove();
+      var r=document.createElement('span'),box=btn.getBoundingClientRect();
+      var size=Math.max(box.width,box.height);
+      r.className='ripple';r.style.width=r.style.height=size+'px';
+      r.style.left=(e.clientX-box.left-size/2)+'px';r.style.top=(e.clientY-box.top-size/2)+'px';
+      btn.appendChild(r);r.addEventListener('animationend',function(){r.remove();});
+    });
+  });
+
+  if(!reduce&&matchMedia('(pointer:fine)').matches){
+    document.querySelectorAll('.trust-item,.fcard,.plan').forEach(function(card){
+      card.addEventListener('pointermove',function(e){
+        var box=card.getBoundingClientRect();
+        card.style.setProperty('--mx',((e.clientX-box.left)/box.width*100)+'%');
+        card.style.setProperty('--my',((e.clientY-box.top)/box.height*100)+'%');
+      });
+      card.addEventListener('pointerleave',function(){
+        card.style.setProperty('--mx','50%');card.style.setProperty('--my','50%');
+      });
+    });
+    var heroPanel=document.querySelector('.hs-laptop');
+    if(heroPanel&&innerWidth>1080){
+      heroPanel.addEventListener('pointermove',function(e){
+        var box=heroPanel.getBoundingClientRect();
+        var rx=((e.clientY-box.top)/box.height-.5)*-3;
+        var ry=((e.clientX-box.left)/box.width-.5)*4-2;
+        heroPanel.style.transform='perspective(1400px) rotateX('+rx+'deg) rotateY('+ry+'deg) translateY(-2px)';
+      });
+      heroPanel.addEventListener('pointerleave',function(){
+        heroPanel.style.transform='perspective(1400px) rotateY(-2deg)';
+      });
+    }
+  }
+})();
+
+// Hero: primeiro mostra a solução completa; depois passa por cada tela individual.
+(function(){
+  var showcase=document.getElementById('heroShowcase'),track=document.getElementById('heroTrack'),tabs=document.getElementById('heroTabs');
+  if(!showcase||!track||!tabs)return;
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var items=[
+    {id:'v1',label:'Pedidos',title:'Painel de pedidos',copy:'Todos os canais e etapas em um só quadro.',kind:'desktop'},
+    {id:'v2',label:'Cardápio',title:'Cardápio do cliente',copy:'Pedido pelo celular, sem instalar aplicativo.',kind:'phone'},
+    {id:'v2',label:'QR Salão',title:'Cardápio QR Code para o salão',copy:'O cliente escaneia na mesa e pede pelo próprio celular.',kind:'qr'},
+    {id:'v3',label:'Cozinha',title:'Cozinha KDS',copy:'Produção organizada por tempo e prioridade.',kind:'desktop'},
+    {id:'v4',label:'Mesas',title:'Mesas e comandas',copy:'O salão inteiro em um mapa simples.',kind:'desktop'},
+    {id:'v5',label:'Garçom',title:'App do garçom',copy:'Atendimento rápido direto pelo celular.',kind:'phone'},
+    {id:'v6',label:'Motoboy',title:'Entregas pelo app',copy:'Rotas, recebimentos e ocorrências no celular.',kind:'motoboy'},
+    {id:'v7',label:'Entrega',title:'Área de entrega',copy:'Frete e regiões sob o seu controle.',kind:'desktop'},
+    {id:'v8',label:'Chatbot',title:'Chatbot no WhatsApp',copy:'Atendimento automático para dúvidas frequentes.',kind:'desktop'},
+    {id:'v9',label:'Caixa',title:'Frente de caixa',copy:'Venda, pagamento e gestão no mesmo lugar.',kind:'desktop'}
+  ];
+  function source(id){
+    var image=document.querySelector('#'+id+' img');
+    return image?image.getAttribute('src'):'';
+  }
+  function imageFor(id,alt){
+    var image=document.createElement('img');
+    image.src=source(id);image.alt=alt;image.decoding='async';
+    return image;
+  }
+  document.querySelectorAll('[data-hero-source]').forEach(function(slot){
+    slot.appendChild(imageFor(slot.getAttribute('data-hero-source'),''));
+  });
+  items.forEach(function(item,n){
+    var slide=document.createElement('article');
+    slide.className='hero-slide';slide.dataset.title=item.title;
+    slide.setAttribute('aria-label',(n+2)+' de '+(items.length+1)+': '+item.title);
+    var inner=document.createElement('div');inner.className='hero-individual';
+    var device=document.createElement('div');device.className='hi-device is-'+item.kind;
+    if(item.kind==='phone'){
+      var phoneScreen=document.createElement('div');phoneScreen.className='hi-screen';
+      phoneScreen.appendChild(imageFor(item.id,'Tela: '+item.title));device.appendChild(phoneScreen);
+    }else if(item.kind==='qr'){
+      var stand=document.createElement('span');stand.className='hi-qr-stand';
+      stand.innerHTML='<span class="qr-brand">PEDE<b>RV</b></span><span class="qr-title">Aponte a câmera e peça</span><span class="qr-code"></span>';
+      var qrPhone=document.createElement('div');qrPhone.className='hi-qr-phone';
+      var qrScreen=document.createElement('div');qrScreen.className='hi-screen';
+      qrScreen.appendChild(imageFor(item.id,'Cardápio PedeRV aberto pelo QR Code'));qrPhone.appendChild(qrScreen);
+      device.appendChild(stand);device.appendChild(qrPhone);
+    }else if(item.kind==='motoboy'){
+      var motoboyPhone=document.createElement('div');motoboyPhone.className='hi-motoboy-phone';
+      var motoboyScreen=document.createElement('div');motoboyScreen.className='hi-screen';
+      motoboyScreen.appendChild(imageFor(item.id,'Tela completa do app do motoboy PedeRV'));motoboyPhone.appendChild(motoboyScreen);
+      var rider=document.createElement('img');rider.className='hi-rider';rider.src=document.querySelector('.hm-rider').src;rider.alt='Motoboy de frente em uma moto com bag de entrega laranja';
+      device.appendChild(motoboyPhone);device.appendChild(rider);
+    }else{
+      var shell=document.createElement('div');shell.className='hi-shell';
+      var deskScreen=document.createElement('div');deskScreen.className='hi-screen';
+      deskScreen.appendChild(imageFor(item.id,'Tela: '+item.title));shell.appendChild(deskScreen);
+      device.appendChild(shell);var base=document.createElement('div');base.className='hi-base';device.appendChild(base);
+    }
+    var caption=document.createElement('div');caption.className='hi-caption';
+    caption.innerHTML='<b>'+item.title+'</b><span>'+item.copy+'</span>';
+    inner.appendChild(device);inner.appendChild(caption);slide.appendChild(inner);track.appendChild(slide);
+  });
+  var slides=[].slice.call(track.querySelectorAll('.hero-slide'));
+  var labels=['Visão completa'].concat(items.map(function(item){return item.label;}));
+  labels.forEach(function(label,n){
+    var button=document.createElement('button');button.type='button';button.className='hero-tab'+(n===0?' is-active':'');
+    button.textContent=label;button.setAttribute('role','tab');button.setAttribute('aria-selected',String(n===0));button.tabIndex=n===0?0:-1;
+    button.addEventListener('click',function(){show(n,true);});tabs.appendChild(button);
+  });
+  var buttons=[].slice.call(tabs.querySelectorAll('.hero-tab')),index=0,timer=null,paused=false;
+  function restartProgress(){
+    showcase.classList.remove('is-running');void showcase.offsetWidth;
+    if(!reduce&&!paused)showcase.classList.add('is-running');
+  }
+  function show(next,userAction){
+    index=(next+slides.length)%slides.length;
+    slides.forEach(function(slide,n){
+      slide.classList.toggle('is-active',n===index);
+      slide.classList.toggle('is-before',n<index);
+      slide.setAttribute('aria-hidden',String(n!==index));
+    });
+    buttons.forEach(function(button,n){
+      var active=n===index;button.classList.toggle('is-active',active);button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;
+    });
+    restartProgress();
+  }
+  function start(){
+    clearInterval(timer);if(reduce)return;
+    timer=setInterval(function(){if(!paused&&!document.hidden)show(index+1,false);},5400);restartProgress();
+  }
+  function setPaused(value){paused=value;if(value)showcase.classList.remove('is-running');else restartProgress();}
+  document.getElementById('heroPrev').addEventListener('click',function(){show(index-1,true);start();});
+  document.getElementById('heroNext').addEventListener('click',function(){show(index+1,true);start();});
+  showcase.addEventListener('mouseenter',function(){setPaused(true);});
+  showcase.addEventListener('mouseleave',function(){setPaused(false);});
+  showcase.addEventListener('focusin',function(){setPaused(true);});
+  showcase.addEventListener('focusout',function(e){if(!showcase.contains(e.relatedTarget))setPaused(false);});
+  showcase.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();show(index+(e.key==='ArrowRight'?1:-1),true);}
+  });
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)restartProgress();});
+  show(0,false);start();
+})();
+
+// abas das telas com teclado e rolagem automática
+(function(){
+  var tabs=document.getElementById('tabs'),buttons=[].slice.call(tabs.querySelectorAll('.tab'));
+  tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Telas do sistema');
+  buttons.forEach(function(button,n){
+    var panel=document.getElementById(button.dataset.v);
+    button.setAttribute('role','tab');button.setAttribute('aria-controls',panel.id);
+    button.setAttribute('aria-selected',String(button.classList.contains('active')));
+    button.tabIndex=button.classList.contains('active')?0:-1;
+    panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby','system-tab-'+n);
+    button.id='system-tab-'+n;
+  });
+  function activate(button,focus){
+    buttons.forEach(function(t){var on=t===button;t.classList.toggle('active',on);t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;});
+    document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('active',v.id===button.dataset.v);});
+    button.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});if(focus)button.focus();
+  }
+  tabs.addEventListener('click',function(e){var b=e.target.closest('.tab');if(b)activate(b,false);});
+  tabs.addEventListener('keydown',function(e){
+    var current=buttons.indexOf(document.activeElement),next=current;
+    if(e.key==='ArrowRight')next=(current+1)%buttons.length;
+    else if(e.key==='ArrowLeft')next=(current-1+buttons.length)%buttons.length;
+    else if(e.key==='Home')next=0;else if(e.key==='End')next=buttons.length-1;else return;
+    e.preventDefault();activate(buttons[next],true);
+  });
+})();
+</script>
+<!-- ===== SIGNUP MODAL (cadastro teste grátis) ===== -->
+<div class="rv-modal" id="rvSignup" aria-hidden="true">
+  <div class="rv-modal-bg" onclick="closeSignup()"></div>
+  <div class="rv-modal-card" role="dialog" aria-modal="true" aria-labelledby="rvSignupTitle">
+    <button class="rv-modal-x" onclick="closeSignup()" aria-label="Fechar">×</button>
+    <div class="rv-form-wrap" id="rvFormWrap">
+      <h3 id="rvSignupTitle">Teste grátis e automatize seu atendimento hoje</h3>
+      <p class="rv-sub">Não é necessário incluir dados do cartão de crédito. Acesso liberado na hora.</p>
+      <form id="rvSignupForm" novalidate>
+        <div class="rv-row">
+          <input name="nome" placeholder="Seu nome *" required>
+          <input name="email" type="email" placeholder="Seu e-mail (será seu login) *" required>
+        </div>
+        <div class="rv-row">
+          <input name="celular" placeholder="Celular / WhatsApp *" required>
+          <input name="restaurante" placeholder="Nome do seu delivery *" required>
+        </div>
+        <div class="rv-row">
+          <input name="senha" type="password" placeholder="Crie uma senha de acesso *" required minlength="4">
+        </div>
+        <div class="rv-field">
+          <label>Quantidade de pedidos por dia *</label>
+          <div class="rv-radios">
+            <label><input type="radio" name="pedidos" value="Menos de 10" required> Menos de 10</label>
+            <label><input type="radio" name="pedidos" value="Mais de 10"> Mais de 10</label>
+          </div>
+        </div>
+        <div class="rv-field">
+          <label>Já tem computador ou notebook? *</label>
+          <div class="rv-radios">
+            <label><input type="radio" name="computador" value="Sim" required> Sim</label>
+            <label><input type="radio" name="computador" value="Não"> Não</label>
+          </div>
+        </div>
+        <div class="rv-field">
+          <label>Qual seu faturamento mensal? *</label>
+          <select name="faturamento" required>
+            <option value="">Selecione uma opção</option>
+            <option>Até R$ 10 mil</option>
+            <option>R$ 10 mil a R$ 30 mil</option>
+            <option>R$ 30 mil a R$ 60 mil</option>
+            <option>Acima de R$ 60 mil</option>
+          </select>
+        </div>
+        <input type="hidden" name="plano_interesse" value="premium_mensal">
+        <div class="rv-trial-plan" role="note">
+          <strong>Seu teste inclui o Premium completo</strong>
+          <span>Você terá acesso a todos os recursos por 7 dias, incluindo a Cozinha KDS. Se não utilizar a cozinha, poderá desativá-la em Configurações Gerais.</span>
+        </div>
+        <div class="rv-err" id="rvErr" hidden></div>
+        <button type="submit" class="btn btn-primary rv-submit" id="rvSubmit">Testar grátis por 7 dias</button>
+        <small class="rv-fine">*válido somente para novas contratações. Suporte disponível na plataforma com seu login e senha.</small>
+      </form>
+    </div>
+    <div class="rv-success" id="rvSuccess" hidden>
+      <div class="rv-check">✓</div>
+      <h3>Tudo pronto! Seu teste começou 🎉</h3>
+      <p>Criamos o painel do seu delivery. Você já pode entrar com o e-mail e a senha que cadastrou.</p>
+      <div class="rv-access">
+        <div><span>Seu painel</span><a id="rvPanelUrl" href="#" target="_blank" rel="noopener"></a></div>
+        <div><span>Seu login</span><b id="rvLogin"></b></div>
+        <div><span>Cardápio do cliente</span><a id="rvCardUrl" href="#" target="_blank" rel="noopener"></a></div>
+      </div>
+      <a class="btn btn-primary rv-submit" id="rvGoPanel" href="#" target="_blank" rel="noopener">Acessar meu painel →</a>
+      <p class="rv-fine" id="rvDays"></p>
+    </div>
+  </div>
+</div>
+<!-- MODAL ASSINAR / PAGAMENTO -->
+<div class="rv-pay-modal" id="rvPayModal" aria-hidden="true">
+  <div class="rv-modal-bg" onclick="closePay()"></div>
+  <div class="rv-modal-card">
+    <button class="rv-modal-x" onclick="closePay()" aria-label="Fechar">×</button>
+    <div id="payFormWrap">
+      <h3 id="payTitle">Assinar <span id="payPlanName">Pró</span></h3>
+      <p class="rv-sub">Preencha seus dados e escolha a forma de pagamento.</p>
+
+      <!-- ABAS DE PAGAMENTO -->
+      <div class="pay-tabs">
+        <div class="pay-tab active" id="payTabPix" onclick="switchPayTab('pix',this)">🟩 PIX</div>
+        <div class="pay-tab" id="payTabCard" onclick="switchPayTab('card',this)">💳 Cartão</div>
+      </div>
+
+      <!-- DADOS DE CONTATO -->
+      <div class="pay-field"><label>Nome completo *</label><input id="payNome" type="text" placeholder="João da Silva" required></div>
+      <div class="pay-row">
+        <div class="pay-field"><label>E-mail *</label><input id="payEmail" type="email" placeholder="seu@email.com" required></div>
+        <div class="pay-field"><label>WhatsApp *</label><input id="payWhats" type="tel" placeholder="(11) 99999-9999" required></div>
+      </div>
+      <div class="pay-field"><label>Nome do restaurante *</label><input id="payRest" type="text" placeholder="Restaurante do João" required></div>
+
+      <!-- TOTAL -->
+      <div class="pay-total">
+        <span>Plano <span id="payTotalPlan">Pró</span> · <span id="payTotalPeriod">mensal</span></span>
+        <b id="payTotalPrice">R$ 149,00/mês</b>
+      </div>
+
+      <!-- PAINEL PIX -->
+      <div class="pay-pane active" id="pane-pix">
+        <div class="pix-box">
+          <p style="font-size:13px;color:#166c48;font-weight:700;margin-bottom:8px">Pague via PIX e receba acesso em minutos</p>
+
+          <!-- QR Code PIX (formato EMV) -->
+          <div class="pix-qr-wrap">
+            <p class="pix-qr-label">📷 Abra o app do banco e escaneie</p>
+            <img id="pixQrImg" src="" alt="QR Code PIX" loading="lazy">
+          </div>
+
+          <!-- Chave para copiar -->
+          <p style="font-size:12px;color:#4a7a62;margin-bottom:6px">Ou copie a chave abaixo e cole no app do banco:</p>
+          <p style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Chave PIX</p>
+          <div class="pix-key-display" id="pixKeyDisplay">22331925836</div>
+          <button class="pix-copy-btn" onclick="copyPix()">📋 Copiar chave PIX</button>
+          <p style="font-size:11px;color:#8a9890;margin-top:10px">Após pagar, envie o comprovante via WhatsApp. Ativamos em até 30 min (horário comercial).</p>
+        </div>
+        <div class="rv-err" id="payPixErr" hidden></div>
+        <button class="pay-submit" onclick="submitPayPix()">✅ Já paguei — enviar dados</button>
+      </div>
+
+      <!-- PAINEL CARTÃO -->
+      <div class="pay-pane" id="pane-card">
+        <div class="card-type-toggle">
+          <button type="button" class="ct-btn active" data-ct="credito" onclick="setCardType('credito',this)">Crédito</button>
+          <button type="button" class="ct-btn" data-ct="debito" onclick="setCardType('debito',this)">Débito</button>
+        </div>
+        <div class="pay-field"><label>Número do cartão *</label><input id="cardNum" type="text" placeholder="0000 0000 0000 0000" maxlength="19" oninput="fmtCard(this)"></div>
+        <div class="pay-field"><label>Nome no cartão *</label><input id="cardName" type="text" placeholder="NOME COMO NO CARTÃO"></div>
+        <div class="pay-row">
+          <div class="pay-field"><label>Validade *</label><input id="cardExp" type="text" placeholder="MM/AA" maxlength="5" oninput="fmtExp(this)"></div>
+          <div class="pay-field"><label>CVV *</label><input id="cardCvv" type="text" placeholder="123" maxlength="4"></div>
+        </div>
+        <div class="pay-field" id="cardParcWrap" hidden><label>Parcelamento</label>
+          <select id="cardParc" onchange="onParcChange()" style="width:100%;border:1px solid #ddd6cd;border-radius:10px;padding:12px 13px;font-size:14px;background:#fbfaf8;color:#141210;font-family:inherit;font-weight:700"></select>
+        </div>
+        <div class="pay-field" id="cardInfoWrap"><label>Cobrança</label>
+          <div id="cardInfoBox" style="width:100%;border:1px solid #ddd6cd;border-radius:10px;padding:12px 13px;font-size:14px;background:#fbfaf8;color:#141210;font-weight:700">Cobrança mensal de R$ 149,00</div>
+        </div>
+        <div class="rv-err" id="payCardErr" hidden></div>
+        <button class="pay-submit" onclick="submitPayCard()">💳 Finalizar assinatura</button>
+      </div>
+    </div>
+    <div id="paySuccess" class="pay-success-box" hidden>
+      <div class="pay-success-icon">✅</div>
+      <h3 style="margin-bottom:8px">Solicitação enviada!</h3>
+      <p style="font-size:14px;color:#5f6670;line-height:1.55;margin-bottom:18px" id="paySuccessMsg">Nossa equipe recebeu seu pedido e entrará em contato pelo WhatsApp para confirmar o acesso.</p>
+      <button class="pay-submit" onclick="closePay()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openSignup(){var m=document.getElementById('rvSignup');m.classList.add('open');m.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
+function closeSignup(){var m=document.getElementById('rvSignup');m.classList.remove('open');m.setAttribute('aria-hidden','true');document.body.style.overflow='';}
+
+// Pagamento
+var PLANOS={
+  pro:{label:'Pró',
+    monthly:{total:'R$ 149,00/mês',recorrente:'Cobrança mensal de R$ 149,00',valor:'149'},
+    annual:{total:'R$ 1.500,00/ano no PIX ou débito',debito:'1500',debitoTxt:'À vista no débito: R$ 1.500,00',creditoTotal:'1620',
+      credito:[['1','R$ 1.620,00 à vista'],['2','2x de R$ 810,00 sem juros'],['3','3x de R$ 540,00 sem juros'],['4','4x de R$ 405,00 sem juros'],['5','5x de R$ 324,00 sem juros'],['6','6x de R$ 270,00 sem juros']]}},
+  premium:{label:'Premium',
+    monthly:{total:'R$ 199,00/mês',recorrente:'Cobrança mensal de R$ 199,00',valor:'199'},
+    annual:{total:'R$ 2.100,00/ano no PIX ou débito',debito:'2100',debitoTxt:'À vista no débito: R$ 2.100,00',creditoTotal:'2274',
+      credito:[['1','R$ 2.274,00 à vista'],['2','2x de R$ 1.137,00 sem juros'],['3','3x de R$ 758,00 sem juros'],['4','4x de R$ 568,00 sem juros'],['5','5x de R$ 454,00 sem juros'],['6','6x de R$ 379,00 sem juros']]}}
+};
+var _payPlan='pro',_payPeriod='monthly',_payVal='149',_payParcN=1,_cardType='credito';
+function _pixEmv(key,nome,cidade){
+  function f(id,v){var l=String(v.length).padStart(2,'0');return id+l+v;}
+  var gui=f('00','BR.GOV.BCB.PIX')+f('01',key);
+  var payload=f('00','01')+f('26',gui)+f('52','0000')+f('53','986')+f('58','BR')+f('59',nome.substring(0,25))+f('60',cidade.substring(0,15))+f('62',f('05','***'))+'6304';
+  var crc=0xFFFF;
+  for(var i=0;i<payload.length;i++){crc^=(payload.charCodeAt(i)<<8);for(var j=0;j<8;j++){crc=(crc&0x8000)?((crc<<1)^0x1021):(crc<<1);crc&=0xFFFF;}}
+  return payload+crc.toString(16).toUpperCase().padStart(4,'0');
+}
+function setCardType(t,el){
+  _cardType=t;
+  document.querySelectorAll('.ct-btn').forEach(function(b){b.classList.remove('active');});
+  el.classList.add('active');
+  updateCardArea();
+}
+function onParcChange(){_payParcN=parseInt(document.getElementById('cardParc').value)||1;}
+function updateCardArea(){
+  var p=PLANOS[_payPlan]||PLANOS.pro,d=p[_payPeriod]||p.monthly;
+  var parcWrap=document.getElementById('cardParcWrap'),infoWrap=document.getElementById('cardInfoWrap'),infoBox=document.getElementById('cardInfoBox'),sel=document.getElementById('cardParc');
+  if(_payPeriod==='annual'){
+    if(_cardType==='credito'){
+      sel.innerHTML=d.credito.map(function(o){return '<option value="'+o[0]+'">'+o[1]+'</option>';}).join('');
+      parcWrap.hidden=false;infoWrap.hidden=true;
+      _payParcN=parseInt(sel.value)||1;_payVal=d.creditoTotal;
+    } else {
+      parcWrap.hidden=true;infoWrap.hidden=false;
+      infoBox.textContent=d.debitoTxt;
+      _payParcN=1;_payVal=d.debito;
+    }
+  } else {
+    parcWrap.hidden=true;infoWrap.hidden=false;
+    infoBox.textContent=d.recorrente;
+    _payParcN=1;_payVal=d.valor;
+  }
+}
+function openPay(plan,period){
+  _payPlan=plan;_payPeriod=period||'monthly';_cardType='credito';
+  var p=PLANOS[plan]||PLANOS.pro,d=p[_payPeriod]||p.monthly;
+  _payVal=d.valor||d.debito;_payParcN=1;
+  document.getElementById('payPlanName').textContent=p.label;
+  document.getElementById('payTotalPlan').textContent=p.label;
+  document.getElementById('payTotalPeriod').textContent=_payPeriod==='annual'?'anual':'mensal';
+  document.getElementById('payTotalPrice').textContent=d.total;
+  // Reseta toggle de cartão para Crédito
+  document.querySelectorAll('.ct-btn').forEach(function(b){b.classList.toggle('active',b.dataset.ct==='credito');});
+  updateCardArea();
+  document.getElementById('payFormWrap').hidden=false;
+  document.getElementById('paySuccess').hidden=true;
+  // Volta sempre para a aba PIX
+  switchPayTab('pix',document.getElementById('payTabPix'));
+  // Gera QR Code PIX no formato EMV (BR Code)
+  var pixKey=document.getElementById('pixKeyDisplay').textContent.trim();
+  var emv=_pixEmv(pixKey,'PedeRV','Santos');
+  var qrImg=document.getElementById('pixQrImg');
+  if(qrImg) qrImg.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&ecc=M&data='+encodeURIComponent(emv);
+  var m=document.getElementById('rvPayModal');
+  m.classList.add('open');m.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
+}
+function closePay(){var m=document.getElementById('rvPayModal');m.classList.remove('open');m.setAttribute('aria-hidden','true');document.body.style.overflow='';}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeSignup();closePay();}});
+function switchPayTab(tab,el){
+  document.querySelectorAll('.pay-tab').forEach(function(t){t.classList.remove('active')});
+  el.classList.add('active');
+  document.querySelectorAll('.pay-pane').forEach(function(p){p.classList.remove('active')});
+  document.getElementById('pane-'+tab).classList.add('active');
+}
+function fmtCard(el){var v=el.value.replace(/\D/g,'').slice(0,16);el.value=v.replace(/(.{4})/g,'$1 ').trim();}
+function fmtExp(el){var v=el.value.replace(/\D/g,'').slice(0,4);el.value=v.length>2?v.slice(0,2)+'/'+v.slice(2):v;}
+function copyPix(){var k=document.getElementById('pixKeyDisplay').textContent;navigator.clipboard.writeText(k).then(function(){alert('Chave PIX copiada!');}).catch(function(){prompt('Copie a chave PIX:',k);});}
+function _payValidateContact(){
+  var n=document.getElementById('payNome').value.trim(),e=document.getElementById('payEmail').value.trim(),w=document.getElementById('payWhats').value.trim(),r=document.getElementById('payRest').value.trim();
+  if(!n||!e||!w||!r)return 'Preencha todos os dados de contato.';
+  if(!e.includes('@'))return 'E-mail inválido.';
+  return null;
+}
+async function _paySubmit(method,extra){
+  var err=_payValidateContact();if(err)return err;
+  var body='r=saas_subscribe&nome='+encodeURIComponent(document.getElementById('payNome').value.trim())+'&email='+encodeURIComponent(document.getElementById('payEmail').value.trim())+'&whatsapp='+encodeURIComponent(document.getElementById('payWhats').value.replace(/\D/g,''))+'&restaurante='+encodeURIComponent(document.getElementById('payRest').value.trim())+'&plano='+encodeURIComponent(_payPlan)+'&periodo='+encodeURIComponent(_payPeriod)+'&valor='+encodeURIComponent(_payVal)+'&metodo='+encodeURIComponent(method)+extra;
+  try{
+    var d=await fetch('index.php?r=saas_subscribe',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body}).then(function(x){return x.json();});
+    if(d.ok){
+      document.getElementById('payFormWrap').hidden=true;
+      document.getElementById('paySuccessMsg').textContent=d.msg||'Nossa equipe entrará em contato pelo WhatsApp em breve.';
+      document.getElementById('paySuccess').hidden=false;
+    } else {return d.erro||'Erro ao processar. Tente novamente.';}
+  }catch(ex){return 'Erro de conexão. Verifique sua internet.';}
+  return null;
+}
+async function submitPayPix(){
+  var btn=document.querySelector('#pane-pix .pay-submit'),errEl=document.getElementById('payPixErr');
+  errEl.hidden=true;btn.disabled=true;btn.textContent='Enviando...';
+  var err=await _paySubmit('pix','');
+  if(err){errEl.textContent=err;errEl.hidden=false;btn.disabled=false;btn.textContent='✅ Já paguei — enviar dados';}
+}
+async function submitPayCard(){
+  var btn=document.querySelector('#pane-card .pay-submit'),errEl=document.getElementById('payCardErr');
+  errEl.hidden=true;
+  var num=document.getElementById('cardNum').value.replace(/\s/g,''),name=document.getElementById('cardName').value.trim(),exp=document.getElementById('cardExp').value.trim(),cvv=document.getElementById('cardCvv').value.trim(),parc=String(_payParcN);
+  if(!num||num.length<15||!name||!exp||exp.length<5||!cvv){errEl.textContent='Preencha todos os dados do cartão.';errEl.hidden=false;return;}
+  btn.disabled=true;btn.textContent='Processando...';
+  var extra='&card_num='+encodeURIComponent(num)+'&card_name='+encodeURIComponent(name)+'&card_exp='+encodeURIComponent(exp)+'&card_cvv='+encodeURIComponent(cvv)+'&parcelas='+encodeURIComponent(parc)+'&card_tipo='+encodeURIComponent(_cardType);
+  var err=await _paySubmit('cartao',extra);
+  if(err){errEl.textContent=err;errEl.hidden=false;btn.disabled=false;btn.textContent='💳 Finalizar assinatura';}
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSignup();});
+(function(){
+  var form=document.getElementById('rvSignupForm');if(!form)return;
+  form.addEventListener('submit',async function(e){
+    e.preventDefault();
+    var err=document.getElementById('rvErr'),btn=document.getElementById('rvSubmit');
+    err.hidden=true;
+    if(!form.checkValidity()){err.textContent='Preencha todos os campos obrigatórios.';err.hidden=false;return;}
+    btn.disabled=true;btn.textContent='Criando seu acesso...';
+    try{
+      var fd=new FormData(form);
+      var r=await fetch('index.php?r=saas_signup',{method:'POST',body:new URLSearchParams(fd)}).then(x=>x.json());
+      if(!r.ok){err.textContent=r.erro||'Não foi possível concluir. Tente novamente.';err.hidden=false;btn.disabled=false;btn.textContent='Testar grátis por 7 dias';return;}
+      document.getElementById('rvFormWrap').hidden=true;
+      var s=document.getElementById('rvSuccess');s.hidden=false;
+      document.getElementById('rvPanelUrl').textContent=r.painel;document.getElementById('rvPanelUrl').href=r.painel;
+      document.getElementById('rvCardUrl').textContent=r.cardapio;document.getElementById('rvCardUrl').href=r.cardapio;
+      document.getElementById('rvGoPanel').href=r.painel;
+      document.getElementById('rvLogin').textContent=r.login;
+      document.getElementById('rvDays').textContent='Seu teste é válido por '+r.trial_dias+' dias. Depois disso o acesso é bloqueado automaticamente até a assinatura ser ativada.';
+    }catch(ex){err.textContent='Erro de conexão. Verifique sua internet e tente novamente.';err.hidden=false;btn.disabled=false;btn.textContent='Testar grátis por 7 dias';}
+  });
+})();
+</script>
+
+</body>
+</html>

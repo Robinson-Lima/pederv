@@ -1,0 +1,18 @@
+INSTALAÇÃO CORRETA PARA O DOMÍNIO RVAUTOMACAO.COM.BR
+
+Extraia todo o conteúdo deste pacote dentro de:
+public_html/cardapio
+
+Não extraia na raiz public_html.
+
+Depois da extração, use:
+https://rvautomacao.com.br/cardapio/
+https://rvautomacao.com.br/cardapio/garcom/
+https://rvautomacao.com.br/cardapio/motoboy/
+https://rvautomacao.com.br/cardapio/Cozinha/
+https://rvautomacao.com.br/cardapio/CAIXA/
+https://rvautomacao.com.br/cardapio/painel/
+
+Painel inicial:
+Usuário: admin
+Senha: rv123

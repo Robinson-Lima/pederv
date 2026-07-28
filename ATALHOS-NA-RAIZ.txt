@@ -1,0 +1,29 @@
+# URLs do sistema multi-tenant (app na RAIZ de pederv.com.br)
+#
+# === PAINEL SAAS (dono da plataforma) ===
+#   pederv.com.br/admin              -> Central SaaS (cadastro de clientes e assinaturas)
+#
+# === MÓDULOS DE CADA CLIENTE (slug = identificador do restaurante) ===
+#   pederv.com.br/cardapio/{slug}    -> Cardápio online do cliente
+#   pederv.com.br/painel/{slug}      -> Painel de pedidos (admin do restaurante)
+#   pederv.com.br/cozinha/{slug}     -> KDS da cozinha
+#   pederv.com.br/garcom/{slug}      -> App do garçom
+#   pederv.com.br/motoboy/{slug}     -> App do motoboy
+#   pederv.com.br/caixa/{slug}       -> Caixa
+#   pederv.com.br/pdv/{slug}         -> PDV balcão
+#
+# EXEMPLO — cliente "Barba Burguer" cadastrado com slug "barbaburguer":
+#   pederv.com.br/cardapio/barbaburguer
+#   pederv.com.br/painel/barbaburguer
+#   pederv.com.br/cozinha/barbaburguer
+#
+# === BANCO DE DADOS ===
+#   Painel SaaS (/admin): usa o Supabase configurado em config.php
+#   Cada tenant:          usa data/{slug}.sqlite (criado automaticamente)
+#
+# === CONFIGURAÇÃO ===
+#   1. Edite config.php e coloque a senha do Supabase
+#   2. Suba todos os arquivos para a raiz de pederv.com.br
+#   3. Acesse pederv.com.br/admin para criar o primeiro cliente
+#   4. Defina o slug do cliente (ex: barbaburguer) no cadastro
+#   5. Compartilhe o link pederv.com.br/cardapio/barbaburguer com o cliente

@@ -1,0 +1,200 @@
+:root{--sa-bg:#111;--sa-panel:#fff;--sa-line:#E8E8E8;--sa-ink:#111;--sa-mut:#777;--sa-brand:#FF6900;--sa-brand2:#FF8C00;--sa-ok:#1B9E58;--sa-warn:#D98A12;--sa-danger:#E23B3B}
+*{box-sizing:border-box}
+body.saas{margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;background:#F4F4F4;color:var(--sa-ink);-webkit-font-smoothing:antialiased}
+.saas-shell{display:flex;min-height:100vh}
+
+/* Sidebar */
+.saas-side{width:240px;flex-shrink:0;background:#111;color:#fff;display:flex;flex-direction:column;padding:18px 14px;position:sticky;top:0;height:100vh}
+.saas-brand{display:flex;align-items:center;gap:11px;padding:6px 8px 16px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:12px}
+.saas-mark{width:44px;height:44px;border-radius:12px;background:#FF6900;display:grid;place-items:center;font-weight:900;font-size:13px;color:#fff;letter-spacing:-.5px;box-shadow:0 8px 20px rgba(255,105,0,.35)}
+.saas-brand b{font-size:15px;display:block;color:#fff}
+.saas-brand small{font-size:11px;color:#888}
+.saas-side nav{display:flex;flex-direction:column;gap:4px;flex:1}
+.saas-side nav a{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:11px;color:#AAA;text-decoration:none;font-weight:700;font-size:14px;transition:background .15s,color .15s}
+.saas-side nav a i{font-style:normal;font-size:15px;width:20px;text-align:center}
+.saas-side nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.saas-side nav a.on{background:#FF6900;color:#fff;box-shadow:0 8px 20px rgba(255,105,0,.35)}
+.saas-side-foot{display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
+.saas-new{background:#FF6900;color:#fff;text-align:center;padding:11px;border-radius:11px;text-decoration:none;font-weight:800;font-size:13px}
+.saas-new:hover{background:#e05e00}
+.saas-logout{color:#777;text-align:center;font-size:12px;text-decoration:none;padding:4px}
+
+/* Main */
+.saas-main{flex:1;padding:26px 30px;max-width:1220px}
+.saas-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.saas-head h1{font-size:26px;margin:0;display:flex;align-items:center;gap:10px}
+.saas-head p{margin:4px 0 0;color:var(--sa-mut);font-size:13.5px}
+.saas-head-actions{display:flex;gap:8px;align-items:center}
+.saas-back{color:var(--sa-brand);text-decoration:none;font-size:12px;font-weight:800;display:inline-block;margin-bottom:4px}
+
+/* Buttons */
+.saas-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--sa-line);background:#fff;color:var(--sa-ink);padding:11px 16px;border-radius:11px;font-weight:800;font-size:13.5px;cursor:pointer;text-decoration:none;transition:transform .1s,box-shadow .15s}
+.saas-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(0,0,0,.1)}
+.saas-btn.primary{background:#FF6900;color:#fff;border-color:transparent;box-shadow:0 8px 20px rgba(255,105,0,.3)}
+.saas-btn.ok{background:var(--sa-ok);color:#fff;border-color:transparent}
+.saas-btn.danger{background:#fff;color:var(--sa-danger);border-color:#F3C4C0}
+.saas-btn.danger:hover{background:var(--sa-danger);color:#fff}
+.saas-btn.full{width:100%}
+
+/* Cards */
+.saas-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.saas-card{background:#fff;border:1px solid var(--sa-line);border-radius:16px;padding:16px 18px;box-shadow:0 4px 14px rgba(0,0,0,.05);position:relative;overflow:hidden}
+.saas-card::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:#FF6900}
+.saas-card.alert::before{background:#E23B3B}
+.saas-card .c-l{font-size:11.5px;font-weight:800;color:var(--sa-mut);letter-spacing:.02em}
+.saas-card .c-v{display:block;font-size:28px;font-weight:800;margin:5px 0 2px;letter-spacing:-.02em}
+.saas-card .c-s{font-size:11px;color:var(--sa-mut)}
+.saas-card.alert .c-v{color:var(--sa-danger)}
+
+/* Panels & columns */
+.saas-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.saas-panel{background:#fff;border:1px solid var(--sa-line);border-radius:16px;padding:16px 18px;box-shadow:0 4px 14px rgba(0,0,0,.04);margin-bottom:16px}
+.saas-panel-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.saas-panel-h b{font-size:14.5px}
+.saas-panel-h a{color:var(--sa-brand);font-size:12px;text-decoration:none;font-weight:700}
+
+/* Tables */
+.saas-table{width:100%;border-collapse:collapse}
+.saas-table td{padding:11px 8px;border-bottom:1px solid #F0F3F8;font-size:13px;vertical-align:middle}
+.saas-table tr:last-child td{border-bottom:0}
+.saas-table th{text-align:left;font-size:10.5px;letter-spacing:.05em;color:var(--sa-mut);padding:6px 8px;border-bottom:1px solid var(--sa-line);text-transform:uppercase}
+.saas-table tr[onclick]{cursor:pointer}
+.saas-table tr[onclick]:hover td{background:#FAFAFA}
+.saas-table td small{display:block;color:var(--sa-mut);font-size:10.5px;margin-top:2px}
+.saas-table td.r{text-align:right}
+.saas-table td.green{color:var(--sa-ok);font-weight:800}
+.saas-table td.empty{color:var(--sa-mut);font-size:12.5px;text-align:center;padding:18px}
+.saas-table.wide td:first-child{width:36%}
+
+/* Pills */
+.pill{display:inline-block;font-size:10.5px;font-weight:800;border-radius:999px;padding:4px 10px}
+.pill.ok{background:#E7F8EF;color:#0E7A46}
+.pill.trial{background:#FFF0E6;color:#C05200}
+.pill.block{background:#FDE7E3;color:#B4362B}
+.pill.cancel{background:#EEF0F4;color:#69707E}
+.plan-tag{display:inline-block;font-size:10.5px;font-weight:800;border-radius:8px;padding:4px 9px}
+.plan-tag.pro{background:#FFF0E6;color:#C05200}
+.plan-tag.premium{background:#111;color:#FF6900}
+
+/* Plan bars */
+.plan-bar{display:flex;flex-direction:column;gap:12px;margin:6px 0}
+.plan-row{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:700}
+.plan-row span{width:64px}
+.plan-row .bar{flex:1;height:12px;background:#EEE;border-radius:999px;overflow:hidden}
+.plan-row .bar i{display:block;height:100%;background:#FF6900;border-radius:999px}
+.plan-row .bar.prem i{background:#111}
+.plan-row b{width:28px;text-align:right}
+.plan-prices{display:flex;justify-content:space-between;color:var(--sa-mut);font-size:11.5px;margin-top:12px;border-top:1px solid #F0F3F8;padding-top:10px}
+
+/* Alerts */
+.saas-alert{border-radius:12px;padding:12px 15px;font-size:13px;font-weight:600;margin-bottom:16px}
+.saas-alert.block{background:#FDECE8;color:#B4362B;border:1px solid #F3C4C0}
+.saas-alert.warn{background:#FFF6E6;color:#8A5A12;border:1px solid #F0D9A6}
+.saas-alert.trial{background:#FFF0E6;color:#C05200;border:1px solid #FFD0B0}
+.saas-alert.ok{background:#E7F8EF;color:#0E7A46;border:1px solid #BFE9D3}
+
+/* Info grid */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.info-grid>div span{display:block;font-size:11px;color:var(--sa-mut);font-weight:700;margin-bottom:2px}
+.info-grid>div b{font-size:14px}
+.saas-obs{margin:12px 0 0;padding:11px;background:#F7F7F7;border-radius:10px;font-size:12.5px;color:#555}
+
+/* Forms */
+.saas-form label{display:block;font-size:12px;font-weight:800;color:#444;margin-bottom:11px}
+.saas-form input,.saas-form select,.saas-form textarea{width:100%;margin-top:5px;border:1px solid #D6DDE6;border-radius:10px;padding:11px;font:inherit;font-size:13.5px;color:var(--sa-ink)}
+.saas-form textarea{resize:vertical}
+.saas-form .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.saas-note{font-size:11.5px;color:var(--sa-mut);background:#F7F7F7;border-radius:10px;padding:10px 12px;margin:4px 0 12px}
+.danger-zone{border-color:#F3C4C0}
+
+/* Filter bar */
+.saas-filter{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.saas-filter input{flex:1;min-width:200px;border:1px solid #D6DDE6;border-radius:11px;padding:11px 14px;font:inherit;font-size:13.5px}
+.saas-filter select{border:1px solid #D6DDE6;border-radius:11px;padding:11px;font:inherit;font-size:13px}
+
+/* Modal */
+.saas-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);z-index:80;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+.saas-modal.on{display:flex}
+.saas-modal-in{background:#fff;border-radius:18px;width:100%;max-width:560px;padding:20px;box-shadow:0 30px 70px rgba(0,0,0,.3)}
+.saas-modal-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.saas-modal-h b{font-size:17px}
+.saas-modal-h button{background:#F0F0F0;border:0;border-radius:9px;width:32px;height:32px;font-size:17px;cursor:pointer}
+
+/* Login */
+.saas-auth{min-height:100vh;display:grid;place-items:center;background:#111;padding:20px}
+.saas-login-card{background:#fff;border-radius:20px;padding:34px 30px;width:100%;max-width:380px;text-align:center;box-shadow:0 30px 70px rgba(0,0,0,.5)}
+.saas-login-mark{width:64px;height:64px;border-radius:16px;background:#FF6900;display:grid;place-items:center;font-weight:900;font-size:16px;color:#fff;margin:0 auto 16px;box-shadow:0 10px 26px rgba(255,105,0,.4);letter-spacing:-.5px}
+.saas-login-card h1{font-size:22px;margin:0 0 4px}
+.saas-login-card p{color:var(--sa-mut);font-size:13px;margin:0 0 20px}
+.saas-login-card label{display:block;text-align:left;font-size:12px;font-weight:800;color:#444}
+.saas-login-card input{width:100%;margin-top:6px;border:1px solid #D6DDE6;border-radius:11px;padding:13px;font-size:15px}
+.saas-login-card button{width:100%;margin-top:14px;background:#FF6900;color:#fff;border:0;border-radius:11px;padding:13px;font-weight:800;font-size:15px;cursor:pointer}
+.saas-login-card button:hover{background:#e05e00}
+.saas-login-hint{display:block;margin-top:14px;color:var(--sa-mut);font-size:11px}
+.saas-err{background:#FDECE8;color:#B4362B;border-radius:10px;padding:10px;font-size:12.5px;font-weight:700;margin-bottom:14px}
+
+/* ===== BOT STUDIO (igual ao painel do cliente) ===== */
+.wrap{max-width:1100px}
+.page-title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.page-title-row h2{margin:0 0 4px;font-size:22px}
+.page-title-row p{margin:0;font-size:13px;color:#666}
+.oknote{background:#E7F8EF;color:#0E7A46;border:1px solid #BFE9D3;border-radius:10px;padding:11px 14px;font-size:13px;font-weight:700;margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+label{display:block;font-size:12px;font-weight:800;color:#444;margin-bottom:10px}
+label input,label select,label textarea{width:100%;margin-top:5px;border:1px solid #D6DDE6;border-radius:10px;padding:11px;font:inherit;font-size:13.5px}
+.bot-section-title{font-size:17px;margin:20px 0 10px;border-bottom:2px solid #FF6900;padding-bottom:8px;display:inline-block}
+.wa-toggle{display:flex;align-items:flex-start;gap:11px;cursor:pointer;padding:12px 14px;background:#FAFAFA;border:1px solid #E8E8E8;border-radius:12px;font-size:13px;font-weight:600}
+.wa-toggle input[type=checkbox]{margin-top:2px;accent-color:#FF6900;width:16px;height:16px;flex-shrink:0}
+.wa-toggle span b{display:block;font-size:13.5px}
+.wa-toggle span small{display:block;font-size:12px;color:#888;margin-top:2px;font-weight:400}
+.wa-toggle.bot-master{margin-bottom:16px;background:#FFF5EE;border-color:#FFD0A8}
+.bot-studio{display:grid;grid-template-columns:260px 1fr 320px;gap:14px;margin-top:6px}
+.bot-studio aside{background:#fff;border:1px solid #E8E8E8;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto}
+.bot-studio aside h3{font-size:14px;margin:0 0 2px}
+.bot-studio aside p{font-size:12px;color:#888;margin:0 0 8px}
+.bot-card{background:#F7F7F7;border:2px solid transparent;border-radius:10px;padding:10px 12px;text-align:left;cursor:pointer;width:100%;font:inherit;transition:border-color .15s,background .15s}
+.bot-card:hover{background:#FFF0E6;border-color:#FFD0A8}
+.bot-card.on{background:#FFF0E6;border-color:#FF6900}
+.bot-card b{display:block;font-size:12px;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bot-card small{display:block;font-size:11px;color:#888;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cxgo{background:#FF6900;color:#fff;border:0;border-radius:9px;padding:9px 14px;font-weight:800;font-size:13px;cursor:pointer;margin-top:6px;width:100%}
+.cxgo:hover{background:#e05e00}
+.bot-phone-preview{background:#ECE5DD;border-radius:20px;padding:0;overflow:hidden;display:flex;flex-direction:column;border:8px solid #222;box-shadow:0 8px 32px rgba(0,0,0,.18);min-height:340px;max-height:520px}
+.bot-phone-head{background:#075E54;color:#fff;padding:12px 16px;font-size:13px;font-weight:700;letter-spacing:.01em}
+.bot-client-bubble{background:#fff;border-radius:12px 12px 12px 2px;padding:9px 13px;font-size:13px;margin:14px 14px 6px;max-width:80%;align-self:flex-start;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.bot-reply-bubble{background:#DCF8C6;border-radius:12px 12px 2px 12px;padding:9px 13px;font-size:13px;margin:0 14px 14px auto;max-width:88%;align-self:flex-end;white-space:pre-wrap;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow-y:auto;max-height:300px}
+.cfgcard{background:#fff;border:1px solid #E8E8E8;border-radius:14px;padding:16px}
+.bot-editor h3{font-size:14px;margin:0 0 12px}
+.bot-editor label{font-size:12px;font-weight:800;color:#444;display:block;margin:10px 0 4px}
+.bot-editor input,.bot-editor textarea{width:100%;border:1px solid #D6DDE6;border-radius:9px;padding:9px 11px;font:inherit;font-size:13px}
+.bot-editor textarea{resize:vertical}
+.bot-tokens{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.bot-tokens button{background:#F4F4F4;border:1px solid #DDD;border-radius:7px;padding:5px 10px;font-size:11.5px;cursor:pointer;font-weight:700}
+.bot-tokens button:hover{background:#FFF0E6;border-color:#FF6900;color:#FF6900}
+.bot-save{margin-top:18px;background:#FF6900;color:#fff;border:0;border-radius:11px;padding:13px 28px;font-weight:800;font-size:15px;cursor:pointer}
+.bot-save:hover{background:#e05e00}
+.save{background:#FF6900;color:#fff;border:0;border-radius:11px;padding:12px 24px;font-weight:800;font-size:14px;cursor:pointer}
+
+/* Mobile bottom nav (hidden on desktop) */
+.saas-mobile-nav{display:none}
+
+@media(max-width:900px){
+  .saas-cards{grid-template-columns:repeat(2,1fr)}
+  .saas-cols{grid-template-columns:1fr}
+  .saas-side{display:none}
+  .saas-main{padding:12px;padding-bottom:76px}
+  .saas-form .grid2{grid-template-columns:1fr}
+  .bot-studio{grid-template-columns:1fr}
+  .grid2{grid-template-columns:1fr}
+  /* mobile top bar */
+  .saas-mobile-top{display:flex!important;align-items:center;gap:10px;background:#111;padding:10px 14px;position:sticky;top:0;z-index:40;margin:-12px -12px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .saas-mobile-top img{width:32px;height:32px;border-radius:8px;background:#fff;padding:2px;object-fit:contain}
+  .saas-mobile-top b{color:#fff;font-size:15px}
+  .saas-mobile-top small{color:#888;font-size:11px;display:block}
+  /* mobile bottom nav */
+  .saas-mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#111;z-index:50;border-top:1px solid rgba(255,255,255,.1);safe-area-inset-bottom:env(safe-area-inset-bottom)}
+  .saas-mobile-nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:9px 4px 11px;color:#777;text-decoration:none;font-size:10px;font-weight:700;line-height:1;transition:color .15s}
+  .saas-mobile-nav a i{font-style:normal;font-size:19px;display:block;margin-bottom:3px;text-align:center}
+  .saas-mobile-nav a.on{color:#FF6900}
+  .saas-mobile-nav a:hover{color:#fff}
+}

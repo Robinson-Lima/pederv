@@ -1,0 +1,62 @@
+ATUALIZAÇÃO RVCARDÁPIOS — V10 (pedidos unificados, robô, salão e relatórios)
+
+COMO SUBIR NA HOSTGATOR
+1. Abra a pasta rvautomacao.com.br/cardapio no Gerenciador de Arquivos.
+2. Envie este ZIP para dentro da pasta cardapio.
+3. Extraia e confirme a substituição dos arquivos existentes.
+4. O ZIP NÃO contém config.php nem data/rvcardapios.sqlite — suas senhas, usuários,
+   produtos, pedidos e caixa continuam intactos.
+5. Abra /cardapio/?r=admin_orders. As novas colunas e tabelas do banco são criadas
+   sozinhas no primeiro acesso (colunas novas em orders/couriers + tabela delivery_zones).
+
+IMPORTANTE PARA O MOTOBOY
+Abra Usuários e ajustes, edite cada usuário Motoboy e clique em Salvar alterações uma vez.
+Isso vincula o acesso individual ao cadastro de entregas.
+
+O QUE MUDOU NESTA VERSÃO
+
+1) ENTREGA CONCLUÍDA
+   Quando o motoboy marca "Entregue" no app dele, o card vai para Finalizados e a tarja
+   passa a mostrar "🛵 Nome · ENTREGA CONCLUÍDA ✓" (antes ficava preso em A CAMINHO).
+   O motoboy também volta automaticamente para o status livre.
+
+2) APP DO MOTOBOY
+   - Botão grande ATIVAR / DESATIVAR ROTA (online/offline). Offline aparece como
+     "(offline)" e fica bloqueado na hora de despachar, e o sorteio "aleatório" só
+     considera quem está online.
+   - Botão SAIR (logout) no topo, para trocar de motoboy no mesmo aparelho.
+   - Corrida nova gera aviso, vibração e tentativa de toque somente quando o motoboy
+     ainda não possui entrega aceita. Se o celular bloquear o som, aparece a faixa
+     "Toque aqui para liberar o som".
+   - Link "Abrir rota no Maps" quando o pedido tem localização.
+
+3) COLUNA NOVOS
+   Os ticks de aceite ficam dentro da própria coluna Novos:
+   - Aceitar pedidos automaticamente
+   - Aceitar automaticamente os do iFood (independente do primeiro)
+   Desmarcado = o pedido espera o clique em "Aceitar pedido".
+
+4) IFOOD
+   - O pedido simulado do iFood agora respeita o tick do iFood: com ele desmarcado,
+     cai em NOVOS e só vai para a cozinha depois que você aceitar.
+   - Quando fica PRONTO, o despacho é igual ao delivery próprio: escolher o motoboy da
+     casa. Existe apenas uma opção a mais: "Pronto para coleta (entregador iFood)".
+
+5) PEDIDO PRONTO SOBE
+   Assim que a cozinha marca PRONTO, o card sobe para o topo da coluna
+   (PRONTO > EM PREPARO > aguardando cozinha).
+
+6) COMANDA DO GARÇOM
+   - Ao fechar, fica registrado quem fechou e recebeu (aparece em Pagamentos).
+   - Em Usuários e ajustes existe o tick "Garçom pode fechar comanda e receber".
+     Desmarcado = só o caixa fecha, e o app do garçom mostra o aviso.
+
+7) TAXAS E ÁREA DE ENTREGA (estilo iFood)
+   Menu "Taxas de entrega":
+   - Cadastre o endereço do restaurante (centro do mapa, pino arrastável).
+   - Desenhe no mapa as áreas: ✅ entrego aqui (com taxa própria) e ⛔ não entrego aqui.
+   - No cardápio o cliente confere a taxa do endereço dele; fora da área o pedido é
+     recusado com aviso.
+   - As taxas por bairro continuam como plano B (quando não há área desenhada ou o
+     endereço não é localizado no mapa).
+   O mapa usa OpenStreetMap/Leaflet — não precisa de chave nem cartão de crédito.

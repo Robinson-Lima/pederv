@@ -1,0 +1,23 @@
+Options -Indexes
+DirectoryIndex index.php
+RewriteEngine On
+
+# Webhook Evolution API (sem query string para compatibilidade)
+RewriteRule ^webhook/?$    index.php?r=webhook_evolution  [NC,L]
+
+# Painel SaaS — sem slug (controle de clientes e assinaturas)
+RewriteRule ^admin/?$      index.php?r=saas_login    [NC,QSA,L]
+
+# Módulos do restaurante — com slug do cliente, ex.: pederv.com.br/cardapio/barbaburguer
+RewriteRule ^cardapio/([a-z0-9_-]+)/?$  index.php?r=menu&slug=$1          [NC,QSA,L]
+RewriteRule ^motoboy/([a-z0-9_-]+)/?$   index.php?r=courier&slug=$1       [NC,QSA,L]
+RewriteRule ^painel/([a-z0-9_-]+)/?$    index.php?r=admin_orders&slug=$1  [NC,QSA,L]
+RewriteRule ^cozinha/([a-z0-9_-]+)/?$   index.php?r=kds&slug=$1           [NC,QSA,L]
+RewriteRule ^garcom/([a-z0-9_-]+)/?$    index.php?r=waiter&slug=$1        [NC,QSA,L]
+RewriteRule ^caixa/([a-z0-9_-]+)/?$     index.php?r=admin_caixa&slug=$1   [NC,QSA,L]
+RewriteRule ^pdv/([a-z0-9_-]+)/?$       index.php?r=admin_pdv&slug=$1     [NC,QSA,L]
+
+# Protege bancos SQLite dos clientes
+<FilesMatch "\.(sqlite|db)$">
+  Require all denied
+</FilesMatch>

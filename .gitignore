@@ -1,0 +1,6 @@
+data/
+*.zip
+error_log
+wh_bot_log.txt
+wh_debug.log
+config.php

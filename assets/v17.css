@@ -1,0 +1,315 @@
+/* ============================================================
+   V17 — Refino premium do painel: menu lateral, cabeçalho de
+   pedidos, barra de aceite no topo e formulário de iFood manual.
+   Carregado por último — só refina o que já existe.
+   ============================================================ */
+
+/* ---------- MENU LATERAL: itens em formato de botão ---------- */
+.admin-side nav a{
+  background:rgba(255,255,255,.035);
+  border:1px solid rgba(255,255,255,.06);
+  padding:10px 12px;margin:3px 8px;border-radius:11px;
+  font-size:12.5px;
+  box-shadow:0 1px 2px rgba(0,0,0,.15);
+}
+.admin-side nav a:hover{
+  background:rgba(255,255,255,.10);
+  border-color:rgba(255,255,255,.16);
+  transform:translateX(2px);
+}
+.admin-side nav a.on{
+  border-color:transparent;
+  box-shadow:0 6px 16px rgba(238,116,48,.4);
+}
+.admin-side nav a i{opacity:1}
+
+/* Categorias separadoras bem visíveis (OPERAÇÃO / GESTÃO / CONFIGURAÇÕES) */
+.admin-side nav>small{
+  opacity:1 !important;
+  color:#F7A05A !important;
+  font-size:10px;font-weight:900;letter-spacing:.16em;
+  margin:14px 9px 7px;padding:8px 10px 0;
+  border-top:1px solid rgba(247,160,90,.22);
+  display:flex;align-items:center;gap:8px;
+}
+.admin-side nav>small::before{
+  content:"";width:5px;height:5px;border-radius:50%;
+  background:#F7A05A;box-shadow:0 0 8px rgba(247,160,90,.7);
+}
+.admin-side nav>small:first-of-type{
+  border-top:0;padding-top:2px;margin-top:6px;
+}
+
+/* Botão sair em destaque suave */
+.admin-side nav a[href*="logout"]{
+  color:#ffb4ac;background:rgba(255,90,80,.08);border-color:rgba(255,90,80,.14);
+}
+.admin-side nav a[href*="logout"]:hover{background:rgba(255,90,80,.16)}
+
+/* ---------- CABEÇALHO "MEUS PEDIDOS" ---------- */
+.dash .orders-title h2{font-family:var(--disp);font-size:22px;color:#141B2C;letter-spacing:-.01em}
+.dash .orders-title .updated{margin-top:2px}
+
+/* Botão adicionar iFood (substitui os de simulação) */
+.ifood-add a{
+  display:inline-flex;align-items:center;gap:6px;
+  background:linear-gradient(90deg,#EA1D2C,#ff5661);
+  color:#fff;text-decoration:none;font-weight:800;font-size:12.5px;
+  padding:11px 18px;border-radius:12px;
+  box-shadow:0 6px 16px rgba(234,29,44,.32);
+  transition:transform .1s,box-shadow .1s;
+}
+.ifood-add a:hover{transform:translateY(-1px);box-shadow:0 9px 22px rgba(234,29,44,.42)}
+
+/* ---------- BARRA DE ACEITE NO TOPO (subiu da coluna Novos) ---------- */
+.orders-autobar{margin:0 0 14px}
+.orders-autobar .auto-box{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  background:#fff;border:1px solid #E4E9F1;border-radius:14px;
+  padding:12px 16px;margin:0;
+  box-shadow:0 4px 14px rgba(18,30,55,.05);
+}
+.orders-autobar .auto-box .auto-accept{
+  background:#F6F8FC;border:1px solid #E4E9F1;border-radius:10px;
+  padding:9px 13px;font-size:12px;font-weight:700;color:#2A3450;
+}
+.orders-autobar .auto-box .auto-accept input{width:auto;accent-color:#1B9E58;transform:scale(1.15)}
+.orders-autobar .auto-box small{font-size:11px;color:#8A93A8;margin-left:auto}
+@media(max-width:700px){.orders-autobar .auto-box small{margin-left:0;width:100%}}
+
+/* ---------- FORMULÁRIO ADICIONAR iFOOD ---------- */
+.ifa-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px}
+.ifa-back{display:inline-block;color:#0797e5;text-decoration:none;font-size:12px;font-weight:700;margin-bottom:6px}
+.ifa-head h2{font-family:var(--disp);font-size:23px;color:#141B2C;margin:0}
+.ifa-head p{font-size:12px;color:#66708A;margin:6px 0 0;max-width:560px;line-height:1.5}
+.ifa-badge{background:linear-gradient(90deg,#EA1D2C,#ff5661);color:#fff;font-weight:900;font-size:12px;padding:8px 16px;border-radius:999px;box-shadow:0 5px 14px rgba(234,29,44,.3);white-space:nowrap}
+.ifa-erro{background:#FDEDE9;color:#B4362B;border:1px solid #F0A79A;border-radius:11px;padding:12px 15px;font-size:12.5px;font-weight:700;margin-bottom:14px}
+
+.ifa-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media(max-width:820px){.ifa-grid{grid-template-columns:1fr}}
+.ifa-card{background:#fff;border:1px solid #E4E9F1;border-radius:16px;padding:18px 20px;box-shadow:0 6px 18px rgba(18,30,55,.05)}
+.ifa-card h3{font-family:var(--disp);font-size:14px;color:#2A3450;margin:0 0 12px}
+.ifa-card label{display:block;font-size:11px;font-weight:800;color:#4A5470;margin-bottom:11px}
+.ifa-card label input{display:block;width:100%;margin-top:5px;border:1.5px solid #E2E8F2;border-radius:10px;padding:11px 12px;font-size:13px;font-weight:600;color:#141B2C}
+.ifa-card label input:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 3px var(--brandsoft)}
+.ifa-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.ifa-tipo{display:flex;gap:10px;margin-bottom:14px}
+.ifa-tipo label{flex:1;margin:0;position:relative}
+.ifa-tipo label input{position:absolute;opacity:0}
+.ifa-tipo label span{display:block;border:1.5px solid #E2E8F2;border-radius:11px;padding:12px;text-align:center;font-size:12.5px;font-weight:800;color:#4A5470;cursor:pointer;transition:all .12s}
+.ifa-tipo label input:checked+span{border-color:var(--brand);background:var(--brandsoft);color:#B4530F}
+
+/* Linhas de item */
+.ifa-item{
+  display:grid;gap:7px;
+  grid-template-columns:1.3fr .7fr 44px;
+  grid-template-areas:"prod prod prod" "nome nome nome" "qtd preco del";
+  background:#F6F8FC;border:1px solid #E4E9F1;border-radius:12px;padding:11px;margin-bottom:9px;
+}
+.ifa-item .ifa-prod{grid-area:prod;border:1.5px solid #E2E8F2;border-radius:9px;padding:9px;font-size:12px;background:#fff;color:#4A5470}
+.ifa-item .ifa-nome{grid-area:nome;border:1.5px solid #E2E8F2;border-radius:9px;padding:10px;font-size:13px;font-weight:600;color:#141B2C}
+.ifa-item .ifa-qtd{grid-area:qtd}
+.ifa-item .ifa-preco{grid-area:preco}
+.ifa-item .ifa-qtd,.ifa-item .ifa-preco{border:1.5px solid #E2E8F2;border-radius:9px;padding:10px;font-size:13px;font-weight:700;color:#141B2C}
+.ifa-item .ifa-del{grid-area:del;background:#FDEDE9;color:#B4362B;border-radius:9px;font-weight:900;font-size:13px;border:1px solid #F0A79A;cursor:pointer}
+.ifa-item .ifa-del:hover{background:#f8d5cf}
+
+.ifa-additem{width:100%;background:#fff;border:1.5px dashed #B9C4D6;color:#4A5470;border-radius:11px;padding:11px;font-size:12.5px;font-weight:800;cursor:pointer;margin-bottom:14px}
+.ifa-additem:hover{border-color:var(--brand);color:#B4530F;background:var(--brandsoft)}
+
+.ifa-total{display:flex;justify-content:space-between;align-items:center;background:#101A2C;color:#fff;border-radius:13px;padding:14px 18px;margin:6px 0 12px}
+.ifa-total span{font-size:12px;opacity:.8;font-weight:700}
+.ifa-total b{font-family:var(--mono);font-size:22px;color:#FFB273}
+.ifa-pay{background:#E7F8EF;color:#0E7A46;border-radius:10px;padding:11px 14px;font-size:12px;font-weight:700;margin-bottom:14px}
+.ifa-submit{width:100%;background:linear-gradient(90deg,#EA1D2C,#ff5661);color:#fff;font-weight:900;font-size:14px;border-radius:12px;padding:14px;box-shadow:0 8px 20px rgba(234,29,44,.35);cursor:pointer;letter-spacing:.01em}
+.ifa-submit:hover{filter:brightness(1.05)}
+
+/* ============================================================
+   CABEÇALHO COMPACTO DOS PEDIDOS — sobe os cards para o topo
+   ============================================================ */
+.admin-main>.wrap.dash-compact{padding-top:14px}
+.orders-topbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+.orders-topbar .ot-title{flex:0 0 auto}
+.orders-topbar .ot-title h2{font-family:var(--disp);font-size:21px;color:#141B2C;margin:0;line-height:1.1}
+.orders-topbar .ot-title .updated{margin:2px 0 0;font-size:11px}
+.orders-filters{display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap}
+.orders-filters .order-filter{border:1px solid #d9e0e5;background:#fff;border-radius:10px;padding:9px 14px;font-size:11.5px;font-weight:800;cursor:pointer;color:#41515f}
+.orders-filters .order-filter.on{background:#0797e5;border-color:#0797e5;color:#fff;box-shadow:0 4px 12px rgba(7,151,229,.28)}
+.orders-filters .orders-autobar{flex:1;margin:0;min-width:0}
+.orders-topbar .ifood-add{flex:0 0 auto}
+
+.orders-subbar{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.orders-subbar #orderSearch{flex:1;width:auto;border:1px solid #d9e0e5;border-radius:10px;padding:10px 12px;font-size:12.5px}
+@media(max-width:700px){.orders-subbar #orderSearch{width:100%}}
+
+/* Barra de aceite (fica ao lado da busca, compacta) */
+.orders-autobar .auto-box{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid #E4E9F1;border-radius:12px;padding:8px 12px;margin:0;box-shadow:0 3px 10px rgba(18,30,55,.05)}
+.orders-autobar .auto-box .auto-accept{background:#F6F8FC;border:1px solid #E4E9F1;border-radius:9px;padding:7px 11px;font-size:11.5px;font-weight:700;color:#2A3450;gap:7px}
+.orders-autobar .auto-box .auto-accept input{width:auto;accent-color:#1B9E58;transform:scale(1.1)}
+.orders-autobar .auto-box small{font-size:10.5px;color:#8A93A8;flex-basis:100%;margin:0}
+
+/* Estatísticas mais baixas para caber mais card na tela */
+.dash-compact .stats-etapas{margin:2px 0 12px}
+.dash-compact .stats-etapas .stat{padding:9px 12px}
+.dash-compact .stats-etapas .stat .v{font-size:19px}
+
+/* ============================================================
+   TAREFA 4 — ÍCONES COLORIDOS NO MENU LATERAL
+   Cada item recebe uma cor própria (item ativo mantém contraste).
+   ============================================================ */
+.admin-side nav a[href*="admin_orders"] i{color:#3B9EFF}
+.admin-side nav a[href*="admin_pdv"] i{color:#2FC46B}
+.admin-side nav a[href*="admin_customers"] i{color:#A970FF}
+.admin-side nav a[href*="admin_tables"] i{color:#F2A33C}
+.admin-side nav a[href*="admin_qr_tables"] i{color:#25C4C4}
+.admin-side nav a[href*="kds"] i{color:#FF6B5E}
+.admin-side nav a[href*="admin_couriers"] i{color:#7C83FF}
+.admin-side nav a[href*="admin_produtos"] i{color:#FFC24B}
+.admin-side nav a[href*="admin_areas"] i{color:#38C7E8}
+.admin-side nav a[href*="admin_caixa"] i{color:#4ECB71}
+.admin-side nav a[href*="admin_payments"] i{color:#C77DFF}
+.admin-side nav a[href*="admin_notas"] i{color:#6FA8FF}
+.admin-side nav a[href*="admin_recovery"] i{color:#FF8FB0}
+.admin-side nav a[href*="admin_reports"] summary i,.admin-side nav a[href*="admin_reports"] i{color:#5AA9FF}
+.admin-side nav details.side-group>summary i{color:#5AA9FF}
+.admin-side nav a[href*="admin_salon"] i{color:#D89B5A}
+.admin-side nav a[href*="admin_general"] i{color:#9AA6B8}
+.admin-side nav a[href*="admin_bot_messages"] i{color:#2FC46B}
+.admin-side nav a[href*="admin_settings"] i{color:#F2A33C}
+/* Item ativo: ícone segue o contraste do fundo laranja */
+.admin-side nav a.on i{color:var(--on-brand) !important}
+
+/* ============================================================
+   TAREFA 3 — FECHAR LOJA (status no topo, botões e modal)
+   ============================================================ */
+.store-status{border-radius:999px;padding:6px 12px;font-size:11px;font-weight:800;white-space:nowrap}
+.store-status.open{color:#0E7A46;background:#E7F8EF}
+.store-status.closed{color:#B4362B;background:#FDEDE9;border:1px solid #F0A79A}
+.store-btn{border-radius:9px;padding:8px 13px;font-size:11px;font-weight:800;cursor:pointer;border:1px solid transparent;white-space:nowrap}
+.store-btn.close{background:#fff;color:#B4362B;border-color:#F0A79A}
+.store-btn.close:hover{background:#FDEDE9}
+.store-btn.reopen{background:#1B9E58;color:#fff;box-shadow:0 4px 12px rgba(27,158,88,.3)}
+.store-btn.reopen:hover{background:#178A4C}
+
+.store-modal{position:fixed;inset:0;background:rgba(10,16,28,.55);backdrop-filter:blur(3px);z-index:95;display:none;align-items:center;justify-content:center;padding:16px}
+.store-modal.on{display:flex}
+.store-modal-in{background:#fff;border-radius:20px;width:100%;max-width:460px;padding:22px;box-shadow:0 30px 70px rgba(6,12,24,.4)}
+.store-modal-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.store-modal-h b{font-family:var(--disp);font-size:18px;color:#141B2C}
+.store-modal-h button{background:#F0F3F8;border-radius:9px;width:32px;height:32px;font-size:18px;cursor:pointer;color:#4A5470}
+.store-modal-sub{font-size:12px;color:#66708A;line-height:1.5;margin:0 0 16px}
+.store-fld{display:block;font-size:11.5px;font-weight:800;color:#4A5470;margin-bottom:13px}
+.store-fld select,.store-fld input,.store-fld textarea{display:block;width:100%;margin-top:6px;border:1.5px solid #E2E8F2;border-radius:10px;padding:11px 12px;font-size:13px;font-weight:600;color:#141B2C;font-family:inherit}
+.store-fld select:focus,.store-fld input:focus,.store-fld textarea:focus{outline:0;border-color:var(--brand);box-shadow:0 0 0 3px var(--brandsoft)}
+.store-hint{display:block;margin-top:6px;font-size:10.5px;color:#8A93A8;font-weight:600;line-height:1.5}
+.store-submit{width:100%;background:linear-gradient(90deg,#E2483D,#F07B4E);color:#fff;font-weight:900;font-size:14px;border-radius:12px;padding:14px;box-shadow:0 8px 20px rgba(226,72,61,.32);cursor:pointer;margin-top:4px}
+.store-submit:hover{filter:brightness(1.05)}
+
+/* uazapi QR Code connect */
+.wa-tabs{display:flex;gap:8px;align-items:center;margin-bottom:20px;border-bottom:2px solid #E8EDF4;padding-bottom:12px}
+.wa-tab{background:none;border:none;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;color:#66708A;cursor:pointer}
+.wa-tab.on{background:var(--brand);color:#fff}
+.wa-tab-link{margin-left:auto;font-size:13px;color:var(--brand);font-weight:700;text-decoration:none}
+.wa-panel{animation:fadeIn .2s}
+.wa-qr-wrap{display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap}
+.wa-qr-side{flex:0 0 280px}
+.wa-qr-steps{flex:1;min-width:240px;background:#F5F8FF;border-radius:14px;padding:20px 24px}
+.wa-qr-steps h4{margin:0 0 14px;font-size:15px}
+.uaz-qr-box{width:240px;height:240px;border:2px dashed #C8D4E8;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:14px 0;background:#F8FAFF;overflow:hidden}
+.uaz-qr-box img{width:100%;height:100%;object-fit:contain}
+.uaz-qr-placeholder{text-align:center;color:#8A99B8;font-size:13px;padding:20px;line-height:1.6}
+.uaz-connected{text-align:center;color:#2e7d32;font-size:15px;font-weight:700;line-height:1.8;padding:20px}
+.wa-status-pill{display:inline-block;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;background:#F0F4FF;color:#5A6480;margin-bottom:10px}
+.wa-status-pill.connected{background:#E8F5E9;color:#2e7d32}
+.wa-status-pill.scanning{background:#FFF8E1;color:#F57F17}
+.wa-status-pill.error{background:#FFEBEE;color:#C62828}
+.uaz-actions{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.uaz-actions button{cursor:pointer;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700}
+.uaz-hint{font-size:11.5px;color:#8A99B8;line-height:1.5}
+
+/* Import de cardápio */
+.imp-card{background:#fff;border:1.5px solid #E2E8F0;border-radius:16px;padding:28px 32px;max-width:740px}
+.imp-section{padding-bottom:20px}
+.imp-badge{display:inline-block;background:#EEF2FF;color:#3730A3;font-size:11.5px;font-weight:800;padding:4px 12px;border-radius:20px;margin-bottom:10px;letter-spacing:.3px}
+.imp-badge-green{background:#E8F5E9;color:#2E7D32}
+.imp-bm-row{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+/* Substeps */
+.imp-substep{display:flex;gap:14px;align-items:flex-start}
+.imp-substep p{margin:4px 0 8px;font-size:13px;color:#555;line-height:1.5}
+.imp-substep-num{flex:0 0 28px;height:28px;background:#F0A500;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;margin-top:2px}
+.imp-kb-demo{display:flex;align-items:center;gap:4px;margin-top:2px;flex-wrap:wrap}
+.imp-key{background:#2d2d2d;color:#fff;padding:4px 10px;border-radius:6px;font-size:13px;font-weight:700;font-family:monospace;box-shadow:0 2px 0 #000}
+.imp-key-plus{color:#888;font-weight:700}
+/* Drag demo */
+.imp-drag-demo{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.imp-drag-target{background:#E8EAED;border-radius:8px;padding:10px 14px;border:2px dashed #9AA0AC}
+.imp-fav-preview{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.imp-fav-other{color:#555;font-size:11px}
+.imp-fav-ours{background:#fff;border:1.5px solid #4285f4;color:#1a73e8;padding:3px 10px;border-radius:4px;font-weight:700;font-size:12px}
+.imp-fav-pulse{animation:impPulse 1.8s infinite}
+@keyframes impPulse{0%,100%{box-shadow:0 0 0 0 rgba(66,133,244,.4)}50%{box-shadow:0 0 0 6px rgba(66,133,244,0)}}
+.imp-drag-anim{display:flex;align-items:center;gap:4px;height:50px;position:relative}
+.imp-drag-cursor{font-size:20px;animation:impCursorUp 2s ease-in-out infinite}
+@keyframes impCursorUp{0%,100%{transform:translateY(20px);opacity:.4}50%{transform:translateY(-10px);opacity:1}}
+.imp-drag-path{width:40px;height:50px}
+/* Main button */
+.imp-bm-bigbtn{display:inline-block;background:linear-gradient(90deg,#2563EB,#1D4ED8);color:#fff;padding:14px 28px;border-radius:14px;font-weight:800;font-size:16px;text-decoration:none;box-shadow:0 4px 18px rgba(37,99,235,.38);cursor:grab}
+.imp-bm-bigbtn:hover{filter:brightness(1.08)}
+.imp-bm-bigbtn:active{cursor:grabbing}
+.imp-bm-bigbtn.shake{animation:impShake .5s}
+@keyframes impShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.imp-click-tip{display:none;position:absolute;bottom:calc(100% + 10px);left:0;background:#1e293b;color:#fff;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;width:300px;z-index:99;box-shadow:0 8px 24px rgba(0,0,0,.25);line-height:1.5}
+.imp-click-tip.show{display:block}
+.imp-click-tip::after{content:'';position:absolute;bottom:-7px;left:24px;border-left:7px solid transparent;border-right:7px solid transparent;border-top:7px solid #1e293b}
+.imp-step-visual{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.imp-step-box{flex:1;min-width:120px;background:#F8FAFF;border:1.5px solid #E0E8FF;border-radius:12px;padding:12px 14px;text-align:center;font-size:13px}
+.imp-step-num{width:26px;height:26px;background:var(--brand);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;margin:0 auto 6px}
+.imp-step-desc{line-height:1.5;font-size:13px}
+.imp-step-arrow{font-size:20px;color:#C0CCEE;font-weight:700}
+.imp-bm-aftershot{background:#F5F7FF;border-radius:10px;padding:12px 16px}
+.imp-fav-preview{display:flex;align-items:center;gap:4px;margin-top:6px;background:#E8EAED;border-radius:6px;padding:6px 12px;font-size:12px}
+.imp-fav-other{color:#555;font-size:11px}
+.imp-fav-ours{background:#fff;border:1.5px solid #4285f4;color:#1a73e8;padding:3px 10px;border-radius:4px;font-weight:700;font-size:12px}
+.imp-divider{text-align:center;font-size:12px;font-weight:700;color:#A0AEC0;margin:16px 0;display:flex;align-items:center;gap:10px;border-top:1px solid #E8EDF4;padding-top:16px}
+.imp-divider span{white-space:nowrap;background:#fff;padding:0 10px}
+.imp-divider::before,.imp-divider::after{content:'';flex:1;height:1px;background:#E2E8F0}
+.imp-use-flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.imp-use-step{flex:1;min-width:110px;background:#F8FAFF;border-radius:12px;padding:14px;text-align:center;font-size:13px;line-height:1.5;border:1.5px solid #E0E8FF}
+.imp-use-step-ok{border-color:#A5D6A7;background:#F1F8F1}
+.imp-use-icon{font-size:22px;margin-bottom:4px}
+.imp-use-step small{font-size:11.5px;color:#666}
+.imp-use-sep{font-size:20px;color:#C0CCEE;font-weight:700}
+.imp-platforms{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.imp-platforms span{background:#F0F4FF;color:#3B5BDB;padding:4px 12px;border-radius:20px;font-size:12.5px;font-weight:600}
+.imp-alt{margin-top:20px;border-top:1px solid #E8EDF4;padding-top:16px}
+.imp-alt summary{cursor:pointer;font-size:13px;color:#5A6480;font-weight:600}
+.imp-alt summary:hover{color:var(--brand)}
+.import-preview-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.import-preview-header h3{margin:0 0 4px}
+.import-preview-header p{margin:0;color:#666;font-size:13px}
+.import-cat{border:1px solid #E8EDF4;border-radius:12px;margin-bottom:10px;overflow:hidden}
+.import-cat summary{padding:12px 16px;cursor:pointer;font-size:14px;background:#F8FAFF;display:flex;justify-content:space-between}
+.import-cat summary span{color:#888;font-weight:400;font-size:12px}
+.import-table{width:100%;border-collapse:collapse;font-size:13px}
+.import-table th{background:#F0F4FF;padding:8px 12px;text-align:left;font-size:11.5px;color:#5A6480;font-weight:700}
+.import-table td{padding:8px 12px;border-bottom:1px solid #F0F4F8}
+.import-table tr:last-child td{border:none}
+
+/* Import — novo fluxo código-fonte */
+.imp-steps-row{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin:16px 0}
+.imp-steps-row .imp-step-box{flex:1;min-width:130px;background:#F8FAFF;border:1.5px solid #E0E8FF;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.5;text-align:left}
+.imp-steps-row .imp-step-num{width:26px;height:26px;background:var(--brand);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;margin-bottom:6px}
+.imp-step-sep{font-size:20px;color:#C0CCEE;font-weight:700;padding-top:28px}
+.imp-platforms-row{margin-top:20px;padding-top:16px;border-top:1px solid #E8EDF4;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.imp-plat{background:#F0F4FF;color:#3B5BDB;padding:4px 12px;border-radius:20px;font-size:12.5px;font-weight:600}
+@media(max-width:600px){.imp-steps-row{flex-direction:column}.imp-step-sep{padding-top:0;transform:rotate(90deg)}}
+.imp-cmd-box{background:#1e293b;color:#7dd3fc;font-family:monospace;font-size:13px;padding:10px 14px;border-radius:8px;margin:8px 0;word-break:break-all;user-select:all;cursor:text}
+.imp-copy-btn{background:#334155;color:#e2e8f0;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer}
+.imp-copy-btn:hover{background:#475569}
+
+/* Banner de loja fechada no cardápio do cliente */
+.menu-closed-banner{position:relative;z-index:5;display:flex;flex-direction:column;gap:3px;background:linear-gradient(90deg,#B4362B,#E2483D);color:#fff;padding:13px 18px;text-align:center;font-size:12.5px}
+.menu-closed-banner b{font-size:14px;font-weight:900}
+.menu-closed-banner span{font-size:11.5px;opacity:.95;line-height:1.45}
+.mh .meta .op.closed{background:rgba(226,72,61,.22);color:#ff9d92}

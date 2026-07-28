@@ -1,0 +1,61 @@
+.close-cash-main{display:inline-block;text-decoration:none;margin-top:12px;background:#c83227!important;color:#fff!important;padding:12px 18px!important}.cash-workspace{display:grid!important;grid-template-columns:minmax(300px,.8fr) minmax(420px,1.2fr)!important;gap:18px;margin-top:18px}.cash-workspace>div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;min-height:260px}
+@media(max-width:900px){.cash-workspace{grid-template-columns:1fr!important}}
+.generate-order{width:100%;padding:14px;margin-bottom:9px;border-radius:11px;background:#ef702e;color:#111;font-weight:950}
+.table-transfer{width:100%;background:#087dc1;color:#fff;margin-top:8px}
+.release-table{margin-top:7px;padding:5px 7px;border-radius:6px;background:#fff;color:#b42c23;font-size:9px;font-weight:800}
+
+/* ============================================================
+   ATUALIZAÇÃO DE FLUXO — v4
+   ============================================================ */
+
+/* 1) Motoboy: status na coluna Finalizados */
+.moto-tag.done{background:#dff5e8;color:#0a6b45;border:1px solid #9fdcbc}
+.moto-tag.coleta{background:#eef1f5;color:#3d4756;border:1px solid #d6dce5}
+
+/* 3 e 4) Ticks de aceite automático dentro da coluna Novos */
+.auto-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px;display:grid;gap:7px}
+.auto-box .auto-accept{border:0;background:#f7f6f3;padding:8px 10px;border-radius:9px;font-size:11.5px}
+.auto-box small{font-size:10.5px;color:var(--muted);line-height:1.45}
+.orders-title{align-items:flex-start}
+
+/* 2) App do motoboy: rota on/off, sair e som */
+.mhead .mh{position:relative}
+.courier-logout{margin-left:auto;background:#242c39;color:#dfe5ee;border:1px solid #3a4454;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:800;text-decoration:none}
+.courier-rota{max-width:560px;margin:14px auto 0;display:flex;align-items:center;gap:12px;border-radius:14px;padding:14px;border:1px solid #303744;background:#171c25}
+.courier-rota.on{border-color:#18ae6c;background:#10251c}
+.courier-rota.off{border-color:#5b3030;background:#241414}
+.rota-info{flex:1}
+.rota-info b{display:block;font-size:14px;letter-spacing:.5px}
+.courier-rota.on .rota-info b{color:#4ade9b}
+.courier-rota.off .rota-info b{color:#ff8f8f}
+.rota-info small{display:block;color:#9ca4af;font-size:11px;margin-top:3px}
+.rota-btn{border:0;border-radius:11px;padding:13px 16px;font-weight:900;font-size:13px;color:#fff;cursor:pointer}
+.courier-rota.on .rota-btn{background:#7a2020}
+.courier-rota.off .rota-btn{background:#18ae6c}
+.rota-btn:disabled{opacity:.4}
+.som-alert{max-width:560px;margin:10px auto;background:#2b2411;color:#ffd88a;border:1px solid #6b5a25;border-radius:12px;padding:11px;text-align:center;font-weight:800;font-size:12.5px;cursor:pointer}
+
+/* 6) Comanda: garçom sem permissão de fechar */
+.no-close{background:#2a2118;border:1px solid #6b5322;color:#ffd7a1;border-radius:12px;padding:13px;font-size:13px;line-height:1.5;margin-top:12px}
+.perm-toggle{margin:6px 0 6px}
+.pcol .mt.recebido{font-size:11px;color:#0a6b45;margin-top:3px}
+
+/* 7) Mapa das áreas de entrega */
+.zone-map{height:430px;border-radius:12px;border:1px solid var(--line);margin:10px 0;z-index:0}
+.delivery-designer{display:grid;grid-template-columns:280px minmax(0,1fr);min-height:540px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}.delivery-toolbox{padding:20px;background:#fafafa;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:12px}.delivery-toolbox>b{font-size:19px}.delivery-toolbox p{font-size:12px;line-height:1.5;color:var(--muted)}.delivery-toolbox label{font-size:11px;font-weight:900;margin-top:6px}.delivery-toolbox select{width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;background:#fff}.map-primary,.map-secondary{width:100%;padding:12px;border-radius:9px;font-weight:900}.map-primary{background:#e51f3f;color:#fff}.map-secondary{background:#fff;color:#6d35b4;border:1px solid #6d35b4}.delivery-toolbox>small{min-height:34px;color:#6d35b4;font-weight:800;line-height:1.4}.map-help{display:grid;gap:6px;margin-top:auto;padding:12px;border-radius:10px;background:#f1eafb;color:#51317e}.map-help b{font-size:11px}.map-help span{font-size:10px}.map-stage{position:relative;min-width:0;background:#ecebe5}.map-stage .zone-map{height:540px;margin:0;border:0;border-radius:0}.map-grid-fallback{background-color:#ecebe5;background-image:linear-gradient(#d4d2ca 1px,transparent 1px),linear-gradient(90deg,#d4d2ca 1px,transparent 1px);background-size:42px 42px}.map-no-tiles-note{position:absolute;left:16px;right:16px;bottom:16px;z-index:500;background:#fff7dc;border:1px solid #e4bd45;border-radius:9px;padding:9px 12px;font-size:11px;color:#745b0a}.zone-editor{margin-top:12px}.leaflet-interactive{transition:fill-opacity .2s}.leaflet-control-draw a{width:36px!important;height:36px!important}.leaflet-control-draw{display:none}
+@media(max-width:900px){.delivery-designer{grid-template-columns:1fr}.delivery-toolbox{border-right:0;border-bottom:1px solid var(--line)}.map-stage .zone-map{height:440px}}
+.stats-etapas{grid-template-columns:repeat(5,1fr)}.evo-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.evo-actions button{padding:10px 13px;border-radius:9px;background:#0797e5;color:#fff;font-weight:800}.evo-result{font-size:12px;margin-top:10px}.evo-qr img{display:block;width:250px;max-width:100%;margin:14px auto;border:12px solid #fff;box-shadow:0 4px 20px #0002}.wa-live-badge{width:18px;height:18px;border-radius:50%;background:#e53935;color:#fff;font-style:normal;place-items:center;margin-left:5px}.whatsapp-dock.has-new{animation:waPulse 1.2s infinite}@keyframes waPulse{50%{transform:scale(1.05);box-shadow:0 0 0 9px #128c7e22}}@media(max-width:900px){.stats-etapas{grid-template-columns:repeat(2,1fr)}}
+.zone-editor{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#f7f6f3;border:1px solid var(--line);border-radius:12px;padding:10px}
+.zone-editor input,.zone-editor select{flex:1;min-width:150px;border:1px solid var(--line);border-radius:9px;padding:10px;font-size:13px;margin:0}
+.zone-editor input:disabled{opacity:.45}
+.zcancel{background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 13px;font-weight:800;font-size:12px}
+.zone-msg{display:block;font-size:12px;color:var(--muted);margin-top:6px}
+.zone-row.off{opacity:.55}
+.zone-row button{background:#f1f1ef;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:11px;font-weight:800;margin-left:6px}
+.area-form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.area-form input{flex:1;min-width:160px;margin:0}
+
+/* Cardápio: conferir taxa pelo mapa */
+.frete-check{display:flex;flex-direction:column;gap:6px}
+.frete-btn{background:#171c25;color:#fff;border:0;border-radius:11px;padding:12px;font-weight:800;font-size:13px;cursor:pointer}
+.frete-check small{font-size:11.5px;color:#9ca4af;line-height:1.45}
