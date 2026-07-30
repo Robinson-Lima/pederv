@@ -25,7 +25,7 @@
           <label>Gateway</label>
           <select name="s[gw_nome]">
             <?php $gw=setting_get('gw_nome','Mercado Pago');
-              foreach(['Mercado Pago','Pagar.me','Stripe','PagSeguro'] as $g): ?>
+              foreach(['Mercado Pago','Pagar.me','Stripe','PagSeguro','InfinitPay'] as $g): ?>
               <option <?= $gw===$g?'selected':'' ?>><?= $g ?></option>
             <?php endforeach; ?>
           </select>
