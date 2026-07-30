@@ -7,6 +7,8 @@
   <div class="grid2">
     <label>Plano Pró — valor mensal (R$)<input name="preco_pro" value="<?= number_format(saas_plan_price('pro'),2,'.','') ?>"></label>
     <label>Plano Premium — valor mensal (R$)<input name="preco_premium" value="<?= number_format(saas_plan_price('premium'),2,'.','') ?>"></label>
+    <label>Plano Pró Anual — valor total/ano (R$)<input name="preco_pro_anual" value="<?= number_format(saas_plan_price('pro_anual'),2,'.','') ?>"></label>
+    <label>Plano Premium Anual — valor total/ano (R$)<input name="preco_premium_anual" value="<?= number_format(saas_plan_price('premium_anual'),2,'.','') ?>"></label>
   </div>
   <label>Dias de teste grátis (novos cadastros)<input name="trial_dias" type="number" min="1" max="60" value="<?= (int)setting_get('saas_trial_dias','7') ?>"></label>
 
@@ -40,6 +42,21 @@
 
   <div class="saas-panel-h" style="margin-top:14px"><b>Segurança</b></div>
   <label>Nova senha do painel (deixe vazio para manter)<input name="nova_senha" type="password" placeholder="••••••••"></label>
+
+  <div class="saas-panel-h" style="margin-top:14px"><b>⏰ Cron de inadimplência</b></div>
+  <p style="color:#666;font-size:13px;margin:0 0 10px">Configure no cPanel do HostGator uma tarefa agendada para chamar a URL abaixo a cada hora. Isso bloqueia inadimplentes e envia avisos de trial automaticamente, sem depender de alguém abrir o painel.</p>
+  <?php $cronTok=setting_get('saas_cron_token',''); ?>
+  <?php if($cronTok): ?>
+    <p style="font-size:12px;background:#f0f8ff;border:1px solid #c8dcf0;border-radius:8px;padding:10px;word-break:break-all;margin:0 0 8px">
+      <b>URL do cron:</b><br>
+      <code><?= (isset($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br') ?>/?r=saas_cron&token=<?= e($cronTok) ?></code>
+    </p>
+  <?php else: ?>
+    <p style="color:#b45309;font-size:13px">Nenhum token gerado ainda. Clique em "Gerar token do cron" abaixo para ativar.</p>
+  <?php endif; ?>
+  <label style="display:flex;align-items:center;gap:10px;margin:8px 0 0">
+    <input type="checkbox" name="gerar_cron_token" value="1"> <span style="font-size:13px"><?= $cronTok?'Regenerar token (invalidará a URL antiga)':'Gerar token do cron' ?></span>
+  </label>
 
   <p class="saas-note">Regra de cobrança: teste grátis por <?= (int)setting_get('saas_trial_dias','7') ?> dias → assinatura mensal → bloqueio automático 15 dias após o vencimento não pago. Desbloqueio manual disponível na ficha do cliente.</p>
   <button class="saas-btn primary">Salvar ajustes</button>

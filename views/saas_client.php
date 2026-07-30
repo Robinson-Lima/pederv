@@ -20,6 +20,10 @@ $pi=saas_plan_info($c['plano']);
   </div>
 </div>
 
+<?php if(!empty($_GET['ok'])): ?>
+  <?php $okMap=['pago'=>'✅ Pagamento registrado.','bloqueado'=>'🔒 Cliente bloqueado.','desbloqueado'=>'🔓 Cliente desbloqueado.','cancelado'=>'Assinatura cancelada.']; ?>
+  <div class="saas-alert ok"><?= $okMap[$_GET['ok']] ?? 'Operação realizada.' ?></div>
+<?php endif; ?>
 <?php if($c['status']==='bloqueado'): ?>
   <div class="saas-alert block">Acesso bloqueado <?= $c['bloqueio_manual']?'manualmente':'automaticamente (15 dias após o vencimento)' ?>. Registre um pagamento ou desbloqueie manualmente para reativar.</div>
 <?php elseif($dv!==null && $dv>0): ?>

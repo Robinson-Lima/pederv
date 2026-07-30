@@ -289,12 +289,13 @@ function saas_plan_price($plano){
   return (float)setting_get('saas_preco_'.$plano, $defaults[$plano]??'149.00');
 }
 function saas_plan_info($plano){
-  // Retorna array com dados de exibição do plano
+  $pPro=saas_plan_price('pro'); $pPrem=saas_plan_price('premium');
+  $pProAn=saas_plan_price('pro_anual'); $pPremAn=saas_plan_price('premium_anual');
   $map=[
-    'pro'            =>['label'=>'Pró',             'anual'=>false,'valor'=>149,  'mensal'=>149, 'economia'=>0],
-    'pro_anual'      =>['label'=>'Pró Anual',       'anual'=>true, 'valor'=>1548, 'mensal'=>129, 'economia'=>240],
-    'premium'        =>['label'=>'Premium',          'anual'=>false,'valor'=>199,  'mensal'=>199, 'economia'=>0],
-    'premium_anual'  =>['label'=>'Premium Anual',   'anual'=>true, 'valor'=>2148, 'mensal'=>179, 'economia'=>240],
+    'pro'           =>['label'=>'Pró',          'anual'=>false,'valor'=>$pPro,   'mensal'=>$pPro,               'economia'=>0],
+    'pro_anual'     =>['label'=>'Pró Anual',    'anual'=>true, 'valor'=>$pProAn, 'mensal'=>round($pProAn/12,2), 'economia'=>round($pPro*12-$pProAn,2)],
+    'premium'       =>['label'=>'Premium',       'anual'=>false,'valor'=>$pPrem,  'mensal'=>$pPrem,              'economia'=>0],
+    'premium_anual' =>['label'=>'Premium Anual','anual'=>true, 'valor'=>$pPremAn,'mensal'=>round($pPremAn/12,2),'economia'=>round($pPrem*12-$pPremAn,2)],
   ];
   return $map[$plano]??$map['pro'];
 }
@@ -342,7 +343,7 @@ function saas_metrics(){
     elseif($r['status']==='trial') $m['trial']++;
     elseif($r['status']==='bloqueado'){ $m['bloqueados']++; $m['inadimplentes']++; }
     elseif($r['status']==='cancelado') $m['cancelados']++;
-    if($r['status']!=='cancelado'){
+    if($r['status']==='ativo'){
       $p=$r['plano'];
       if($p==='premium_anual') $m['premium_anual']++;
       elseif($p==='pro_anual') $m['pro_anual']++;
@@ -355,17 +356,31 @@ function saas_metrics(){
   $m['receita_total']=(float)($d->query("SELECT COALESCE(SUM(valor),0) v FROM saas_payments WHERE status='pago'")->fetch()['v'] ?? 0);
   return $m;
 }
-// Registra pagamento e empurra o próximo vencimento em 1 mês; reativa se bloqueado.
+// Calcula a data de vencimento ancorando ao dia fixo do cliente.
+function _venc_prox($base,$plano,$dia){
+  $dia=max(1,min(28,(int)$dia));
+  $ts=strtotime($base.(strpos($plano??'','_anual')!==false?' +1 year':' +1 month'));
+  $y=(int)date('Y',$ts); $mo=(int)date('m',$ts);
+  $dim=(int)date('t',mktime(0,0,0,$mo,1,$y));
+  return sprintf('%04d-%02d-%02d',$y,$mo,min($dia,$dim));
+}
+// Registra pagamento e empurra o próximo vencimento; reativa se bloqueado.
 function saas_registrar_pagamento($clientId,$valor,$metodo,$obs=''){
   $d=db(); $q=$d->prepare("SELECT * FROM saas_clients WHERE id=?"); $q->execute([$clientId]); $c=$q->fetch();
   if(!$c) return false;
-  $d->prepare("INSERT INTO saas_payments(client_id,competencia,valor,metodo,status,obs) VALUES(?,?,?,?, 'pago', ?)")
-    ->execute([$clientId, date('Y-m'), $valor, $metodo, $obs]);
-  $base = !empty($c['proximo_venc']) ? $c['proximo_venc'] : date('Y-m-d');
-  $prox = date('Y-m-d', strtotime($base.(strpos($c['plano']??'','_anual')!==false?' +1 year':' +1 month')));
-  $d->prepare("UPDATE saas_clients SET status='ativo', proximo_venc=?, bloqueado_em=NULL, bloqueio_manual=0, atualizado_em=datetime('now','localtime') WHERE id=?")
-    ->execute([$prox,$clientId]);
-  return true;
+  // DATA-04: não reativar cliente cancelado via pagamento; bloqueio_manual permanece
+  if($c['status']==='cancelado') return false;
+  $d->beginTransaction();
+  try{
+    $d->prepare("INSERT INTO saas_payments(client_id,competencia,valor,metodo,status,obs) VALUES(?,?,?,?, 'pago', ?)")
+      ->execute([$clientId, date('Y-m'), $valor, $metodo, $obs]);
+    $base = !empty($c['proximo_venc']) ? $c['proximo_venc'] : date('Y-m-d');
+    $prox = _venc_prox($base, $c['plano']??'pro', $c['dia_vencimento']??10);
+    $d->prepare("UPDATE saas_clients SET status='ativo', proximo_venc=?, bloqueado_em=NULL, bloqueio_manual=0, atualizado_em=datetime('now','localtime') WHERE id=?")
+      ->execute([$prox,$clientId]);
+    $d->commit();
+    return true;
+  }catch(Exception $e){ $d->rollBack(); return false; }
 }
 
 // Caixa

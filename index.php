@@ -23,7 +23,7 @@ $_saas_routes=['saas_signup','saas_login','saas','saas_clients','saas_client','s
   'saas_pay','saas_block','saas_unblock','saas_cancel','saas_delete_client','saas_estorno','saas_settings',
   'saas_settings_save','saas_logout','saas_forgot','saas_reset','saas_bot','saas_bot_save','saas_bot_test',
   'uazapi_qr','uazapi_status','uazapi_disconnect',
-  'uazapi_settings_save','uazapi_webhook_config','webhook_uazapi'];
+  'uazapi_settings_save','uazapi_webhook_config','webhook_uazapi','saas_cron'];
 $_tenant_slug=current_slug();
 if($_tenant_slug!=='' && !in_array($r,$_saas_routes,true)){
   try{
@@ -938,7 +938,7 @@ case 'admin_whatsapp_send':
   $phone=setting_get('wa_phone_number_id','');$token=setting_get('wa_access_token','');$ver=setting_get('wa_graph_version','v23.0')?:'v23.0';
   if(!$phone||!$token) json_out(['ok'=>false,'erro'=>'Conecte a API oficial do WhatsApp primeiro.']);
   $ch=curl_init("https://graph.facebook.com/".rawurlencode($ver)."/".rawurlencode($phone)."/messages");
-  curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_RETURNTRANSFER=>true,CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$token,'Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode(['messaging_product'=>'whatsapp','to'=>$to,'type'=>'text','text'=>['body'=>$text]])]);
+  curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>5,CURLOPT_TIMEOUT=>15,CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$token,'Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode(['messaging_product'=>'whatsapp','to'=>$to,'type'=>'text','text'=>['body'=>$text]])]);
   $raw=curl_exec($ch);$code=(int)curl_getinfo($ch,CURLINFO_HTTP_CODE);curl_close($ch);
   if($code<200||$code>=300) json_out(['ok'=>false,'erro'=>'A Meta recusou o envio. Confira token e número.','detalhe'=>$raw]);
   db()->prepare("INSERT INTO whatsapp_messages(wa_id,direcao,texto,status) VALUES(?,'saida',?,'enviada')")->execute([$to,$text]);
@@ -1114,7 +1114,7 @@ case 'webhook_whatsapp':
           $phone=setting_get('wa_phone_number_id','');$token=setting_get('wa_access_token','');$ver=setting_get('wa_graph_version','v23.0')?:'v23.0';
           if($phone&&$token&&function_exists('curl_init')){
             $ch=curl_init("https://graph.facebook.com/".rawurlencode($ver)."/".rawurlencode($phone)."/messages");
-            curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_RETURNTRANSFER=>true,CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$token,'Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode(['messaging_product'=>'whatsapp','to'=>$from,'type'=>'text','text'=>['body'=>$reply]])]);
+            curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>5,CURLOPT_TIMEOUT=>15,CURLOPT_HTTPHEADER=>['Authorization: Bearer '.$token,'Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode(['messaging_product'=>'whatsapp','to'=>$from,'type'=>'text','text'=>['body'=>$reply]])]);
             curl_exec($ch);$code=(int)curl_getinfo($ch,CURLINFO_HTTP_CODE);curl_close($ch);
             if($code>=200&&$code<300)db()->prepare("INSERT INTO whatsapp_messages(wa_id,direcao,texto,status) VALUES(?,'saida',?,'enviada')")->execute([$from,$reply]);
           }
@@ -1750,6 +1750,11 @@ case 'saas_client_save':
   $login=trim($_POST['email']??'');
   $senha_nova=trim($_POST['senha_nova']??'');
   $restaurante=trim($_POST['restaurante']??'');
+  // BIZ-09: verificar slug duplicado antes de qualquer escrita
+  if($slug_novo){
+    $dup=db()->prepare("SELECT id FROM saas_clients WHERE slug=? AND id<>?"); $dup->execute([$slug_novo,$id?:0]);
+    if($dup->fetch()){ redirect('?r=saas_clients&erro=slug&slug='.urlencode($slug_novo)); break; }
+  }
   $dados=[$restaurante,trim($_POST['responsavel']??''),$login,trim($_POST['whatsapp']??''),
     trim($_POST['dominio']??''),trim($_POST['cidade']??''),trim($_POST['uf']??''),$plano,$valor,max(1,min(28,(int)($_POST['dia_vencimento']??10))),trim($_POST['obs']??''),$slug_novo];
   if($id){
@@ -1786,14 +1791,14 @@ case 'saas_pay':
   $valor=$_POST['valor']!==''?(float)str_replace(',','.',$_POST['valor']):(float)($cl['valor_mensal']??0);
   if($valor<=0){ redirect('?r=saas_client&id='.$cid); break; }
   saas_registrar_pagamento($cid,$valor,in_array($_POST['metodo']??'pix',['pix','cartao','boleto','dinheiro','transferencia'],true)?$_POST['metodo']:'pix',trim($_POST['obs']??''));
-  redirect('?r=saas_client&id='.$cid);
+  redirect('?r=saas_client&id='.$cid.'&ok=pago');
   break;
 
 case 'saas_block':
   saas_require(); saas_csrf_check();
   $cid=(int)($_POST['id']??0);
   db()->prepare("UPDATE saas_clients SET status='bloqueado', bloqueio_manual=1, bloqueado_em=datetime('now','localtime') WHERE id=?")->execute([$cid]);
-  redirect('?r=saas_client&id='.$cid);
+  redirect('?r=saas_client&id='.$cid.'&ok=bloqueado');
   break;
 
 case 'saas_unblock':
@@ -1802,14 +1807,14 @@ case 'saas_unblock':
   $q=db()->prepare("SELECT * FROM saas_clients WHERE id=?"); $q->execute([$cid]); $c=$q->fetch();
   $prox = (!empty($c['proximo_venc']) && $c['proximo_venc']>=date('Y-m-d')) ? $c['proximo_venc'] : date('Y-m-d', strtotime('+7 days'));
   db()->prepare("UPDATE saas_clients SET status='ativo', bloqueio_manual=0, bloqueado_em=NULL, proximo_venc=? WHERE id=?")->execute([$prox,$cid]);
-  redirect('?r=saas_client&id='.$cid);
+  redirect('?r=saas_client&id='.$cid.'&ok=desbloqueado');
   break;
 
 case 'saas_cancel':
   saas_require(); saas_csrf_check();
   $cid=(int)($_POST['id']??0);
   db()->prepare("UPDATE saas_clients SET status='cancelado', bloqueado_em=datetime('now','localtime') WHERE id=?")->execute([$cid]);
-  redirect('?r=saas_client&id='.$cid);
+  redirect('?r=saas_client&id='.$cid.'&ok=cancelado');
   break;
 
 case 'saas_delete_client':
@@ -1842,13 +1847,43 @@ case 'saas_estorno':
   redirect('?r=saas_client&id='.$cid);
   break;
 
+case 'saas_cron':
+  $tok=setting_get('saas_cron_token','');
+  if($tok===''||!hash_equals($tok,(string)($_GET['token']??''))){ http_response_code(403); die('Unauthorized'); }
+  saas_refresh_status();
+  // Avisos de trial expirando (reusa lógica do dashboard)
+  $tc=master_db()->query("SELECT * FROM saas_clients WHERE status='trial' AND trial_aviso_enviado=0")->fetchAll();
+  foreach($tc as $_tc){
+    $dias=saas_dias_venc($_tc);
+    if($dias!==null && $dias>=-3 && $_tc['whatsapp']!==''){
+      $trialDias=(int)setting_get('saas_trial_dias','7');
+      $restam=max(0,3+abs($dias));
+      $saasUrl=setting_get('saas_evo_url',''); $saasKey=setting_get('saas_evo_key',''); $saasInst=setting_get('saas_evo_instance','');
+      if($saasUrl&&$saasKey&&$saasInst){
+        $aviso="Olá, {$_tc['restaurante']}! 👋 Seu período de teste gratuito do PedeRV encerra em {$restam} dia(s). Para continuar sem interrupção, acesse o painel e escolha um plano.";
+        $waNum=preg_replace('/\D/','',$_tc['whatsapp']); if(strlen($waNum)<=11) $waNum='55'.$waNum;
+        $ch=curl_init(rtrim($saasUrl,'/').'/message/sendText/'.rawurlencode($saasInst));
+        curl_setopt_array($ch,[CURLOPT_CUSTOMREQUEST=>'POST',CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>5,CURLOPT_TIMEOUT=>10,CURLOPT_HTTPHEADER=>['apikey: '.$saasKey,'Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode(['number'=>$waNum,'text'=>$aviso],JSON_UNESCAPED_UNICODE)]);
+        curl_exec($ch); curl_close($ch);
+      }
+      master_db()->prepare("UPDATE saas_clients SET trial_aviso_enviado=1 WHERE id=?")->execute([(int)$_tc['id']]);
+    }
+  }
+  header('Content-Type: text/plain');
+  echo date('Y-m-d H:i:s')." cron ok\n";
+  break;
+
 case 'saas_settings':
   saas_require();
   if($method==='POST'){
     saas_csrf_check();
-    setting_set('saas_preco_pro', str_replace(',','.',$_POST['preco_pro']??'89.90'));
-    setting_set('saas_preco_premium', str_replace(',','.',$_POST['preco_premium']??'149.90'));
+    setting_set('saas_preco_pro', str_replace(',','.',$_POST['preco_pro']??'149.00'));
+    setting_set('saas_preco_premium', str_replace(',','.',$_POST['preco_premium']??'199.00'));
+    setting_set('saas_preco_pro_anual', str_replace(',','.',$_POST['preco_pro_anual']??'1548.00'));
+    setting_set('saas_preco_premium_anual', str_replace(',','.',$_POST['preco_premium_anual']??'2148.00'));
     setting_set('saas_trial_dias', (string)max(1,(int)($_POST['trial_dias']??7)));
+    // Cron token: gera automaticamente se vazio
+    if(!empty($_POST['gerar_cron_token'])) setting_set('saas_cron_token', bin2hex(random_bytes(16)));
     if(!empty($_POST['nova_senha'])) setting_set('saas_master_pass', password_hash(trim($_POST['nova_senha']), PASSWORD_DEFAULT));
     // uazapi global config — salva sempre no master db via setting_set (sem slug = master)
     if(isset($_POST['saas_uaz_url'])) setting_set('saas_uaz_url', trim($_POST['saas_uaz_url']));
@@ -2143,7 +2178,7 @@ case 'admin_import':
           $scraperKey=setting_get('saas_scraper_key','');
           if($scraperKey!==''){
             function _scraper_get($scraperKey,$targetUrl,$extraHeaders=[]){
-              $u='http://api.scraperapi.com?api_key='.urlencode($scraperKey).'&url='.urlencode($targetUrl).'&keep_headers=true';
+              $u='https://api.scraperapi.com?api_key='.urlencode($scraperKey).'&url='.urlencode($targetUrl).'&keep_headers=true';
               $ch=curl_init($u);
               $hdrs=array_merge(['Accept: application/json','Origin: https://pedido.anota.ai','Referer: https://pedido.anota.ai/'],$extraHeaders);
               curl_setopt_array($ch,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>30,CURLOPT_CONNECTTIMEOUT=>10,
@@ -2169,7 +2204,7 @@ case 'admin_import':
             }
             // Outros sites: render HTML + __NEXT_DATA__
             if(!$cats){
-              $u2='http://api.scraperapi.com?api_key='.urlencode($scraperKey).'&url='.urlencode($importUrl).'&render=true&wait=4000';
+              $u2='https://api.scraperapi.com?api_key='.urlencode($scraperKey).'&url='.urlencode($importUrl).'&render=true&wait=4000';
               $ch2=curl_init($u2);
               curl_setopt_array($ch2,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>45,CURLOPT_CONNECTTIMEOUT=>15,CURLOPT_SSL_VERIFYPEER=>false]);
               $raw2=curl_exec($ch2);$code2=(int)curl_getinfo($ch2,CURLINFO_HTTP_CODE);curl_close($ch2);
@@ -2203,7 +2238,7 @@ case 'admin_import_raw':
   header('Content-Type: text/plain; charset=utf-8');
   echo "=== PASSO 1: TOKEN ===\n";
   $tokenUrl="https://api.anota.ai/noauth/access/get-token/{$slug}";
-  $u1='http://api.scraperapi.com?api_key='.urlencode($scraperKey).'&url='.urlencode($tokenUrl).'&keep_headers=true';
+  $u1='https://api.scraperapi.com?api_key='.urlencode($scraperKey).'&url='.urlencode($tokenUrl).'&keep_headers=true';
   $ch=curl_init($u1);
   curl_setopt_array($ch,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>30,CURLOPT_SSL_VERIFYPEER=>false,
     CURLOPT_HTTPHEADER=>['Accept: application/json','Origin: https://pedido.anota.ai'],
@@ -2215,7 +2250,7 @@ case 'admin_import_raw':
   echo "=== PASSO 2: MENU (token=".($jwt?substr($jwt,0,30).'...':'N/A').") ===\n";
   if($jwt){
     $menuUrl='https://api.anota.ai/clientauth/nm-category/menu-merchant?displaySources=DIGITAL_MENU';
-    $u2='http://api.scraperapi.com?api_key='.urlencode($scraperKey).'&url='.urlencode($menuUrl).'&keep_headers=true';
+    $u2='https://api.scraperapi.com?api_key='.urlencode($scraperKey).'&url='.urlencode($menuUrl).'&keep_headers=true';
     $ch2=curl_init($u2);
     curl_setopt_array($ch2,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>30,CURLOPT_SSL_VERIFYPEER=>false,
       CURLOPT_HTTPHEADER=>['Accept: application/json','Authorization: Bearer '.$jwt,'Origin: https://pedido.anota.ai'],

@@ -263,6 +263,13 @@ function db_build_schema($d){
   try{$d->exec("CREATE UNIQUE INDEX IF NOT EXISTS customers_email_uq ON customers(email) WHERE email<>''");}catch(Exception $e){}
   try{$d->exec("ALTER TABLE saas_clients ADD COLUMN slug TEXT DEFAULT ''");}catch(Exception $e){}
   try{$d->exec("CREATE UNIQUE INDEX IF NOT EXISTS saas_clients_slug_uq ON saas_clients(slug) WHERE slug<>''");}catch(Exception $e){}
+  try{$d->exec("CREATE INDEX IF NOT EXISTS saas_clients_status ON saas_clients(status)");}catch(Exception $e){}
+  try{$d->exec("CREATE INDEX IF NOT EXISTS saas_clients_venc ON saas_clients(proximo_venc) WHERE proximo_venc IS NOT NULL");}catch(Exception $e){}
+  try{$d->exec("CREATE INDEX IF NOT EXISTS saas_payments_client ON saas_payments(client_id)");}catch(Exception $e){}
+  try{$d->exec("ALTER TABLE saas_clients ADD COLUMN trial_aviso_enviado INTEGER DEFAULT 0");}catch(Exception $e){}
+  try{$d->exec("ALTER TABLE saas_clients ADD COLUMN dominio TEXT DEFAULT ''");}catch(Exception $e){}
+  try{$d->exec("ALTER TABLE saas_clients ADD COLUMN cidade TEXT DEFAULT ''");}catch(Exception $e){}
+  try{$d->exec("ALTER TABLE saas_clients ADD COLUMN uf TEXT DEFAULT ''");}catch(Exception $e){}
 }
 
 // Provisiona o banco de um novo cliente (trial): cria o SQLite, monta o schema,

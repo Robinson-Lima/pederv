@@ -4,6 +4,9 @@ function saas_status_pill($s){
   $x=$map[$s]??[$s,'']; return '<span class="pill '.$x[1].'">'.e($x[0]).'</span>';
 }
 ?>
+<?php if(!empty($_GET['erro'])): ?>
+  <div class="saas-alert block">Slug "<?= e($_GET['slug']??'') ?>" já está em uso por outro cliente. Escolha um diferente.</div>
+<?php endif; ?>
 <div class="saas-head">
   <div><h1>Clientes</h1><p><?= $m['total'] ?> cadastrados · <?= $m['ativos'] ?> ativos · <?= $m['trial'] ?> em teste · <?= $m['bloqueados'] ?> bloqueados</p></div>
   <button class="saas-btn primary" onclick="document.getElementById('novoCli').classList.add('on')">＋ Novo cliente</button>
