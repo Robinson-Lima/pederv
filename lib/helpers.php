@@ -84,7 +84,7 @@ function do_login($role,$senha,$usuario=''){
     }
     return false;
   }
-  if ($senha === cfg($role.'_senha')){ $_SESSION['role_'.$role] = $senha; return true; }
+  if ($senha === cfg($role.'_senha')){ $_SESSION['role_'.$role] = $senha; if($role==='admin') $_SESSION['user_role']='admin'; return true; }
   return false;
 }
 
