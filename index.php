@@ -1941,19 +1941,32 @@ case 'webhook_uazapi':
     db()->prepare("UPDATE whatsapp_contacts SET nome=?,atualizado_em=datetime('now','localtime') WHERE wa_id=?")->execute([$nome,$wa]);
     db()->prepare("INSERT INTO whatsapp_messages(wa_id,direcao,texto,status) VALUES(?,'entrada',?,'recebida')")->execute([$wa,$text]);
     n8n_event('whatsapp_message',['from'=>$wa,'nome'=>$nome,'texto'=>$text]);
-    if(setting_get('wa_bot_active','0')==='1'){
+    $botActive=setting_get('wa_bot_active','0');
+    $allGatilhos=array_column(db()->query("SELECT gatilho FROM bot_replies WHERE ativo=1")->fetchAll(),'gatilho');
+    file_put_contents(__DIR__.'/wh_uaz_log.txt',date('Y-m-d H:i:s')." DBG wa=$wa text=$text bot_active=$botActive gatilhos=".json_encode($allGatilhos,JSON_UNESCAPED_UNICODE)."\n",FILE_APPEND|LOCK_EX);
+    if($botActive==='1'){
       $reply='';$low=mb_strtolower($text);
       $hora=(int)date('H');$saudacao=$hora<12?'Bom dia':($hora<18?'Boa tarde':'Boa noite');
       $fechadaMsg=store_closed_message();
       if($fechadaMsg!==''){$reply=$fechadaMsg;}
-      else foreach(db()->query("SELECT * FROM bot_replies WHERE ativo=1")->fetchAll() as $br)
-        foreach(explode('|',mb_strtolower($br['gatilho'])) as $kw)
-          if(trim($kw)!==''&&mb_strpos($low,trim($kw))!==false){$reply=$br['resposta'];break 2;}
+      else{
+        foreach(db()->query("SELECT * FROM bot_replies WHERE ativo=1 AND gatilho!='*'")->fetchAll() as $br)
+          foreach(explode('|',mb_strtolower($br['gatilho'])) as $kw)
+            if(trim($kw)!==''&&mb_strpos($low,trim($kw))!==false){$reply=$br['resposta'];break 2;}
+        // Fallback: gatilho * dispara quando nenhuma palavra-chave combinar
+        if($reply===''){
+          $fb=db()->query("SELECT resposta FROM bot_replies WHERE ativo=1 AND gatilho='*' LIMIT 1")->fetch();
+          if($fb) $reply=$fb['resposta'];
+        }
+      }
       if($reply!==''){
         $base=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br').strtok($_SERVER['REQUEST_URI']??'/','?');
         $reply=str_replace(['{LINK_CARDAPIO}','{NOME_CLIENTE}','{SAUDACAO}'],[$base.'?r=menu',$nome?:'cliente',$saudacao],$reply);
         $sent=uaz_r_send_text($wa,$reply);
+        file_put_contents(__DIR__.'/wh_uaz_log.txt',date('Y-m-d H:i:s').' SEND ok='.($sent['ok']?'1':'0').' raw='.substr((string)($sent['raw']??''),0,200)."\n",FILE_APPEND|LOCK_EX);
         if(!empty($sent['ok']))db()->prepare("INSERT INTO whatsapp_messages(wa_id,direcao,texto,status) VALUES(?,'saida',?,'enviada')")->execute([$wa,$reply]);
+      } else {
+        file_put_contents(__DIR__.'/wh_uaz_log.txt',date('Y-m-d H:i:s')." NO_MATCH for text=$text\n",FILE_APPEND|LOCK_EX);
       }
     }
   }catch(Exception $e){file_put_contents(__DIR__.'/wh_uaz_log.txt',date('Y-m-d H:i:s').' ERR:'.$e->getMessage()."\n",FILE_APPEND|LOCK_EX);}
