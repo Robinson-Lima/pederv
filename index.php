@@ -1867,8 +1867,8 @@ case 'uazapi_qr':
     setting_set('uaz_instance_name',$instName);
   }
   $r=uaz_r_request('POST','/instance/connect');
-  $b64=$r['data']['base64']??$r['data']['qrcode']['base64']??'';
-  json_out(['ok'=>$r['ok'],'base64'=>$b64,'erro'=>$r['data']['error']??$r['erro']??'']);
+  $b64=$r['data']['instance']['qrcode']??'';
+  json_out(['ok'=>$r['ok']&&$b64!=='','base64'=>$b64,'erro'=>$r['data']['error']??$r['data']['message']??$r['erro']??'']);
   break;
 
 case 'uazapi_status':
@@ -1885,9 +1885,10 @@ case 'uazapi_status':
   // Painel do restaurante
   if(!uaz_r_configured()) json_out(['ok'=>true,'state'=>'not_configured','connected'=>false]);
   $r=uaz_r_request('GET','/instance/status');
-  $state=$r['data']['state']??'disconnected';
-  $qr=$r['data']['qrcode']??'';
-  json_out(['ok'=>true,'state'=>$state,'connected'=>$state==='connected','qrcode'=>$qr]);
+  $connected=(bool)($r['data']['status']['connected']??false);
+  $state=$r['data']['instance']['status']??($connected?'connected':'disconnected');
+  $qr=$r['data']['instance']['qrcode']??'';
+  json_out(['ok'=>true,'state'=>$state,'connected'=>$connected,'qrcode'=>$qr]);
   break;
 
 case 'uazapi_disconnect':
