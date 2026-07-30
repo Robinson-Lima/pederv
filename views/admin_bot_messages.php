@@ -6,7 +6,7 @@
     <div class="order-msgs-panel">
       <h3>📦 Acompanhamento automático do pedido</h3>
       <p>Assim que o cliente finaliza o pedido, e a cada mudança de etapa, o sistema manda essas mensagens prontas pelo WhatsApp dele. Deixe em branco para usar o texto padrão. Tokens disponíveis: <code>{NOME}</code> <code>{CODIGO}</code> <code>{ITENS}</code> <code>{ENDERECO}</code> <code>{BAIRRO}</code> <code>{TELEFONE}</code> <code>{TAXA}</code> <code>{TOTAL}</code> <code>{PAGAMENTO}</code> <code>{PAGAMENTO_STATUS}</code> <code>{TEMPO_ENTREGA}</code> <code>{LINK_ACOMPANHAR}</code></p>
-      <label class="wa-toggle bot-master"><input type="checkbox" name="channel_whatsapp" value="1" <?= !empty($channelWhats)?'checked':'' ?>> <span><b>Enviar essas mensagens automaticamente</b><small>Precisa da Central WhatsApp conectada (Evolution API).</small></span></label>
+      <label class="wa-toggle bot-master"><input type="checkbox" name="channel_whatsapp" value="1" <?= !empty($channelWhats)?'checked':'' ?>> <span><b>Enviar essas mensagens automaticamente</b><small>Precisa do WhatsApp conectado via UazAPI (página Conectar robô).</small></span></label>
       <div class="order-msgs-grid">
         <label><b>1. Pedido recebido</b><small>Enviada assim que o cliente finaliza a compra.</small><textarea name="wa_msg_novo" rows="9"><?= e($orderMsgs['novo']) ?></textarea></label>
         <label><b>2. Em preparo</b><small>Quando a cozinha inicia o pedido.</small><textarea name="wa_msg_preparo" rows="4"><?= e($orderMsgs['preparo']) ?></textarea></label>

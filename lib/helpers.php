@@ -128,6 +128,33 @@ function uazapi_request($method,$path,$body=null){
   return ['ok'=>$code>=200&&$code<300,'status'=>$code,'data'=>$data,'raw'=>$raw,'erro'=>$err?:''];
 }
 
+// ============================================================
+// UAZAPI — restaurante (painel único, não SaaS)
+// Auth por instância: header 'token'. Admin: header 'admintoken'.
+// Settings: uaz_url, uaz_admintoken, uaz_token, uaz_instance_name
+// ============================================================
+function uaz_r_request($method,$path,$body=null,$admin=false){
+  $base=rtrim(setting_get('uaz_url',''),'/');
+  if(!$base||!function_exists('curl_init')) return ['ok'=>false,'erro'=>'UazAPI não configurada.'];
+  $token=$admin?setting_get('uaz_admintoken',''):setting_get('uaz_token','');
+  if(!$token) return ['ok'=>false,'erro'=>$admin?'Admin token não configurado.':'Token da instância não configurado.'];
+  $ch=curl_init($base.'/'.ltrim($path,'/'));
+  $headers=[($admin?'admintoken':'token').': '.$token,'Content-Type: application/json'];
+  curl_setopt_array($ch,[CURLOPT_CUSTOMREQUEST=>$method,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>6,CURLOPT_TIMEOUT=>20,CURLOPT_HTTPHEADER=>$headers]);
+  if($body!==null)curl_setopt($ch,CURLOPT_POSTFIELDS,json_encode($body,JSON_UNESCAPED_UNICODE));
+  $raw=curl_exec($ch);$code=(int)curl_getinfo($ch,CURLINFO_HTTP_CODE);$err=curl_error($ch);curl_close($ch);
+  $data=json_decode((string)$raw,true);
+  return ['ok'=>$code>=200&&$code<300,'status'=>$code,'data'=>$data,'raw'=>$raw,'erro'=>$err?:''];
+}
+function uaz_r_configured(){
+  return setting_get('uaz_url','')!==''&&setting_get('uaz_token','')!=='';
+}
+function uaz_r_send_text($number,$text){
+  $number=preg_replace('/\D/','',(string)$number);
+  if(strlen($number)<=11)$number='55'.$number;
+  return uaz_r_request('POST','/send/text',['number'=>$number,'text'=>$text,'delay'=>800]);
+}
+
 // Evolution API: canal WhatsApp usado pela Central e pelos avisos de entrega.
 function evolution_configured(){
   return setting_get('evo_url','')!=='' && setting_get('evo_apikey','')!=='' && setting_get('evo_instance','')!=='';

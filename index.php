@@ -22,7 +22,8 @@ $r = $_GET['r'] ?? 'menu';
 $_saas_routes=['saas_signup','saas_login','saas','saas_clients','saas_client','saas_client_save',
   'saas_pay','saas_block','saas_unblock','saas_cancel','saas_delete_client','saas_estorno','saas_settings',
   'saas_settings_save','saas_logout','saas_forgot','saas_reset','saas_bot','saas_bot_save','saas_bot_test',
-  'uazapi_qr','uazapi_status','uazapi_disconnect'];
+  'uazapi_qr','uazapi_status','uazapi_disconnect',
+  'uazapi_settings_save','uazapi_webhook_config','webhook_uazapi'];
 $_tenant_slug=current_slug();
 if($_tenant_slug!=='' && !in_array($r,$_saas_routes,true)){
   try{
@@ -1844,30 +1845,112 @@ case 'saas_settings':
 case 'uazapi_qr':
   _start_session();
   $slug=current_slug();
-  if(!$slug||!uazapi_configured()) json_out(['ok'=>false,'erro'=>'não configurado']);
-  // Cria instância para o tenant se não existir (idempotente)
-  uazapi_request('POST','instance/create',['instanceName'=>$slug,'integration'=>'WHATSAPP-BAILEYS','qrcode'=>true]);
-  // Busca QR Code
-  $uazR=uazapi_request('GET','instance/'.$slug.'/qrcode');
-  $b64=$uazR['data']['base64']??$uazR['data']['qrcode']['base64']??$uazR['data']['code']??'';
-  json_out(['ok'=>$uazR['ok'],'base64'=>$b64,'erro'=>$uazR['erro']??'']);
+  if($slug){
+    // SaaS tenant — fluxo original (Evolution-compatible endpoints)
+    if(!uazapi_configured()) json_out(['ok'=>false,'erro'=>'não configurado']);
+    uazapi_request('POST','instance/create',['instanceName'=>$slug,'integration'=>'WHATSAPP-BAILEYS','qrcode'=>true]);
+    $uazR=uazapi_request('GET','instance/'.$slug.'/qrcode');
+    $b64=$uazR['data']['base64']??$uazR['data']['qrcode']['base64']??$uazR['data']['code']??'';
+    json_out(['ok'=>$uazR['ok'],'base64'=>$b64,'erro'=>$uazR['erro']??'']);
+    break;
+  }
+  // Painel do restaurante — UazAPI nativa
+  if(!setting_get('uaz_url','')||!setting_get('uaz_admintoken',''))
+    json_out(['ok'=>false,'erro'=>'Configure a URL e o Admin Token da UazAPI primeiro.']);
+  // Cria instância se ainda não existe token
+  if(setting_get('uaz_token','')===''){
+    $instName='pederv-'.preg_replace('/[^a-z0-9-]/','',strtolower(str_replace(' ','-',cfg('restaurante')?:'restaurante')));
+    $cr=uaz_r_request('POST','/instance/create',['name'=>$instName],true);
+    $tok=$cr['data']['token']??'';
+    if(!$tok) json_out(['ok'=>false,'erro'=>'Erro ao criar instância: '.substr((string)($cr['raw']??''),0,200)]);
+    setting_set('uaz_token',$tok);
+    setting_set('uaz_instance_name',$instName);
+  }
+  $r=uaz_r_request('POST','/instance/connect');
+  $b64=$r['data']['base64']??$r['data']['qrcode']['base64']??'';
+  json_out(['ok'=>$r['ok'],'base64'=>$b64,'erro'=>$r['data']['error']??$r['erro']??'']);
   break;
 
 case 'uazapi_status':
   _start_session();
   $slug=current_slug();
-  if(!$slug||!uazapi_configured()) json_out(['ok'=>true,'state'=>'not_configured','connected'=>false]);
-  $uazR=uazapi_request('GET','instance/'.$slug.'/connectionState');
-  $state=$uazR['data']['state']??$uazR['data']['connectionState']['state']??'close';
-  json_out(['ok'=>true,'state'=>$state,'connected'=>$state==='open']);
+  if($slug){
+    // SaaS tenant — fluxo original
+    if(!uazapi_configured()) json_out(['ok'=>true,'state'=>'not_configured','connected'=>false]);
+    $uazR=uazapi_request('GET','instance/'.$slug.'/connectionState');
+    $state=$uazR['data']['state']??$uazR['data']['connectionState']['state']??'close';
+    json_out(['ok'=>true,'state'=>$state,'connected'=>$state==='open']);
+    break;
+  }
+  // Painel do restaurante
+  if(!uaz_r_configured()) json_out(['ok'=>true,'state'=>'not_configured','connected'=>false]);
+  $r=uaz_r_request('GET','/instance/status');
+  $state=$r['data']['state']??'disconnected';
+  $qr=$r['data']['qrcode']??'';
+  json_out(['ok'=>true,'state'=>$state,'connected'=>$state==='connected','qrcode'=>$qr]);
   break;
 
 case 'uazapi_disconnect':
   _start_session();
   $slug=current_slug();
-  if($slug&&uazapi_configured()) uazapi_request('DELETE','instance/'.$slug.'/logout');
+  if($slug&&uazapi_configured()){ uazapi_request('DELETE','instance/'.$slug.'/logout'); json_out(['ok'=>true]); break; }
+  if(!$slug&&uaz_r_configured()) uaz_r_request('POST','/instance/disconnect');
   json_out(['ok'=>true]);
   break;
+
+case 'uazapi_settings_save':
+  if(!require_role('admin')) json_out(['ok'=>false,'erro'=>'acesso negado']);
+  $prevUrl=setting_get('uaz_url','');
+  $newUrl=trim($_POST['uaz_url']??''); $adm=trim($_POST['uaz_admintoken']??'');
+  if($newUrl) setting_set('uaz_url',rtrim($newUrl,'/'));
+  if($adm) setting_set('uaz_admintoken',$adm);
+  // URL mudou → reseta token (instância do servidor anterior não vale mais)
+  if($newUrl&&$newUrl!==$prevUrl&&$prevUrl!==''){ setting_set('uaz_token',''); setting_set('uaz_instance_name',''); }
+  redirect('?r=admin_whatsapp&saved=1');
+  break;
+
+case 'uazapi_webhook_config':
+  if(!require_role('admin')) json_out(['ok'=>false,'erro'=>'acesso negado']);
+  if(!uaz_r_configured()) json_out(['ok'=>false,'erro'=>'Conecte o WhatsApp primeiro (token da instância necessário).']);
+  $webhookBase=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br');
+  $webhookUrl=$webhookBase.'/?r=webhook_uazapi';
+  $r=uaz_r_request('POST','/webhook',['enabled'=>true,'url'=>$webhookUrl,'events'=>['messages'],'excludeMessages'=>['wasSentByApi','fromMeYes','isGroupYes']]);
+  json_out(array_merge($r,['webhook_url'=>$webhookUrl]));
+  break;
+
+case 'webhook_uazapi':
+  $body=file_get_contents('php://input');
+  file_put_contents(__DIR__.'/wh_uaz_log.txt',date('Y-m-d H:i:s')."\nIP: ".($_SERVER['REMOTE_ADDR']??'')."\n".substr($body,0,2000)."\n---\n",FILE_APPEND|LOCK_EX);
+  $payload=json_decode($body,true)?:[];
+  $event=strtolower((string)($payload['event']??''));
+  $data=$payload['data']??[];
+  if($event!=='message'||!empty($data['fromMe'])||!empty($data['isGroup'])){ http_response_code(200); exit; }
+  $text=trim((string)($data['text']??''));
+  $wa=preg_replace('/\D/','',(string)($data['sender']??$data['chatid']??''));
+  $nome=(string)($data['senderName']??'');
+  if($text===''||$wa===''){http_response_code(200);exit;}
+  try{
+    db()->prepare("INSERT OR IGNORE INTO whatsapp_contacts(wa_id,nome) VALUES(?,?)")->execute([$wa,$nome]);
+    db()->prepare("UPDATE whatsapp_contacts SET nome=?,atualizado_em=datetime('now','localtime') WHERE wa_id=?")->execute([$nome,$wa]);
+    db()->prepare("INSERT INTO whatsapp_messages(wa_id,direcao,texto,status) VALUES(?,'entrada',?,'recebida')")->execute([$wa,$text]);
+    n8n_event('whatsapp_message',['from'=>$wa,'nome'=>$nome,'texto'=>$text]);
+    if(setting_get('wa_bot_active','0')==='1'){
+      $reply='';$low=mb_strtolower($text);
+      $hora=(int)date('H');$saudacao=$hora<12?'Bom dia':($hora<18?'Boa tarde':'Boa noite');
+      $fechadaMsg=store_closed_message();
+      if($fechadaMsg!==''){$reply=$fechadaMsg;}
+      else foreach(db()->query("SELECT * FROM bot_replies WHERE ativo=1")->fetchAll() as $br)
+        foreach(explode('|',mb_strtolower($br['gatilho'])) as $kw)
+          if(trim($kw)!==''&&mb_strpos($low,trim($kw))!==false){$reply=$br['resposta'];break 2;}
+      if($reply!==''){
+        $base=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br').strtok($_SERVER['REQUEST_URI']??'/','?');
+        $reply=str_replace(['{LINK_CARDAPIO}','{NOME_CLIENTE}','{SAUDACAO}'],[$base.'?r=menu',$nome?:'cliente',$saudacao],$reply);
+        $sent=uaz_r_send_text($wa,$reply);
+        if(!empty($sent['ok']))db()->prepare("INSERT INTO whatsapp_messages(wa_id,direcao,texto,status) VALUES(?,'saida',?,'enviada')")->execute([$wa,$reply]);
+      }
+    }
+  }catch(Exception $e){file_put_contents(__DIR__.'/wh_uaz_log.txt',date('Y-m-d H:i:s').' ERR:'.$e->getMessage()."\n",FILE_APPEND|LOCK_EX);}
+  http_response_code(200);exit;
 
 case 'saas_bot':
   saas_require();
