@@ -242,6 +242,41 @@ function store_closed_message(){
 // SaaS — painel do dono da plataforma
 // ============================================================
 function saas_master_pass(){ return setting_get('saas_master_pass','') ?: cfg('saas_senha'); }
+
+function saas_csrf_token(){
+  _start_session();
+  if(empty($_SESSION['saas_csrf'])) $_SESSION['saas_csrf']=bin2hex(random_bytes(16));
+  return $_SESSION['saas_csrf'];
+}
+function saas_csrf_field(){ return '<input type="hidden" name="saas_csrf" value="'.htmlspecialchars(saas_csrf_token(),ENT_QUOTES).'">'; }
+function saas_csrf_check(){
+  _start_session();
+  if(!hash_equals(saas_csrf_token(),(string)($_POST['saas_csrf']??''))){
+    http_response_code(403); die('Requisição inválida. Recarregue a página e tente novamente.');
+  }
+}
+
+function saas_rate_limit_check(){
+  $ip=preg_replace('/[^0-9a-f:.\[\]]/','',strtolower($_SERVER['REMOTE_ADDR']??'0'));
+  $f=__DIR__.'/../data/rl_'.md5($ip).'.json';
+  $d=json_decode(@file_get_contents($f)?:'{}',true)??[];
+  if(($d['until']??0)>time()){
+    $mins=ceil(($d['until']-time())/60);
+    saas_render('saas_login',['erro'=>"Muitas tentativas. Aguarde {$mins} minuto(s)."]); exit;
+  }
+  return $d;
+}
+function saas_rate_limit_fail(array $d){
+  $ip=preg_replace('/[^0-9a-f:.\[\]]/','',strtolower($_SERVER['REMOTE_ADDR']??'0'));
+  $f=__DIR__.'/../data/rl_'.md5($ip).'.json';
+  $d['fails']=($d['fails']??0)+1;
+  if($d['fails']>=5){ $d=['fails'=>0,'until'=>time()+900]; }
+  file_put_contents($f,json_encode($d));
+}
+function saas_rate_limit_reset(){
+  $ip=preg_replace('/[^0-9a-f:.\[\]]/','',strtolower($_SERVER['REMOTE_ADDR']??'0'));
+  @unlink(__DIR__.'/../data/rl_'.md5($ip).'.json');
+}
 function saas_render($name,$vars=[]){
   $content = view($name,$vars);
   echo view('saas_layout', array_merge($vars,['content'=>$content]));

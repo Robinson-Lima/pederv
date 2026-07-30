@@ -2,6 +2,7 @@
 <?php if(!empty($salvo)): ?><div class="saas-alert ok">Ajustes salvos.</div><?php endif; ?>
 
 <form method="post" action="?r=saas_settings" class="saas-form saas-panel">
+  <?= saas_csrf_field() ?>
   <div class="saas-panel-h"><b>Planos de assinatura</b></div>
   <div class="grid2">
     <label>Plano Pró — valor mensal (R$)<input name="preco_pro" value="<?= number_format(saas_plan_price('pro'),2,'.','') ?>"></label>

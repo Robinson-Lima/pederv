@@ -12,9 +12,9 @@ $pi=saas_plan_info($c['plano']);
   </div>
   <div class="saas-head-actions">
     <?php if($c['status']==='bloqueado'): ?>
-      <form method="post" action="?r=saas_unblock" onsubmit="return confirm('Desbloquear <?= e($c['restaurante']) ?>?')"><input type="hidden" name="id" value="<?= $c['id'] ?>"><button class="saas-btn ok">🔓 Desbloquear</button></form>
+      <form method="post" action="?r=saas_unblock" onsubmit="return confirm('Desbloquear <?= e($c['restaurante']) ?>?')"><?= saas_csrf_field() ?><input type="hidden" name="id" value="<?= $c['id'] ?>"><button class="saas-btn ok">🔓 Desbloquear</button></form>
     <?php elseif($c['status']!=='cancelado'): ?>
-      <form method="post" action="?r=saas_block" onsubmit="return confirm('Bloquear o acesso de <?= e($c['restaurante']) ?>?')"><input type="hidden" name="id" value="<?= $c['id'] ?>"><button class="saas-btn danger">🔒 Bloquear</button></form>
+      <form method="post" action="?r=saas_block" onsubmit="return confirm('Bloquear o acesso de <?= e($c['restaurante']) ?>?')"><?= saas_csrf_field() ?><input type="hidden" name="id" value="<?= $c['id'] ?>"><button class="saas-btn danger">🔒 Bloquear</button></form>
     <?php endif; ?>
     <button class="saas-btn" onclick="document.getElementById('editCli').classList.add('on')">Editar</button>
   </div>
@@ -58,7 +58,7 @@ $pi=saas_plan_info($c['plano']);
           <tr>
             <td><b><?= e($p['competencia']) ?></b><small><?= e($p['metodo']) ?> · <?= date('d/m/Y H:i',strtotime($p['pago_em'])) ?><?= $p['obs']?' · '.e($p['obs']):'' ?></small></td>
             <td class="r green">+ <?= money($p['valor']) ?></td>
-            <td class="r"><form method="post" action="?r=saas_estorno" onsubmit="return confirm('Estornar este pagamento de <?= money($p['valor']) ?>? O valor será removido do histórico.')" style="margin:0"><input type="hidden" name="payment_id" value="<?= $p['id'] ?>"><input type="hidden" name="client_id" value="<?= $c['id'] ?>"><button class="saas-btn danger" style="padding:.2rem .5rem;font-size:.8rem">Estornar</button></form></td>
+            <td class="r"><form method="post" action="?r=saas_estorno" onsubmit="return confirm('Estornar este pagamento de <?= money($p['valor']) ?>? O valor será removido do histórico.')" style="margin:0"><?= saas_csrf_field() ?><input type="hidden" name="payment_id" value="<?= $p['id'] ?>"><input type="hidden" name="client_id" value="<?= $c['id'] ?>"><button class="saas-btn danger" style="padding:.2rem .5rem;font-size:.8rem">Estornar</button></form></td>
           </tr>
         <?php endforeach; ?>
       </table>
@@ -69,6 +69,7 @@ $pi=saas_plan_info($c['plano']);
     <div class="saas-panel pay">
       <div class="saas-panel-h"><b>Registrar pagamento</b></div>
       <form method="post" action="?r=saas_pay" class="saas-form">
+        <?= saas_csrf_field() ?>
         <input type="hidden" name="client_id" value="<?= $c['id'] ?>">
         <label>Valor recebido (R$)<input name="valor" value="<?= number_format($c['valor_mensal'],2,'.','') ?>"></label>
         <label>Forma
@@ -83,6 +84,7 @@ $pi=saas_plan_info($c['plano']);
     <div class="saas-panel danger-zone">
       <div class="saas-panel-h"><b>Cancelar assinatura</b></div>
       <form method="post" action="?r=saas_cancel" onsubmit="return confirm('Cancelar definitivamente a assinatura de <?= e($c['restaurante']) ?>?')">
+        <?= saas_csrf_field() ?>
         <input type="hidden" name="id" value="<?= $c['id'] ?>">
         <button class="saas-btn danger full">Cancelar cliente</button>
       </form>
@@ -92,6 +94,7 @@ $pi=saas_plan_info($c['plano']);
       <div class="saas-panel-h"><b>Excluir permanentemente</b></div>
       <p style="font-size:.85rem;color:var(--muted);margin:0 0 .75rem">Remove o cliente e todo o histórico de pagamentos. Irreversível.</p>
       <form method="post" action="?r=saas_delete_client" onsubmit="return confirm('Excluir PERMANENTEMENTE <?= e($c['restaurante']) ?> e todo o histórico? Não pode ser desfeito.')">
+        <?= saas_csrf_field() ?>
         <input type="hidden" name="id" value="<?= $c['id'] ?>">
         <button class="saas-btn danger full">🗑️ Excluir permanentemente</button>
       </form>
@@ -104,13 +107,14 @@ $pi=saas_plan_info($c['plano']);
   <div class="saas-modal-in">
     <div class="saas-modal-h"><b>Editar cliente</b><button onclick="document.getElementById('editCli').classList.remove('on')">×</button></div>
     <form method="post" action="?r=saas_client_save" class="saas-form">
+      <?= saas_csrf_field() ?>
       <input type="hidden" name="id" value="<?= $c['id'] ?>">
       <div class="grid2">
         <label>Restaurante *<input name="restaurante" value="<?= e($c['restaurante']) ?>" required></label>
         <label>Responsável<input name="responsavel" value="<?= e($c['responsavel']) ?>"></label>
         <label>Login de acesso (e-mail ou usuário)<input name="email" type="text" value="<?= e($c['email']) ?>" placeholder="email@dominio.com ou nome-de-usuario" autocomplete="off"></label>
         <label>WhatsApp<input name="whatsapp" value="<?= e($c['whatsapp']) ?>"></label>
-        <label>Slug (URL)<input name="client_slug" value="<?= e($c['slug']??'') ?>" readonly style="background:#f5f5f5;cursor:not-allowed" title="Alteração de slug desativada temporariamente — renomear apagaria os dados do cliente"><small style="color:#b45309;font-size:11px">⚠ Bloqueado — alterar o slug apagaria os dados do restaurante.</small></label>
+        <label>Slug (URL)<input name="client_slug" value="<?= e($c['slug']??'') ?>" pattern="[a-z0-9_-]*" placeholder="barbaburguer" title="Apenas letras minúsculas, números e hífen"><small style="color:#6b7280;font-size:11px">Alterar renomeia o banco de dados do cliente automaticamente.</small></label>
         <label>Domínio / link<input name="dominio" value="<?= e($c['dominio']) ?>"></label>
         <label>Cidade<input name="cidade" value="<?= e($c['cidade']) ?>"></label>
         <label>UF<input name="uf" maxlength="2" value="<?= e($c['uf']) ?>"></label>

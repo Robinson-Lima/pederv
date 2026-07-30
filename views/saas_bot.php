@@ -19,6 +19,7 @@
       <span style="margin-left:auto;opacity:.5;font-size:12px">clique para <?= $evoOk?'editar':'configurar' ?></span>
     </summary>
     <form method="post" action="?r=saas_bot_save" style="padding:0 18px 18px;border-top:1px solid var(--line)">
+      <?= saas_csrf_field() ?>
       <input type="hidden" name="_tab" value="config">
       <div class="grid2" style="margin-top:14px">
         <label>URL da API<input name="saas_evo_url" value="<?= e(setting_get('saas_evo_url','')) ?>" placeholder="https://api.seudominio.com"></label>
@@ -147,6 +148,7 @@ async function saveMsgs(btn){
     fd.append('_tab','messages');
     fd.append('bot_json',json);
     fd.append('saas_wa_bot_active',document.getElementById('botMasterActive').checked?'1':'0');
+    fd.append('saas_csrf','<?= saas_csrf_token() ?>');
     var r=await fetch('?r=saas_bot_save',{method:'POST',body:fd});
     if(r.redirected){window.location.href=r.url;return;}
     var data=null;try{data=await r.json();}catch(e){}

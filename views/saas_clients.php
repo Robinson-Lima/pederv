@@ -42,22 +42,25 @@ function saas_status_pill($s){
   <div class="saas-modal-in">
     <div class="saas-modal-h"><b>Novo cliente</b><button onclick="document.getElementById('novoCli').classList.remove('on')">×</button></div>
     <form method="post" action="?r=saas_client_save" class="saas-form">
+      <?= saas_csrf_field() ?>
       <div class="grid2">
         <label>Restaurante *<input name="restaurante" required></label>
         <label>Responsável<input name="responsavel"></label>
         <label>WhatsApp<input name="whatsapp" placeholder="(00) 00000-0000"></label>
-        <label>E-mail<input name="email" type="email"></label>
+        <label>E-mail (login) *<input name="email" type="email" required></label>
         <label>Slug (URL) *<input name="client_slug" required pattern="[a-z0-9_-]+" placeholder="barbaburguer" title="Apenas letras minúsculas, números e hífen"></label>
+        <label>Senha *<input name="senha_nova" type="password" required minlength="6" placeholder="Mínimo 6 caracteres"></label>
         <label>Domínio / link<input name="dominio" placeholder="cliente.rvcardapios.com.br"></label>
         <label>Cidade<input name="cidade"></label>
         <label>UF<input name="uf" maxlength="2"></label>
         <label>Plano
-          <select name="plano" onchange="document.getElementById('nvValor').value=this.value==='premium'?'<?= number_format(saas_plan_price('premium'),2,'.','') ?>':'<?= number_format(saas_plan_price('pro'),2,'.','') ?>'">
-            <option value="pro">Pró — <?= money(saas_plan_price('pro')) ?></option>
-            <option value="premium">Premium — <?= money(saas_plan_price('premium')) ?></option>
+          <select name="plano">
+            <option value="pro">Pró — <?= money(saas_plan_price('pro')) ?>/mês</option>
+            <option value="pro_anual">Pró Anual — <?= money(saas_plan_price('pro_anual')) ?>/ano</option>
+            <option value="premium">Premium — <?= money(saas_plan_price('premium')) ?>/mês</option>
+            <option value="premium_anual">Premium Anual — <?= money(saas_plan_price('premium_anual')) ?>/ano</option>
           </select>
         </label>
-        <label>Valor mensal (R$)<input id="nvValor" name="valor_mensal" value="<?= number_format(saas_plan_price('pro'),2,'.','') ?>"></label>
         <label>Dia do vencimento<input name="dia_vencimento" type="number" min="1" max="28" value="10"></label>
       </div>
       <label>Observações<textarea name="obs" rows="2"></textarea></label>

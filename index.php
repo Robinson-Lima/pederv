@@ -1041,8 +1041,8 @@ case 'webhook_evolution':
                   curl_setopt_array($chTyp,[CURLOPT_CUSTOMREQUEST=>'POST',CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>4,CURLOPT_TIMEOUT=>5,CURLOPT_HTTPHEADER=>['apikey: '.$saasKey,'Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode(['number'=>$waNum,'presence'=>'composing','delay'=>1500],JSON_UNESCAPED_UNICODE)]);
                   curl_exec($chTyp);curl_close($chTyp);
                   // Aplicar delay configurado
-                  $botDelay=(int)setting_get('saas_bot_delay','0');
-                  if($botDelay>0&&$botDelay<=60)sleep($botDelay);
+                  $botDelay=min(10,(int)setting_get('saas_bot_delay','0'));
+                  if($botDelay>0)sleep($botDelay);
                   // Enviar resposta
                   $ch=curl_init(rtrim($saasUrl,'/').'/message/sendText/'.rawurlencode($saasInst));
                   curl_setopt_array($ch,[CURLOPT_CUSTOMREQUEST=>'POST',CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>5,CURLOPT_TIMEOUT=>30,CURLOPT_HTTPHEADER=>['apikey: '.$saasKey,'Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode(['number'=>$waNum,'text'=>$reply,'linkPreview'=>false],JSON_UNESCAPED_UNICODE)]);
@@ -1629,9 +1629,11 @@ case 'webhook_ifood':
 case 'saas_login':
   if (session_status()===PHP_SESSION_NONE) session_start();
   if($method==='POST'){
+    $rl=saas_rate_limit_check();
     $stored=saas_master_pass(); $input=(string)($_POST['senha']??'');
     $ok=$stored!==''&&((strncmp($stored,'$2y$',4)===0||strncmp($stored,'$argon',6)===0)?password_verify($input,$stored):hash_equals($stored,$input));
-    if($ok){ $_SESSION['saas_ok']=true; redirect('?r=saas'); }
+    if($ok){ saas_rate_limit_reset(); $_SESSION['saas_ok']=true; redirect('?r=saas'); }
+    saas_rate_limit_fail($rl);
     saas_render('saas_login',['erro'=>'Senha incorreta.']); break;
   }
   saas_render('saas_login',['erro'=>'']); break;
@@ -1739,11 +1741,11 @@ case 'saas_client':
   saas_render('saas_client',['c'=>$c,'pagamentos'=>$pg->fetchAll()]); break;
 
 case 'saas_client_save':
-  saas_require();
+  saas_require(); saas_csrf_check();
   $id=(int)($_POST['id']??0);
   $trialDias=(int)setting_get('saas_trial_dias','7');
   $plano=in_array($_POST['plano']??'pro',['pro','premium','pro_anual','premium_anual'],true)?$_POST['plano']:'pro';
-  $valor=saas_plan_price($plano); // sempre automático pelo plano
+  $valor=saas_plan_price($plano);
   $slug_novo=preg_replace('/[^a-z0-9_-]/','',strtolower(trim($_POST['client_slug']??'')));
   $login=trim($_POST['email']??'');
   $senha_nova=trim($_POST['senha_nova']??'');
@@ -1751,32 +1753,34 @@ case 'saas_client_save':
   $dados=[$restaurante,trim($_POST['responsavel']??''),$login,trim($_POST['whatsapp']??''),
     trim($_POST['dominio']??''),trim($_POST['cidade']??''),trim($_POST['uf']??''),$plano,$valor,max(1,min(28,(int)($_POST['dia_vencimento']??10))),trim($_POST['obs']??''),$slug_novo];
   if($id){
+    // DATA-01: renomear arquivo se slug mudou
+    $old=db()->prepare("SELECT slug FROM saas_clients WHERE id=?"); $old->execute([$id]); $oldSlug=($old->fetch()['slug']??'');
     db()->prepare("UPDATE saas_clients SET restaurante=?,responsavel=?,email=?,whatsapp=?,dominio=?,cidade=?,uf=?,plano=?,valor_mensal=?,dia_vencimento=?,obs=?,slug=?,atualizado_em=datetime('now','localtime') WHERE id=?")
       ->execute(array_merge($dados,[$id]));
-    if($slug_novo && $login && $senha_nova){
-      saas_provision_tenant($slug_novo,$login,$senha_nova,$restaurante);
-    } elseif($slug_novo){
-      $tf=__DIR__.'/data/'.$slug_novo.'.sqlite';
-      if(!file_exists($tf)||filesize($tf)===0) @file_put_contents($tf,'');
+    if($slug_novo && $oldSlug && $slug_novo!==$oldSlug){
+      $oldFile=__DIR__.'/data/'.$oldSlug.'.sqlite';
+      $newFile=__DIR__.'/data/'.$slug_novo.'.sqlite';
+      if(file_exists($oldFile) && !file_exists($newFile)) rename($oldFile,$newFile);
     }
+    if($slug_novo && $login && $senha_nova) saas_provision_tenant($slug_novo,$login,$senha_nova,$restaurante);
+    elseif($slug_novo){ $tf=__DIR__.'/data/'.$slug_novo.'.sqlite'; if(!file_exists($tf)||filesize($tf)===0) saas_provision_tenant($slug_novo,$login?:$slug_novo,bin2hex(random_bytes(8)),$restaurante); }
     header('Location: ?r=saas_client&id='.$id); exit;
   } else {
     $trialAte=date('Y-m-d', strtotime('+'.$trialDias.' days'));
     db()->prepare("INSERT INTO saas_clients(restaurante,responsavel,email,whatsapp,dominio,cidade,uf,plano,valor_mensal,dia_vencimento,obs,slug,status,trial_ate) VALUES(?,?,?,?,?,?,?,?,?,?,?,?, 'trial', ?)")
       ->execute(array_merge($dados,[$trialAte]));
     $newId=db()->lastInsertId();
-    if($slug_novo && $login && $senha_nova){
-      saas_provision_tenant($slug_novo,$login,$senha_nova,$restaurante);
-    } elseif($slug_novo){
-      $tf=__DIR__.'/data/'.$slug_novo.'.sqlite';
-      if(!file_exists($tf)||filesize($tf)===0) @file_put_contents($tf,'');
+    // UX-01: sempre provisionar o tenant ao criar
+    if($slug_novo){
+      $senhaFinal=$senha_nova!==''?$senha_nova:bin2hex(random_bytes(8));
+      saas_provision_tenant($slug_novo,$login?:$slug_novo,$senhaFinal,$restaurante);
     }
     header('Location: ?r=saas_client&id='.$newId); exit;
   }
   break;
 
 case 'saas_pay':
-  saas_require();
+  saas_require(); saas_csrf_check();
   $cid=(int)($_POST['client_id']??0);
   $q=db()->prepare("SELECT valor_mensal FROM saas_clients WHERE id=?"); $q->execute([$cid]); $cl=$q->fetch();
   $valor=$_POST['valor']!==''?(float)str_replace(',','.',$_POST['valor']):(float)($cl['valor_mensal']??0);
@@ -1786,16 +1790,15 @@ case 'saas_pay':
   break;
 
 case 'saas_block':
-  saas_require();
+  saas_require(); saas_csrf_check();
   $cid=(int)($_POST['id']??0);
   db()->prepare("UPDATE saas_clients SET status='bloqueado', bloqueio_manual=1, bloqueado_em=datetime('now','localtime') WHERE id=?")->execute([$cid]);
   redirect('?r=saas_client&id='.$cid);
   break;
 
 case 'saas_unblock':
-  saas_require();
+  saas_require(); saas_csrf_check();
   $cid=(int)($_POST['id']??0);
-  // Desbloqueio manual: reativa e dá carência até o próximo vencimento calculado.
   $q=db()->prepare("SELECT * FROM saas_clients WHERE id=?"); $q->execute([$cid]); $c=$q->fetch();
   $prox = (!empty($c['proximo_venc']) && $c['proximo_venc']>=date('Y-m-d')) ? $c['proximo_venc'] : date('Y-m-d', strtotime('+7 days'));
   db()->prepare("UPDATE saas_clients SET status='ativo', bloqueio_manual=0, bloqueado_em=NULL, proximo_venc=? WHERE id=?")->execute([$prox,$cid]);
@@ -1803,34 +1806,46 @@ case 'saas_unblock':
   break;
 
 case 'saas_cancel':
-  saas_require();
+  saas_require(); saas_csrf_check();
   $cid=(int)($_POST['id']??0);
   db()->prepare("UPDATE saas_clients SET status='cancelado', bloqueado_em=datetime('now','localtime') WHERE id=?")->execute([$cid]);
   redirect('?r=saas_client&id='.$cid);
   break;
 
 case 'saas_delete_client':
-  saas_require();
+  saas_require(); saas_csrf_check();
   $cid=(int)($_POST['id']??0);
   $c=db()->prepare("SELECT slug,status FROM saas_clients WHERE id=?"); $c->execute([$cid]); $row=$c->fetch();
   if($row && $row['status']==='cancelado'){
-    db()->prepare("DELETE FROM saas_payments WHERE client_id=?")->execute([$cid]);
+    // DATA-05: preserva histórico de pagamentos (não deleta saas_payments)
     db()->prepare("DELETE FROM saas_clients WHERE id=?")->execute([$cid]);
   }
   redirect('?r=saas_clients');
   break;
 
 case 'saas_estorno':
-  saas_require();
+  saas_require(); saas_csrf_check();
   $pid=(int)($_POST['payment_id']??0);
   $cid=(int)($_POST['client_id']??0);
-  if($pid) db()->prepare("DELETE FROM saas_payments WHERE id=?")->execute([$pid]);
+  if($pid && $cid){
+    // BIZ-03: recalcula proximo_venc após estorno
+    db()->prepare("DELETE FROM saas_payments WHERE id=?")->execute([$pid]);
+    $cli=db()->prepare("SELECT * FROM saas_clients WHERE id=?"); $cli->execute([$cid]); $cli=$cli->fetch();
+    if($cli){
+      $lp=db()->prepare("SELECT pago_em FROM saas_payments WHERE client_id=? AND status='pago' ORDER BY id DESC LIMIT 1"); $lp->execute([$cid]); $lp=$lp->fetch();
+      if($lp){ $base=date('Y-m-d',strtotime($lp['pago_em'])); $prox=date('Y-m-d',strtotime($base.(strpos($cli['plano']??'','_anual')!==false?' +1 year':' +1 month')));
+        db()->prepare("UPDATE saas_clients SET proximo_venc=? WHERE id=?")->execute([$prox,$cid]);
+      } else { db()->prepare("UPDATE saas_clients SET proximo_venc=NULL WHERE id=?")->execute([$cid]); }
+      saas_refresh_status();
+    }
+  }
   redirect('?r=saas_client&id='.$cid);
   break;
 
 case 'saas_settings':
   saas_require();
   if($method==='POST'){
+    saas_csrf_check();
     setting_set('saas_preco_pro', str_replace(',','.',$_POST['preco_pro']??'89.90'));
     setting_set('saas_preco_premium', str_replace(',','.',$_POST['preco_premium']??'149.90'));
     setting_set('saas_trial_dias', (string)max(1,(int)($_POST['trial_dias']??7)));
@@ -1978,7 +1993,7 @@ case 'saas_bot':
   saas_render('saas_bot',['bot'=>$bot,'salvo'=>!empty($_GET['salvo'])]); break;
 
 case 'saas_bot_save':
-  saas_require();
+  saas_require(); saas_csrf_check();
   master_db()->exec("CREATE TABLE IF NOT EXISTS saas_bot_replies(id INTEGER PRIMARY KEY AUTOINCREMENT, gatilho TEXT, resposta TEXT, ativo INTEGER DEFAULT 1)");
   $tab=$_POST['_tab']??'';
   if($tab==='config'){
