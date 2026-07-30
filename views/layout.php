@@ -152,6 +152,7 @@ if($isAdmin){try{$waCount=(int)db()->query("SELECT COUNT(*) c FROM whatsapp_mess
 <?php if($r!=='courier'): ?><button type="button" id="pwaInstallBtn" class="pwa-install-fab" hidden>📲 Instalar app</button><?php endif; ?>
 <script>
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js?v=16').catch(()=>{}));
+(function(){var n=document.querySelector('.admin-side nav');if(!n)return;n.scrollTop=+localStorage.getItem('rv_nav_scroll')||0;var t;n.addEventListener('scroll',function(){clearTimeout(t);t=setTimeout(function(){localStorage.setItem('rv_nav_scroll',n.scrollTop)},120)},{passive:true})})();
 <?php $__slug=current_slug(); if($__slug): ?>(function(){
   var S='<?= e($__slug) ?>';
   function addSlug(url){if(typeof url!=='string'||url.indexOf('slug=')!==-1)return url;if(url.charAt(0)==='?'||url.indexOf('index.php')!==-1){return url+(url.indexOf('?')!==-1?'&':'?')+'slug='+S;}return url;}

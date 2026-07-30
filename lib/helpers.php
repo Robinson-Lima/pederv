@@ -514,7 +514,7 @@ function customer_status_notify($order,$status,$primeiroEvento){
   if(!$order || empty($order['cliente_fone'])) return false;
   if(($order['tipo']??'')==='mesa') return false; // cliente está no salão, não precisa de WhatsApp
   if(setting_get('channel_whatsapp','1')!=='1') return false;
-  if(!evolution_configured()) return false;
+  if(!uaz_r_configured()) return false;
 
   $chave=null;
   if($primeiroEvento && in_array($status,['novo','aceito'],true)) $chave='wa_msg_novo';
@@ -550,7 +550,7 @@ function customer_status_notify($order,$status,$primeiroEvento){
     '{LINK_ACOMPANHAR}'=>(isset($_SERVER['HTTP_HOST'])?'https://'.$_SERVER['HTTP_HOST'].strtok($_SERVER['REQUEST_URI']??'','?'):'').'?r=order_status&id='.$order['id'],
   ];
   $texto=str_replace(array_keys($subst),array_values($subst),$tpl);
-  return evolution_send_text($order['cliente_fone'],$texto)['ok'] ?? false;
+  return uaz_r_send_text($order['cliente_fone'],$texto)['ok'] ?? false;
 }
 
 // ============================================================

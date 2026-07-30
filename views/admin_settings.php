@@ -95,6 +95,15 @@
 
       <div>
         <div class="cfgcard">
+          <h3>💠 PIX</h3>
+          <p>Chave PIX exibida no checkout para pagamento manual. O QR Code é gerado automaticamente.</p>
+          <label>Chave PIX (CPF, CNPJ, e-mail, telefone ou aleatória)</label>
+          <input name="s[pix_key]" value="<?= e(setting_get('pix_key','')) ?>" placeholder="Ex: 11999999999 ou chave-aleatoria@banco">
+          <label>Nome do favorecido (aparece no comprovante)</label>
+          <input name="s[pix_favorecido]" value="<?= e(setting_get('pix_favorecido','')) ?>" placeholder="Ex: Restaurante Sabor & Arte">
+        </div>
+
+        <div class="cfgcard">
           <h3>⚡ n8n (automação)</h3>
           <label>Webhook do n8n (mensagens automáticas)</label>
           <input name="s[n8n_webhook]" value="<?= e(setting_get('n8n_webhook')) ?>" placeholder="https://seu-n8n/webhook/rvcardapios">

@@ -33,7 +33,7 @@ $toggle=function($key,$label,$help,$def='0')use($ck){ ?>
         <?php $toggle('orders_auto_accept','Aceitar pedidos automaticamente','Quando ativo, pedidos do cardápio avançam direto para Em preparo.','0'); ?>
         <?php $toggle('ifood_auto_accept','Aceitar iFood automaticamente','Use somente depois de validar a integração oficial.','0'); ?>
         <?php $toggle('skip_kds','Pular cozinha (sem KDS) — Plano PRÓ','Permite despachar o motoboy direto do status "Aceito", sem precisar que a cozinha marque como pronto. Ideal para adega, disk-água e deliverys sem preparo.','0'); ?>
-        <div class="settings-grid"><label>Número inicial dos próximos pedidos<input type="number" min="1" name="s[order_initial]" value="<?= e(setting_get('order_initial','1')) ?>"></label><label>Prefixo visual<input name="s[order_prefix]" maxlength="8" value="<?= e(setting_get('order_prefix','#')) ?>"></label></div>
+        <div class="settings-grid"><label class="setting-field">Número inicial dos próximos pedidos<input type="number" min="1" name="s[order_initial]" value="<?= e(setting_get('order_initial','1')) ?>"></label><label class="setting-field">Prefixo visual<input name="s[order_prefix]" maxlength="8" value="<?= e(setting_get('order_prefix','#')) ?>"></label></div>
       <?php elseif($sec==='sounds'): ?>
         <h3>3. Som dos pedidos</h3><p>Escolha onde a campainha deve tocar.</p>
         <?php $toggle('sound_delivery','Pedidos para entrega','Tocar na central quando chegar um pedido delivery.','1'); ?>

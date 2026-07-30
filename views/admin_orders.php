@@ -69,7 +69,7 @@ function renderOrder(o){
   } else if(o.acerto_status==='ok'&&['entregue','concluido'].includes(o.status)&&['dinheiro','cartao_entrega','pix_entrega'].includes(o.pagamento_metodo)){
     acerto=`<div class="acerto-ok">✔ Acerto conferido no caixa</div>`;
   }
-  return `<div class="tk ${o.status} ${o.acerto_status==='pendente'?'tk-acerto':''}">${edit}${acerto}<div class="id">Comanda ${o.codigo}${source(o)}<span>${origin(o)}</span></div>${kitchenStatus(o)}<div class="nm">${o.cliente_nome}</div><div class="it">${o.itens||''}</div>${contact(o)}${motoTag(o)}<div class="ft">${paymentBadge(o)}<span class="val">R$ ${parseFloat(o.total).toFixed(2).replace('.',',')}</span></div>${paymentEditor(o)}${action}${!['entregue','concluido','cancelado'].includes(o.status)?`<button class="cancel-order" onclick="cancelOrder(${o.id})">Cancelar pedido</button>`:''}</div>`;
+  return `<div class="tk ${o.status} ${o.acerto_status==='pendente'?'tk-acerto':''}" draggable="true" data-oid="${o.id}" data-status="${o.status}">${edit}${acerto}<div class="id">Comanda ${o.codigo}${source(o)}<span>${origin(o)}</span></div>${kitchenStatus(o)}<div class="nm">${o.cliente_nome}</div><div class="it">${o.itens||''}</div>${contact(o)}${motoTag(o)}<div class="ft">${paymentBadge(o)}<span class="val">R$ ${parseFloat(o.total).toFixed(2).replace('.',',')}</span></div>${paymentEditor(o)}${action}${!['entregue','concluido','cancelado'].includes(o.status)?`<button class="cancel-order" onclick="cancelOrder(${o.id})">Cancelar pedido</button>`:''}</div>`;
 }
 function isInteracting(){
   const kan=document.getElementById('kan');if(!kan)return false;
@@ -90,7 +90,7 @@ async function feed(force){
   let html='';
   COLS.forEach(([key,label])=>{
     const ready=key==='em_preparo'&&readyTotal?`<span class="ready-inline hot">🟢 ${readyTotal} pronto${readyTotal>1?'s':''}</span>`:'';
-    html+=`<div class="kcol"><div class="kh"><span>${label}${ready}</span><span class="c">${g[key].length}</span></div>`;
+    html+=`<div class="kcol" data-col="${key}"><div class="kh"><span>${label}${ready}</span><span class="c">${g[key].length}</span></div>`;
     g[key].forEach(o=>html+=renderOrder(o));
     html+='</div>';
   });
@@ -107,4 +107,45 @@ async function confirmAcerto(id){if(!confirm('Confirmar que o motoboy entregou o
 async function savePayment(id){const r=await fetch('?r=admin_set_payment',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`id=${id}&metodo=${document.getElementById('pm'+id).value}&pagamento_status=${document.getElementById('ps'+id).value}`}).then(x=>x.json());if(!r.ok)alert(r.erro||'Não foi possível alterar o pagamento.');feed(true)}
 async function despachar(id,locked=false){if(locked)return alert('Pagamento online ainda não confirmado. Clique na caneta, marque PAGO e salve antes de despachar.');const cid=document.getElementById('cs'+id).value;if(!cid)return alert('Escolha o motoboy ou marque Pronto para coleta.');const r=await fetch('?r=admin_assign_courier',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'application/json'},body:`order_id=${id}&courier_id=${cid}`}).then(x=>x.json()).catch(()=>({ok:true}));if(r&&r.ok===false)alert(r.erro||'Não foi possível despachar.');feed(true)}
 if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();feed();setInterval(feed,4000);
+// Kanban drag & drop via event delegation (funciona após rebuilds do innerHTML)
+(function(){
+  const kan=document.getElementById('kan');
+  let dragOid=null,dragStatus=null;
+  const colStatus={em_preparo:'aceito',concluido_from_saiu:'entregue',concluido_from_prep:'concluido'};
+  kan.addEventListener('dragstart',e=>{
+    const tk=e.target.closest('[data-oid]');
+    if(!tk)return;
+    dragOid=tk.dataset.oid; dragStatus=tk.dataset.status;
+    e.dataTransfer.effectAllowed='move';
+    setTimeout(()=>tk.classList.add('dragging'),0);
+  });
+  kan.addEventListener('dragend',e=>{
+    document.querySelectorAll('.tk.dragging').forEach(el=>el.classList.remove('dragging'));
+    document.querySelectorAll('.kcol.drag-over').forEach(el=>el.classList.remove('drag-over'));
+  });
+  kan.addEventListener('dragover',e=>{
+    const col=e.target.closest('[data-col]');
+    if(!col||!dragOid)return;
+    e.preventDefault(); e.dataTransfer.dropEffect='move';
+    document.querySelectorAll('.kcol.drag-over').forEach(el=>el.classList.remove('drag-over'));
+    col.classList.add('drag-over');
+  });
+  kan.addEventListener('dragleave',e=>{
+    const col=e.target.closest('[data-col]');
+    if(col&&!col.contains(e.relatedTarget))col.classList.remove('drag-over');
+  });
+  kan.addEventListener('drop',e=>{
+    e.preventDefault();
+    const col=e.target.closest('[data-col]');
+    if(!col||!dragOid)return;
+    col.classList.remove('drag-over');
+    const target=col.dataset.col;
+    let newStatus=null;
+    if(target==='em_preparo'&&dragStatus==='novo') newStatus='aceito';
+    else if(target==='concluido'&&dragStatus==='saiu_entrega') newStatus='entregue';
+    else if(target==='concluido'&&['pronto'].includes(dragStatus)) newStatus='concluido';
+    if(newStatus) setStatus(parseInt(dragOid),newStatus);
+    dragOid=null; dragStatus=null;
+  });
+})();
 </script>

@@ -266,9 +266,11 @@ case 'order_pix': // GET id -> retorna payload
   $id=(int)($_GET['id']??0);
   $o=db()->prepare("SELECT * FROM orders WHERE id=?"); $o->execute([$id]); $o=$o->fetch();
   if(!$o) json_out(['ok'=>false]);
-  $pix=cfg('pix');
-  $payload=pix_payload($pix['chave'],$pix['favorecido'],cfg('cidade'),$o['total'],'RV'.$o['id']);
-  json_out(['ok'=>true,'payload'=>$payload,'valor'=>$o['total'],'favorecido'=>$pix['favorecido']]);
+  $pixKey=setting_get('pix_key','');
+  $pixFav=setting_get('pix_favorecido','');
+  if($pixKey===''){ $pix=cfg('pix'); $pixKey=$pix['chave']??''; $pixFav=$pix['favorecido']??$pixFav; }
+  $payload=pix_payload($pixKey,$pixFav,cfg('cidade'),$o['total'],'RV'.$o['id']);
+  json_out(['ok'=>true,'payload'=>$payload,'valor'=>$o['total'],'favorecido'=>$pixFav]);
   break;
 
 case 'order_status': // GET id -> tela de acompanhamento
@@ -1924,7 +1926,6 @@ case 'uazapi_webhook_config':
 
 case 'webhook_uazapi':
   $body=file_get_contents('php://input');
-  file_put_contents(__DIR__.'/wh_uaz_log.txt',date('Y-m-d H:i:s')."\nIP: ".($_SERVER['REMOTE_ADDR']??'')."\n".substr($body,0,2000)."\n---\n",FILE_APPEND|LOCK_EX);
   $payload=json_decode($body,true)?:[];
   $evType=strtolower((string)($payload['EventType']??$payload['event']??''));
   $msg=$payload['message']??[];
@@ -1933,7 +1934,7 @@ case 'webhook_uazapi':
   if(!empty($msg['fromMe'])||!empty($msg['isGroup'])){ http_response_code(200); exit; }
   $text=trim((string)($msg['content']['text']??$msg['content']['caption']??''));
   $wa=preg_replace('/\D/','',(string)($chat['phone']??$msg['chatid']??''));
-  $wa=preg_replace('/@.*/','',$wa); // remove @s.whatsapp.net se vier junto
+  $wa=preg_replace('/@.*/','',$wa);
   $nome=(string)($chat['wa_name']??$chat['wa_contactName']??'');
   if($text===''||$wa===''){http_response_code(200);exit;}
   try{
@@ -1942,8 +1943,6 @@ case 'webhook_uazapi':
     db()->prepare("INSERT INTO whatsapp_messages(wa_id,direcao,texto,status) VALUES(?,'entrada',?,'recebida')")->execute([$wa,$text]);
     n8n_event('whatsapp_message',['from'=>$wa,'nome'=>$nome,'texto'=>$text]);
     $botActive=setting_get('wa_bot_active','0');
-    $allGatilhos=array_column(db()->query("SELECT gatilho FROM bot_replies WHERE ativo=1")->fetchAll(),'gatilho');
-    file_put_contents(__DIR__.'/wh_uaz_log.txt',date('Y-m-d H:i:s')." DBG wa=$wa text=$text bot_active=$botActive gatilhos=".json_encode($allGatilhos,JSON_UNESCAPED_UNICODE)."\n",FILE_APPEND|LOCK_EX);
     if($botActive==='1'){
       $reply='';$low=mb_strtolower($text);
       $hora=(int)date('H');$saudacao=$hora<12?'Bom dia':($hora<18?'Boa tarde':'Boa noite');
@@ -1953,7 +1952,6 @@ case 'webhook_uazapi':
         foreach(db()->query("SELECT * FROM bot_replies WHERE ativo=1 AND gatilho!='*'")->fetchAll() as $br)
           foreach(explode('|',mb_strtolower($br['gatilho'])) as $kw)
             if(trim($kw)!==''&&mb_strpos($low,trim($kw))!==false){$reply=$br['resposta'];break 2;}
-        // Fallback: gatilho * dispara quando nenhuma palavra-chave combinar
         if($reply===''){
           $fb=db()->query("SELECT resposta FROM bot_replies WHERE ativo=1 AND gatilho='*' LIMIT 1")->fetch();
           if($fb) $reply=$fb['resposta'];
@@ -1963,13 +1961,10 @@ case 'webhook_uazapi':
         $base=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br').strtok($_SERVER['REQUEST_URI']??'/','?');
         $reply=str_replace(['{LINK_CARDAPIO}','{NOME_CLIENTE}','{SAUDACAO}'],[$base.'?r=menu',$nome?:'cliente',$saudacao],$reply);
         $sent=uaz_r_send_text($wa,$reply);
-        file_put_contents(__DIR__.'/wh_uaz_log.txt',date('Y-m-d H:i:s').' SEND ok='.($sent['ok']?'1':'0').' raw='.substr((string)($sent['raw']??''),0,200)."\n",FILE_APPEND|LOCK_EX);
         if(!empty($sent['ok']))db()->prepare("INSERT INTO whatsapp_messages(wa_id,direcao,texto,status) VALUES(?,'saida',?,'enviada')")->execute([$wa,$reply]);
-      } else {
-        file_put_contents(__DIR__.'/wh_uaz_log.txt',date('Y-m-d H:i:s')." NO_MATCH for text=$text\n",FILE_APPEND|LOCK_EX);
       }
     }
-  }catch(Exception $e){file_put_contents(__DIR__.'/wh_uaz_log.txt',date('Y-m-d H:i:s').' ERR:'.$e->getMessage()."\n",FILE_APPEND|LOCK_EX);}
+  }catch(Exception $e){}
   http_response_code(200);exit;
 
 case 'saas_bot':
