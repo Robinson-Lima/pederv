@@ -16,7 +16,7 @@ function _pdo_sqlite($file){
   $p=new PDO('sqlite:'.$file);
   $p->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);
   $p->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE,PDO::FETCH_ASSOC);
-  $p->exec('PRAGMA foreign_keys=ON');
+  $p->exec('PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000');
   return $p;
 }
 

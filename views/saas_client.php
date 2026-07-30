@@ -110,7 +110,7 @@ $pi=saas_plan_info($c['plano']);
         <label>Responsável<input name="responsavel" value="<?= e($c['responsavel']) ?>"></label>
         <label>Login de acesso (e-mail ou usuário)<input name="email" type="text" value="<?= e($c['email']) ?>" placeholder="email@dominio.com ou nome-de-usuario" autocomplete="off"></label>
         <label>WhatsApp<input name="whatsapp" value="<?= e($c['whatsapp']) ?>"></label>
-        <label>Slug (URL)<input name="client_slug" value="<?= e($c['slug']??'') ?>" pattern="[a-z0-9_-]*" placeholder="barbaburguer" title="Apenas letras minúsculas, números e hífen"></label>
+        <label>Slug (URL)<input name="client_slug" value="<?= e($c['slug']??'') ?>" readonly style="background:#f5f5f5;cursor:not-allowed" title="Alteração de slug desativada temporariamente — renomear apagaria os dados do cliente"><small style="color:#b45309;font-size:11px">⚠ Bloqueado — alterar o slug apagaria os dados do restaurante.</small></label>
         <label>Domínio / link<input name="dominio" value="<?= e($c['dominio']) ?>"></label>
         <label>Cidade<input name="cidade" value="<?= e($c['cidade']) ?>"></label>
         <label>UF<input name="uf" maxlength="2" value="<?= e($c['uf']) ?>"></label>

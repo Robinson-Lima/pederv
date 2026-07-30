@@ -13,22 +13,22 @@
   <p style="color:#666;font-size:13px;margin:0 0 10px">Configure uma vez. Cada restaurante conectará o próprio número escaneando um QR Code, sem precisar de chave de API. <a href="https://docs.uazapi.com" target="_blank">Ver docs ↗</a></p>
   <div class="grid2">
     <label>URL da sua instância uazapi<input name="saas_uaz_url" value="<?= e(_uaz_cfg('saas_uaz_url')) ?>" placeholder="https://api.uazapi.com"></label>
-    <label>API Key (master)<input name="saas_uaz_key" type="password" value="<?= e(_uaz_cfg('saas_uaz_key')) ?>" placeholder="sua-chave-aqui" autocomplete="off"></label>
+    <label>API Key (master)<input name="saas_uaz_key" type="password" value="<?= _uaz_cfg('saas_uaz_key')!==''?'••••••••':'' ?>" placeholder="sua-chave-aqui" autocomplete="off"></label>
   </div>
   <?php if(_uaz_cfg('saas_uaz_url')): ?><p style="color:#2e7d32;font-size:13px">✅ uazapi configurado — clientes verão a opção "QR Code" no painel deles.</p><?php endif; ?>
 
   <div class="saas-panel-h" style="margin-top:14px"><b>Importação de cardápio — ScraperAPI</b></div>
   <p style="color:#666;font-size:13px;margin:0 0 10px">Permite que clientes importem cardápios do Anota AI, Goomer e outros apenas colando um link. Crie uma conta grátis em <a href="https://www.scraperapi.com" target="_blank">scraperapi.com</a> e cole a chave abaixo (1.000 importações/mês grátis).</p>
-  <label>Chave da ScraperAPI<input name="saas_scraper_key" type="password" value="<?= e(setting_get('saas_scraper_key','')) ?>" placeholder="Cole sua API key aqui" autocomplete="off"></label>
+  <label>Chave da ScraperAPI<input name="saas_scraper_key" type="password" value="<?= setting_get('saas_scraper_key','')!==''?'••••••••':'' ?>" placeholder="Cole sua API key aqui" autocomplete="off"></label>
   <?php if(setting_get('saas_scraper_key','')): ?><p style="color:#2e7d32;font-size:13px">✅ ScraperAPI configurada — clientes podem importar cardápios pelo link.</p><?php endif; ?>
 
   <div class="saas-panel-h" style="margin-top:14px"><b>💳 Pagamento online (maquininha de cartão)</b></div>
   <p style="color:#666;font-size:13px;margin:0 0 10px">Cole aqui a chave da API da sua maquininha (PagSeguro, Mercado Pago, Cielo, Stone, etc.) para aceitar cartão online nas assinaturas do PedeRV.</p>
   <div class="grid2">
-    <label>Chave da API de pagamentos<input name="saas_payment_api_key" type="password" value="<?= e(setting_get('saas_payment_api_key','')) ?>" placeholder="Cole a API Key do seu gateway" autocomplete="off"></label>
+    <label>Chave da API de pagamentos<input name="saas_payment_api_key" type="password" value="<?= setting_get('saas_payment_api_key','')!==''?'••••••••':'' ?>" placeholder="Cole a API Key do seu gateway" autocomplete="off"></label>
     <label>Provedor (ex: mercadopago, pagseguro, cielo)<input name="saas_payment_provider" value="<?= e(setting_get('saas_payment_provider','')) ?>" placeholder="mercadopago"></label>
   </div>
-  <?php if(setting_get('saas_payment_api_key','')): ?><p style="color:#2e7d32;font-size:13px">✅ Gateway de pagamento configurado — clientes poderão pagar com cartão online.</p><?php endif; ?>
+  <?php if(setting_get('saas_payment_api_key','')): ?><p style="color:#b45309;font-size:13px">⚠️ Chave salva — integração pendente de implementação técnica.</p><?php endif; ?>
 
   <div class="saas-panel-h" style="margin-top:14px"><b>PIX para assinaturas</b></div>
   <p style="color:#666;font-size:13px;margin:0 0 10px">Chave PIX exibida no botão "Assinar" do site. Clientes verão esta chave para pagar via PIX.</p>

@@ -241,7 +241,7 @@ function store_closed_message(){
 // ============================================================
 // SaaS — painel do dono da plataforma
 // ============================================================
-function saas_master_pass(){ return setting_get('saas_master_pass','') ?: (cfg('saas_senha') ?: 'rvsaas'); }
+function saas_master_pass(){ return setting_get('saas_master_pass','') ?: cfg('saas_senha'); }
 function saas_render($name,$vars=[]){
   $content = view($name,$vars);
   echo view('saas_layout', array_merge($vars,['content'=>$content]));
@@ -303,7 +303,7 @@ function saas_metrics(){
   $m=['total'=>0,'ativos'=>0,'trial'=>0,'bloqueados'=>0,'cancelados'=>0,'mrr'=>0,'pro'=>0,'premium'=>0,'pro_anual'=>0,'premium_anual'=>0,'inadimplentes'=>0];
   foreach($rows as $r){
     $m['total']++;
-    if($r['status']==='ativo'){ $m['ativos']++; $m['mrr']+=$r['valor_mensal']; }
+    if($r['status']==='ativo'){ $m['ativos']++; $m['mrr']+=(strpos($r['plano']??'','_anual')!==false?(float)$r['valor_mensal']/12:(float)$r['valor_mensal']); }
     elseif($r['status']==='trial') $m['trial']++;
     elseif($r['status']==='bloqueado'){ $m['bloqueados']++; $m['inadimplentes']++; }
     elseif($r['status']==='cancelado') $m['cancelados']++;
@@ -326,8 +326,8 @@ function saas_registrar_pagamento($clientId,$valor,$metodo,$obs=''){
   if(!$c) return false;
   $d->prepare("INSERT INTO saas_payments(client_id,competencia,valor,metodo,status,obs) VALUES(?,?,?,?, 'pago', ?)")
     ->execute([$clientId, date('Y-m'), $valor, $metodo, $obs]);
-  $base = (!empty($c['proximo_venc']) && $c['proximo_venc']>=date('Y-m-d')) ? $c['proximo_venc'] : date('Y-m-d');
-  $prox = date('Y-m-d', strtotime($base.' +1 month'));
+  $base = !empty($c['proximo_venc']) ? $c['proximo_venc'] : date('Y-m-d');
+  $prox = date('Y-m-d', strtotime($base.(strpos($c['plano']??'','_anual')!==false?' +1 year':' +1 month')));
   $d->prepare("UPDATE saas_clients SET status='ativo', proximo_venc=?, bloqueado_em=NULL, bloqueio_manual=0, atualizado_em=datetime('now','localtime') WHERE id=?")
     ->execute([$prox,$clientId]);
   return true;

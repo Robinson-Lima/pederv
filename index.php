@@ -1035,7 +1035,7 @@ case 'webhook_evolution':
                 $isNoMatch=false;
                 if($reply===''&&!$isHumanReq){$isNoMatch=true;$reply="Olá! 😊 Deixa eu chamar um de nossos consultores para te atender. Um momento!";}
                 if($reply!==''&&$saasUrl&&$saasKey&&$saasInst){
-                  $reply=str_replace(['{NOME}','{SAUDACAO}','{PLANO}','{TRIAL_DIAS}','{LINK_SITE}'],[$nome?:'cliente',$saudacao,'Pró','7','https://pederv.com.br'],$reply);
+                  $reply=str_replace(['{NOME}','{SAUDACAO}','{PLANO}','{TRIAL_DIAS}','{LINK_SITE}'],[$nome?:'cliente',$saudacao,'Pró',setting_get('saas_trial_dias','7'),setting_get('saas_site_url','https://pederv.com.br')],$reply);
                   // Mostrar "digitando..." antes de responder
                   $chTyp=curl_init(rtrim($saasUrl,'/').'/chat/sendPresence/'.rawurlencode($saasInst));
                   curl_setopt_array($chTyp,[CURLOPT_CUSTOMREQUEST=>'POST',CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>4,CURLOPT_TIMEOUT=>5,CURLOPT_HTTPHEADER=>['apikey: '.$saasKey,'Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode(['number'=>$waNum,'presence'=>'composing','delay'=>1500],JSON_UNESCAPED_UNICODE)]);
@@ -1629,7 +1629,9 @@ case 'webhook_ifood':
 case 'saas_login':
   if (session_status()===PHP_SESSION_NONE) session_start();
   if($method==='POST'){
-    if(hash_equals(saas_master_pass(), (string)($_POST['senha']??''))){ $_SESSION['saas_ok']=true; redirect('?r=saas'); }
+    $stored=saas_master_pass(); $input=(string)($_POST['senha']??'');
+    $ok=$stored!==''&&((strncmp($stored,'$2y$',4)===0||strncmp($stored,'$argon',6)===0)?password_verify($input,$stored):hash_equals($stored,$input));
+    if($ok){ $_SESSION['saas_ok']=true; redirect('?r=saas'); }
     saas_render('saas_login',['erro'=>'Senha incorreta.']); break;
   }
   saas_render('saas_login',['erro'=>'']); break;
@@ -1778,6 +1780,7 @@ case 'saas_pay':
   $cid=(int)($_POST['client_id']??0);
   $q=db()->prepare("SELECT valor_mensal FROM saas_clients WHERE id=?"); $q->execute([$cid]); $cl=$q->fetch();
   $valor=$_POST['valor']!==''?(float)str_replace(',','.',$_POST['valor']):(float)($cl['valor_mensal']??0);
+  if($valor<=0){ redirect('?r=saas_client&id='.$cid); break; }
   saas_registrar_pagamento($cid,$valor,in_array($_POST['metodo']??'pix',['pix','cartao','boleto','dinheiro','transferencia'],true)?$_POST['metodo']:'pix',trim($_POST['obs']??''));
   redirect('?r=saas_client&id='.$cid);
   break;
@@ -1831,12 +1834,12 @@ case 'saas_settings':
     setting_set('saas_preco_pro', str_replace(',','.',$_POST['preco_pro']??'89.90'));
     setting_set('saas_preco_premium', str_replace(',','.',$_POST['preco_premium']??'149.90'));
     setting_set('saas_trial_dias', (string)max(1,(int)($_POST['trial_dias']??7)));
-    if(!empty($_POST['nova_senha'])) setting_set('saas_master_pass', trim($_POST['nova_senha']));
+    if(!empty($_POST['nova_senha'])) setting_set('saas_master_pass', password_hash(trim($_POST['nova_senha']), PASSWORD_DEFAULT));
     // uazapi global config — salva sempre no master db via setting_set (sem slug = master)
     if(isset($_POST['saas_uaz_url'])) setting_set('saas_uaz_url', trim($_POST['saas_uaz_url']));
-    if(isset($_POST['saas_uaz_key']) && trim($_POST['saas_uaz_key'])!=='') setting_set('saas_uaz_key', trim($_POST['saas_uaz_key']));
-    if(isset($_POST['saas_scraper_key']) && trim($_POST['saas_scraper_key'])!=='') setting_set('saas_scraper_key', trim($_POST['saas_scraper_key']));
-    if(isset($_POST['saas_payment_api_key']) && trim($_POST['saas_payment_api_key'])!=='') setting_set('saas_payment_api_key', trim($_POST['saas_payment_api_key']));
+    if(isset($_POST['saas_uaz_key']) && ($v=trim($_POST['saas_uaz_key']))!=='' && $v!=='••••••••') setting_set('saas_uaz_key',$v);
+    if(isset($_POST['saas_scraper_key']) && ($v=trim($_POST['saas_scraper_key']))!=='' && $v!=='••••••••') setting_set('saas_scraper_key',$v);
+    if(isset($_POST['saas_payment_api_key']) && ($v=trim($_POST['saas_payment_api_key']))!=='' && $v!=='••••••••') setting_set('saas_payment_api_key',$v);
     if(isset($_POST['saas_payment_provider'])) setting_set('saas_payment_provider', trim($_POST['saas_payment_provider']));
     if(isset($_POST['saas_pix_key'])) setting_set('saas_pix_key', trim($_POST['saas_pix_key']));
     if(isset($_POST['saas_pix_nome'])) setting_set('saas_pix_nome', trim($_POST['saas_pix_nome']));
@@ -1980,7 +1983,7 @@ case 'saas_bot_save':
   $tab=$_POST['_tab']??'';
   if($tab==='config'){
     setting_set('saas_evo_url',  trim($_POST['saas_evo_url']??''));
-    setting_set('saas_evo_key',  trim($_POST['saas_evo_key']??''));
+    if(($v=trim($_POST['saas_evo_key']??''))!=='' && $v!=='••••••••') setting_set('saas_evo_key',$v);
     setting_set('saas_evo_instance', trim($_POST['saas_evo_instance']??''));
     setting_set('saas_evo_phone', trim($_POST['saas_evo_phone']??''));
     setting_set('saas_wa_bot_active', isset($_POST['saas_wa_bot_active'])?'1':'0');
@@ -1988,6 +1991,7 @@ case 'saas_bot_save':
     setting_set('saas_bot_delay', trim($_POST['saas_bot_delay']??'0'));
     setting_set('saas_human_timeout', trim($_POST['saas_human_timeout']??'4'));
   } else {
+    setting_set('saas_wa_bot_active', isset($_POST['saas_wa_bot_active'])&&$_POST['saas_wa_bot_active']==='1'?'1':'0');
     $botJson=trim($_POST['bot_json']??'');
     $botData=$botJson?json_decode($botJson,true):null;
     if(is_array($botData)&&count($botData)>0){

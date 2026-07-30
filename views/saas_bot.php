@@ -22,7 +22,7 @@
       <input type="hidden" name="_tab" value="config">
       <div class="grid2" style="margin-top:14px">
         <label>URL da API<input name="saas_evo_url" value="<?= e(setting_get('saas_evo_url','')) ?>" placeholder="https://api.seudominio.com"></label>
-        <label>API Key<input name="saas_evo_key" type="password" value="<?= e(setting_get('saas_evo_key','')) ?>" placeholder="sua-chave-aqui" autocomplete="off"></label>
+        <label>API Key<input name="saas_evo_key" type="password" value="<?= setting_get('saas_evo_key','')!==''?'••••••••':'' ?>" placeholder="sua-chave-aqui" autocomplete="off"></label>
       </div>
       <div class="grid2">
         <label>Nome da instância<input name="saas_evo_instance" value="<?= e(setting_get('saas_evo_instance','')) ?>" placeholder="pederv-vendas"></label>
@@ -72,7 +72,7 @@
     <h3 class="bot-section-title" style="margin-bottom:8px">💬 Respostas automáticas por palavra-chave</h3>
     <p style="color:#666;font-size:13px;margin:0 0 14px">Separe palavras-gatilho com <b>|</b>. Tokens: <code>{NOME}</code> <code>{PLANO}</code> <code>{TRIAL_DIAS}</code> <code>{LINK_SITE}</code> <code>{SAUDACAO}</code></p>
     <label class="wa-toggle bot-master" style="margin-bottom:16px">
-      <input type="checkbox" name="saas_wa_bot_active" value="1" <?= setting_get('saas_wa_bot_active','0')==='1'?'checked':'' ?>>
+      <input type="checkbox" id="botMasterActive" name="saas_wa_bot_active" value="1" <?= setting_get('saas_wa_bot_active','0')==='1'?'checked':'' ?>>
       <span><b>Ativar respostas automáticas</b><small>Desative para atender manualmente todas as conversas.</small></span>
     </label>
 
@@ -146,6 +146,7 @@ async function saveMsgs(btn){
     var fd=new FormData();
     fd.append('_tab','messages');
     fd.append('bot_json',json);
+    fd.append('saas_wa_bot_active',document.getElementById('botMasterActive').checked?'1':'0');
     var r=await fetch('?r=saas_bot_save',{method:'POST',body:fd});
     if(r.redirected){window.location.href=r.url;return;}
     var data=null;try{data=await r.json();}catch(e){}
