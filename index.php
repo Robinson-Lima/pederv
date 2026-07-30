@@ -1865,6 +1865,9 @@ case 'uazapi_qr':
     if(!$tok) json_out(['ok'=>false,'erro'=>'Erro ao criar instância: '.substr((string)($cr['raw']??''),0,200)]);
     setting_set('uaz_token',$tok);
     setting_set('uaz_instance_name',$instName);
+    // Registra webhook automaticamente ao criar a instância
+    $wbBase=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br');
+    uaz_r_request('POST','/webhook',['enabled'=>true,'url'=>$wbBase.'/?r=webhook_uazapi','events'=>['messages'],'excludeMessages'=>['wasSentByApi','fromMeYes','isGroupYes']]);
   }
   $r=uaz_r_request('POST','/instance/connect');
   $b64=$r['data']['instance']['qrcode']??'';
@@ -1923,12 +1926,15 @@ case 'webhook_uazapi':
   $body=file_get_contents('php://input');
   file_put_contents(__DIR__.'/wh_uaz_log.txt',date('Y-m-d H:i:s')."\nIP: ".($_SERVER['REMOTE_ADDR']??'')."\n".substr($body,0,2000)."\n---\n",FILE_APPEND|LOCK_EX);
   $payload=json_decode($body,true)?:[];
-  $event=strtolower((string)($payload['event']??''));
-  $data=$payload['data']??[];
-  if($event!=='message'||!empty($data['fromMe'])||!empty($data['isGroup'])){ http_response_code(200); exit; }
-  $text=trim((string)($data['text']??''));
-  $wa=preg_replace('/\D/','',(string)($data['sender']??$data['chatid']??''));
-  $nome=(string)($data['senderName']??'');
+  $evType=strtolower((string)($payload['EventType']??$payload['event']??''));
+  $msg=$payload['message']??[];
+  $chat=$payload['chat']??[];
+  if($evType!=='messages'&&$evType!=='message'){ http_response_code(200); exit; }
+  if(!empty($msg['fromMe'])||!empty($msg['isGroup'])){ http_response_code(200); exit; }
+  $text=trim((string)($msg['content']['text']??$msg['content']['caption']??''));
+  $wa=preg_replace('/\D/','',(string)($chat['phone']??$msg['chatid']??''));
+  $wa=preg_replace('/@.*/','',$wa); // remove @s.whatsapp.net se vier junto
+  $nome=(string)($chat['wa_name']??$chat['wa_contactName']??'');
   if($text===''||$wa===''){http_response_code(200);exit;}
   try{
     db()->prepare("INSERT OR IGNORE INTO whatsapp_contacts(wa_id,nome) VALUES(?,?)")->execute([$wa,$nome]);

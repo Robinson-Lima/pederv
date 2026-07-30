@@ -42,7 +42,6 @@ $uazConfigured = ($uazUrl !== '' && $uazAdmToken !== '');
       <div class="uaz-actions">
         <button class="cxgo" onclick="uazGetQr()">📷 Gerar QR Code</button>
         <button class="cxgo" style="background:#f0f4ff;color:#333" onclick="uazCheckStatus()">🔄 Verificar</button>
-        <button onclick="uazRegisterWebhook()" style="background:#fff;color:#1a7a3a;border:1px solid #1a7a3a;padding:9px 16px;border-radius:10px;cursor:pointer;font-size:13px">🔗 Registrar Webhook</button>
         <button onclick="uazDisconnect()" style="background:#fff;color:#c00;border:1px solid #c00;padding:9px 16px;border-radius:10px;cursor:pointer;font-size:13px">Desconectar</button>
       </div>
       <p class="uaz-hint">O QR Code expira em ~60 segundos. Clique em <b>Gerar QR Code</b> novamente se expirar.</p>
