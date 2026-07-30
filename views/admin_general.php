@@ -66,6 +66,8 @@ $toggle=function($key,$label,$help,$def='0')use($ck){ ?>
       <?php elseif($sec==='cardapio'): ?>
         <h3>8. Marca, cores e cardapio</h3><p>Sua identidade visual, as cores do sistema e a experiencia de compra do cliente.</p>
 
+        <label class="setting-field">Link do cardápio (para o robô do WhatsApp)<input name="s[cardapio_url]" value="<?= e(setting_get('cardapio_url','')) ?>" placeholder="Ex: https://pederv.com.br/cardapio/barbaburguer"><small style="color:#6b7280;font-size:11px">Usado pelo token <code>{LINK_CARDAPIO}</code> nas mensagens automáticas do robô.</small></label>
+
         <div class="setting-field">
           <b style="font-size:13px">&#127991; Logo do restaurante</b>
           <small>Aparece no painel (canto superior esquerdo) e no topo do cardapio, no lugar da inicial. PNG com fundo transparente, quadrado (recomendado 256x256px).</small>

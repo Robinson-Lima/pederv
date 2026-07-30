@@ -1958,8 +1958,9 @@ case 'webhook_uazapi':
         }
       }
       if($reply!==''){
-        $base=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br').strtok($_SERVER['REQUEST_URI']??'/','?');
-        $reply=str_replace(['{LINK_CARDAPIO}','{NOME_CLIENTE}','{SAUDACAO}'],[$base.'?r=menu',$nome?:'cliente',$saudacao],$reply);
+        $linkCardapio=setting_get('cardapio_url','');
+        if($linkCardapio==='') $linkCardapio=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br').'/?r=menu';
+        $reply=str_replace(['{LINK_CARDAPIO}','{NOME_CLIENTE}','{SAUDACAO}'],[$linkCardapio,$nome?:'cliente',$saudacao],$reply);
         $sent=uaz_r_send_text($wa,$reply);
         if(!empty($sent['ok']))db()->prepare("INSERT INTO whatsapp_messages(wa_id,direcao,texto,status) VALUES(?,'saida',?,'enviada')")->execute([$wa,$reply]);
       }
