@@ -295,9 +295,8 @@ function saas_provision_tenant($slug,$usuario,$senha,$nome=''){
     if($n==0) db_seed($d);
     // Popula settings iniciais para o novo tenant não herdar dados de outro restaurante
     $ins=$d->prepare("INSERT OR IGNORE INTO settings(chave,valor) VALUES(?,?)");
-    $ins->execute(['nome_restaurante', $nome]);
-    $ins->execute(['loja_aberta', '1']);
-    $ins->execute(['loja_slug', $slug]);
+    $ins->execute(['store_name', $nome]);
+    $ins->execute(['store_open', '1']);
   }
   return true;
 }
