@@ -2005,6 +2005,18 @@ case 'uazapi_settings_save':
   redirect('?r=admin_whatsapp&saved=1');
   break;
 
+case 'uazapi_diag':
+  if(!require_role('admin')) json_out(['ok'=>false,'erro'=>'acesso negado']);
+  $slug=current_slug();
+  $url=_uaz_cfg('saas_uaz_url'); $key=_uaz_cfg('saas_uaz_key');
+  $r=['slug'=>$slug,'saas_uaz_url'=>$url,'saas_uaz_key_set'=>$key!=='','uazapi_configured'=>uazapi_configured()];
+  if($url&&$key){
+    $t=uazapi_request('GET','instance/fetchInstances');
+    $r['test_status']=$t['status']; $r['test_raw']=substr((string)($t['raw']??''),0,500);
+  }
+  json_out($r);
+  break;
+
 case 'uazapi_webhook_config':
   if(!require_role('admin')) json_out(['ok'=>false,'erro'=>'acesso negado']);
   if(!uaz_r_configured()) json_out(['ok'=>false,'erro'=>'Conecte o WhatsApp primeiro (token da instância necessário).']);
