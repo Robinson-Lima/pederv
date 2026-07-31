@@ -62,7 +62,9 @@ async function botWaGetQr(){
   const box=document.getElementById('botWaQrBox'), st=document.getElementById('botWaStatus');
   box.innerHTML='<div class="uaz-qr-placeholder">⏳ Gerando QR Code...</div>';
   st.textContent='⏳ Gerando...'; st.className='wa-status-pill';
-  const d=await fetch(_botWaUrl('uazapi_qr'),{method:'POST'}).then(x=>x.json()).catch(()=>({ok:false}));
+  const d=await fetch(_botWaUrl('uazapi_qr'),{method:'POST'})
+    .then(x=>x.text().then(t=>{try{return JSON.parse(t);}catch(e){return {ok:false,erro:'[Resposta inválida] '+t.slice(0,300)};}}))
+    .catch(e=>({ok:false,erro:'Erro de rede: '+e.message}));
   if(d.ok && d.base64){
     box.innerHTML=`<img src="${d.base64}" alt="QR Code" style="width:240px;height:240px;border-radius:8px;display:block">`;
     st.textContent='📷 Escaneie com o WhatsApp'; st.className='wa-status-pill scanning';
