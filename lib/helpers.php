@@ -119,7 +119,7 @@ function uazapi_configured(){
 // Requisição com admin token (criação de instâncias)
 function uazapi_request($method,$path,$body=null){
   if(!uazapi_configured()||!function_exists('curl_init')) return ['ok'=>false,'erro'=>'uazapi não configurado.'];
-  return _uazapi_curl(_uaz_cfg('saas_uaz_url'),$path,$method,$body,'admintoken: '._uaz_cfg('saas_uaz_key'));
+  return _uazapi_curl(_uaz_cfg('saas_uaz_url'),$path,$method,$body,'token: '._uaz_cfg('saas_uaz_key'));
 }
 // Requisição com token da instância (connect, status, disconnect)
 function uazapi_instance_request($tok,$method,$path,$body=null){
