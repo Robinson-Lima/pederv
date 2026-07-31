@@ -43,7 +43,8 @@ $_slug = current_slug();
 
 <script>
 const _waSlug = '<?= htmlspecialchars(current_slug(), ENT_QUOTES) ?>';
-function _waUrl(r){ return _waSlug ? '?r='+r+'&slug='+encodeURIComponent(_waSlug) : '?r='+r; }
+const _waBase = location.protocol+'//'+location.host+'/';
+function _waUrl(r){ return _waBase+'?r='+r+(_waSlug?'&slug='+encodeURIComponent(_waSlug):''); }
 let _uazPolling = null;
 const stateMap = {
   disconnected:   '⭕ Desconectado',

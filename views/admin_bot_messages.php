@@ -53,7 +53,8 @@
 <script>
 // WhatsApp QR connection
 const _botSlug = '<?= htmlspecialchars(current_slug(), ENT_QUOTES) ?>';
-function _botWaUrl(r){ return _botSlug ? '?r='+r+'&slug='+encodeURIComponent(_botSlug) : '?r='+r; }
+const _botBase = location.protocol+'//'+location.host+'/';
+function _botWaUrl(r){ return _botBase+'?r='+r+(_botSlug?'&slug='+encodeURIComponent(_botSlug):''); }
 let _botWaPolling = null;
 const _botStateMap = {disconnected:'⭕ Desconectado',connecting:'⏳ Conectando...',hibernated:'💤 Hibernando',not_configured:'⚙️ Não configurado'};
 
