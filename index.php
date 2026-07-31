@@ -1793,7 +1793,7 @@ case 'saas_client_save':
 case 'saas_pay':
   saas_require(); saas_csrf_check();
   $cid=(int)($_POST['client_id']??0);
-  $q=db()->prepare("SELECT valor_mensal FROM saas_clients WHERE id=?"); $q->execute([$cid]); $cl=$q->fetch();
+  $q=master_db()->prepare("SELECT valor_mensal FROM saas_clients WHERE id=?"); $q->execute([$cid]); $cl=$q->fetch();
   $valor=$_POST['valor']!==''?(float)str_replace(',','.',$_POST['valor']):(float)($cl['valor_mensal']??0);
   if($valor<=0){ redirect('?r=saas_client&id='.$cid); break; }
   $metodo=in_array($_POST['metodo']??'pix',['pix','cartao','boleto','dinheiro','transferencia'],true)?$_POST['metodo']:'pix';
@@ -1805,7 +1805,7 @@ case 'saas_pay':
 case 'saas_block':
   saas_require(); saas_csrf_check();
   $cid=(int)($_POST['id']??0);
-  db()->prepare("UPDATE saas_clients SET status='bloqueado', bloqueio_manual=1, bloqueado_em=datetime('now','localtime') WHERE id=?")->execute([$cid]);
+  master_db()->prepare("UPDATE saas_clients SET status='bloqueado', bloqueio_manual=1, bloqueado_em=datetime('now','localtime') WHERE id=?")->execute([$cid]);
   saas_audit('bloqueio',$cid,'manual');
   redirect('?r=saas_client&id='.$cid.'&ok=bloqueado');
   break;
@@ -1813,9 +1813,9 @@ case 'saas_block':
 case 'saas_unblock':
   saas_require(); saas_csrf_check();
   $cid=(int)($_POST['id']??0);
-  $q=db()->prepare("SELECT * FROM saas_clients WHERE id=?"); $q->execute([$cid]); $c=$q->fetch();
+  $q=master_db()->prepare("SELECT * FROM saas_clients WHERE id=?"); $q->execute([$cid]); $c=$q->fetch();
   $prox = (!empty($c['proximo_venc']) && $c['proximo_venc']>=date('Y-m-d')) ? $c['proximo_venc'] : date('Y-m-d', strtotime('+7 days'));
-  db()->prepare("UPDATE saas_clients SET status='ativo', bloqueio_manual=0, bloqueado_em=NULL, proximo_venc=? WHERE id=?")->execute([$prox,$cid]);
+  master_db()->prepare("UPDATE saas_clients SET status='ativo', bloqueio_manual=0, bloqueado_em=NULL, proximo_venc=? WHERE id=?")->execute([$prox,$cid]);
   saas_audit('desbloqueio',$cid);
   redirect('?r=saas_client&id='.$cid.'&ok=desbloqueado');
   break;
@@ -1823,7 +1823,7 @@ case 'saas_unblock':
 case 'saas_cancel':
   saas_require(); saas_csrf_check();
   $cid=(int)($_POST['id']??0);
-  db()->prepare("UPDATE saas_clients SET status='cancelado', bloqueado_em=datetime('now','localtime') WHERE id=?")->execute([$cid]);
+  master_db()->prepare("UPDATE saas_clients SET status='cancelado', bloqueado_em=datetime('now','localtime') WHERE id=?")->execute([$cid]);
   saas_audit('cancelamento',$cid);
   redirect('?r=saas_client&id='.$cid.'&ok=cancelado');
   break;
@@ -1831,10 +1831,10 @@ case 'saas_cancel':
 case 'saas_delete_client':
   saas_require(); saas_csrf_check();
   $cid=(int)($_POST['id']??0);
-  $c=db()->prepare("SELECT slug,status,restaurante FROM saas_clients WHERE id=?"); $c->execute([$cid]); $row=$c->fetch();
+  $c=master_db()->prepare("SELECT slug,status,restaurante FROM saas_clients WHERE id=?"); $c->execute([$cid]); $row=$c->fetch();
   if($row && $row['status']==='cancelado'){
+    master_db()->prepare("DELETE FROM saas_clients WHERE id=?")->execute([$cid]);
     saas_audit('exclusao',$cid,$row['restaurante']??'');
-    db()->prepare("DELETE FROM saas_clients WHERE id=?")->execute([$cid]);
   }
   redirect('?r=saas_clients');
   break;
@@ -1844,15 +1844,15 @@ case 'saas_estorno':
   $pid=(int)($_POST['payment_id']??0);
   $cid=(int)($_POST['client_id']??0);
   if($pid && $cid){
-    $payRow=db()->prepare("SELECT valor,metodo FROM saas_payments WHERE id=?"); $payRow->execute([$pid]); $payRow=$payRow->fetch();
-    db()->prepare("DELETE FROM saas_payments WHERE id=?")->execute([$pid]);
+    $payRow=master_db()->prepare("SELECT valor,metodo FROM saas_payments WHERE id=?"); $payRow->execute([$pid]); $payRow=$payRow->fetch();
+    master_db()->prepare("DELETE FROM saas_payments WHERE id=?")->execute([$pid]);
     if($payRow) saas_audit('estorno',$cid,"R\${$payRow['valor']} via {$payRow['metodo']}");
-    $cli=db()->prepare("SELECT * FROM saas_clients WHERE id=?"); $cli->execute([$cid]); $cli=$cli->fetch();
+    $cli=master_db()->prepare("SELECT * FROM saas_clients WHERE id=?"); $cli->execute([$cid]); $cli=$cli->fetch();
     if($cli){
-      $lp=db()->prepare("SELECT pago_em FROM saas_payments WHERE client_id=? AND status='pago' ORDER BY id DESC LIMIT 1"); $lp->execute([$cid]); $lp=$lp->fetch();
+      $lp=master_db()->prepare("SELECT pago_em FROM saas_payments WHERE client_id=? AND status='pago' ORDER BY id DESC LIMIT 1"); $lp->execute([$cid]); $lp=$lp->fetch();
       if($lp){ $base=date('Y-m-d',strtotime($lp['pago_em'])); $prox=_venc_prox($base,$cli['plano']??'pro',$cli['dia_vencimento']??10);
-        db()->prepare("UPDATE saas_clients SET proximo_venc=? WHERE id=?")->execute([$prox,$cid]);
-      } else { db()->prepare("UPDATE saas_clients SET proximo_venc=NULL WHERE id=?")->execute([$cid]); }
+        master_db()->prepare("UPDATE saas_clients SET proximo_venc=? WHERE id=?")->execute([$prox,$cid]);
+      } else { master_db()->prepare("UPDATE saas_clients SET proximo_venc=NULL WHERE id=?")->execute([$cid]); }
       saas_refresh_status();
     }
   }
