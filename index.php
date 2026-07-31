@@ -1942,7 +1942,8 @@ case 'uazapi_qr':
     uazapi_request('POST','instance/create',['instanceName'=>$slug,'integration'=>'WHATSAPP-BAILEYS','qrcode'=>true]);
     $uazR=uazapi_request('GET','instance/'.$slug.'/qrcode');
     $b64=$uazR['data']['base64']??$uazR['data']['qrcode']['base64']??$uazR['data']['code']??'';
-    json_out(['ok'=>$uazR['ok'],'base64'=>$b64,'erro'=>$uazR['erro']??'']);
+    $errMsg=$uazR['erro']?:($b64===''?('[HTTP '.$uazR['status'].'] '.substr((string)($uazR['raw']??''),0,300)):'');
+    json_out(['ok'=>$uazR['ok']&&$b64!=='','base64'=>$b64,'erro'=>$errMsg]);
     break;
   }
   // Painel do restaurante — UazAPI nativa
