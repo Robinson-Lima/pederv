@@ -64,6 +64,19 @@ function db_migrate() {
   // Seed só na primeira vez
   $n = $d->query("SELECT COUNT(*) c FROM products")->fetch()['c'];
   if ($n == 0) db_seed($d);
+
+  // Auto-popula store_name do master se estiver ausente no tenant
+  $slug=current_slug();
+  if($slug && db_driver()==='sqlite'){
+    $sn=$d->query("SELECT valor FROM settings WHERE chave='store_name'")->fetch();
+    if($sn===false||$sn['valor']===''){
+      $mq=master_db()->prepare("SELECT restaurante FROM saas_clients WHERE slug=? LIMIT 1");
+      $mq->execute([$slug]);
+      $row=$mq->fetch();
+      if($row&&$row['restaurante']!=='')
+        $d->prepare("INSERT OR REPLACE INTO settings(chave,valor) VALUES('store_name',?)")->execute([$row['restaurante']]);
+    }
+  }
 }
 
 // Cria/atualiza todo o schema SQLite. Usado pelo tenant atual e pelo
@@ -293,11 +306,11 @@ function saas_provision_tenant($slug,$usuario,$senha,$nome=''){
   if($fresh){
     $n=$d->query("SELECT COUNT(*) c FROM products")->fetch()['c'];
     if($n==0) db_seed($d);
-    // Popula settings iniciais para o novo tenant não herdar dados de outro restaurante
-    $ins=$d->prepare("INSERT OR IGNORE INTO settings(chave,valor) VALUES(?,?)");
-    $ins->execute(['store_name', $nome]);
-    $ins->execute(['store_open', '1']);
   }
+  // Sempre garante store_name e store_open (INSERT OR IGNORE não sobrescreve valor existente)
+  if($nome!=='')
+    $d->prepare("INSERT OR IGNORE INTO settings(chave,valor) VALUES('store_name',?)")->execute([$nome]);
+  $d->prepare("INSERT OR IGNORE INTO settings(chave,valor) VALUES('store_open','1')")->execute([]);
   return true;
 }
 
