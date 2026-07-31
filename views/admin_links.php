@@ -1,5 +1,6 @@
 <?php
 $slug = current_slug();
+?><div class="wrap dash"><?php
 $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $host  = $_SERVER['HTTP_HOST'] ?? 'pederv.com.br';
 $base  = $scheme.'://'.$host;
@@ -177,3 +178,4 @@ function toggleSenha(key){
   }
 }
 </script>
+</div>
