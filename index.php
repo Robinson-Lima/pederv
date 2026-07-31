@@ -1943,7 +1943,7 @@ case 'uazapi_qr':
     $saasWaTok=setting_get('saas_wa_token','');
     if($saasWaTok===''){
       $cr=uazapi_request('POST','/instance/create',['name'=>$slug]);
-      $saasWaTok=$cr['data']['token']??'';
+      $saasWaTok=$cr['data']['instance']['token']??$cr['data']['token']??'';
       if($saasWaTok===''){
         $em=$cr['erro']?:('[HTTP '.$cr['status'].'] '.substr((string)($cr['raw']??''),0,300));
         json_out(['ok'=>false,'erro'=>'Erro ao criar instância: '.$em]);
