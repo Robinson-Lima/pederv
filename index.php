@@ -2030,8 +2030,15 @@ case 'uazapi_diag':
   $url=_uaz_cfg('saas_uaz_url'); $key=_uaz_cfg('saas_uaz_key');
   $r=['slug'=>$slug,'saas_uaz_url'=>$url,'saas_uaz_key_set'=>$key!=='','uazapi_configured'=>uazapi_configured()];
   if($url&&$key){
-    $t=uazapi_request('GET','instance/fetchInstances');
-    $r['test_status']=$t['status']; $r['test_raw']=substr((string)($t['raw']??''),0,500);
+    // Testa criação com token: header (formato nativo UazAPI)
+    $t=uazapi_request('POST','instance/create',['name'=>'diag-test-'.time()]);
+    $r['create_status']=$t['status']; $r['create_raw']=substr((string)($t['raw']??''),0,500);
+    // Testa também com admintoken: header
+    $t2=_uazapi_curl($url,'instance/create','POST',['name'=>'diag2-'.time()],'admintoken: '.$key);
+    $r['admintoken_status']=$t2['status']; $r['admintoken_raw']=substr((string)($t2['raw']??''),0,300);
+    // Testa com apikey: header
+    $t3=_uazapi_curl($url,'instance/create','POST',['name'=>'diag3-'.time()],'apikey: '.$key);
+    $r['apikey_status']=$t3['status']; $r['apikey_raw']=substr((string)($t3['raw']??''),0,300);
   }
   json_out($r);
   break;
