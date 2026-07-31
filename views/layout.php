@@ -12,7 +12,7 @@ $corPainel  =$hex6(setting_get('panel_color',''),'#EE7430');   // cor do painel 
 $corLateral =$hex6(setting_get('panel_side',''),'#0D1320');    // cor da barra lateral
 $menuBg     =setting_get('menu_bg_image','');                  // fundo enviado pelo cliente
 $r=$_GET['r']??'menu';
-$adminRoutes=['admin_orders','admin_pdv','admin_customers','admin_areas','admin_payments','admin_ifood','admin_ifood_add','admin_tables','admin_qr_tables','admin_couriers','admin_caixa','admin_cash_detail','admin_settings','admin_notas','admin_produtos','admin_import','admin_import_raw','admin_financeiro','admin_whatsapp','admin_bot_messages','admin_salon','admin_reports','admin_general','admin_recovery'];
+$adminRoutes=['admin_orders','admin_pdv','admin_customers','admin_areas','admin_payments','admin_ifood','admin_ifood_add','admin_tables','admin_qr_tables','admin_couriers','admin_caixa','admin_cash_detail','admin_settings','admin_notas','admin_produtos','admin_import','admin_import_raw','admin_financeiro','admin_whatsapp','admin_bot_messages','admin_salon','admin_reports','admin_general','admin_recovery','admin_links'];
 $isAdmin=in_array($r,$adminRoutes,true);
 // PWA: cada área instala como um app próprio, com o ícone abrindo direto na tela certa.
 $pwaApp = in_array($r,['admin_caixa','admin_pdv'],true) ? 'caixa'
@@ -63,6 +63,7 @@ if($isAdmin){try{$waCount=(int)db()->query("SELECT COUNT(*) c FROM whatsapp_mess
       <a class="<?= $r==='admin_salon'?'on':'' ?>" href="?r=admin_salon">🏠 Configuração do salão</a>
       <a class="<?= $r==='admin_general'?'on':'' ?>" href="?r=admin_general">⚙️ Configurações gerais</a>
       <a class="<?= $r==='admin_bot_messages'?'on':'' ?>" href="?r=admin_bot_messages">🤖 Mensagens do robô</a>
+      <a class="<?= $r==='admin_links'?'on':'' ?>" href="?r=admin_links">🔗 Acessos e links</a>
       <a class="<?= $r==='admin_settings'?'on':'' ?>" href="?r=admin_settings">👤 Usuários e integrações</a>
     </nav>
     <div class="side-user"><span><?= e(mb_substr($_SESSION['user_nome']??'A',0,1)) ?></span><div><b><?= e($_SESSION['user_nome']??'Administrador') ?></b><small>● Loja aberta</small></div><a href="?r=logout">Sair</a></div>

@@ -755,6 +755,30 @@ case 'admin_salon':
   render('admin_salon',['waiters'=>$waiters,'sec'=>$sec]);
   break;
 
+case 'admin_links':
+  if(!require_role('admin')){ redirect('?r=admin'); }
+  render('admin_links');
+  break;
+
+case 'admin_links_save':
+  if(!require_role('admin')){ redirect('?r=admin'); }
+  saas_csrf_check();
+  $role_save = preg_replace('/[^a-z]/', '', trim($_POST['role'] ?? ''));
+  $usuario_save = preg_replace('/[^a-z0-9_-]/', '', trim($_POST['usuario'] ?? $role_save));
+  $nova_senha = trim($_POST['nova_senha'] ?? '');
+  $roles_permitidos = ['cozinha','garcom','motoboy','caixa'];
+  if(!in_array($role_save, $roles_permitidos, true) || strlen($nova_senha) < 4){
+    redirect('?r=admin_links&erro='.urlencode('Senha inválida ou role não permitido.'));
+    break;
+  }
+  $hash = password_hash($nova_senha, PASSWORD_DEFAULT);
+  $nomes = ['cozinha'=>'Acesso Cozinha','garcom'=>'Acesso Garçom','motoboy'=>'Acesso Motoboy','caixa'=>'Acesso Caixa'];
+  db()->prepare("INSERT INTO users(nome,usuario,senha_hash,role,ativo) VALUES(?,?,?,?,1) ON CONFLICT(usuario) DO UPDATE SET senha_hash=excluded.senha_hash, ativo=1")
+    ->execute([$nomes[$role_save], $usuario_save, $hash, $role_save]);
+  setting_set('senha_visible_'.$role_save, $nova_senha);
+  redirect('?r=admin_links&salvo=1');
+  break;
+
 case 'admin_general':
   if(!require_role('admin')){ redirect('?r=admin'); }
   $sections=['status','sequence','sounds','printing','cancel','establishment','delivery','cardapio','integrations','security'];
