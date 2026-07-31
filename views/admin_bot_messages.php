@@ -1,5 +1,30 @@
 <div class="wrap bot-personalize">
-  <div class="page-title-row"><div><h2>🤖 Mensagens pré-prontas do robô</h2><p>Personalize as respostas automáticas usadas no WhatsApp. A inteligência artificial só é chamada quando nenhum gatilho combinar.</p></div><a class="cxgo" href="?r=admin_whatsapp">Conexão do WhatsApp</a></div>
+  <div class="page-title-row"><div><h2>🤖 Configuração Robô</h2><p>Conecte o WhatsApp e personalize as respostas automáticas.</p></div></div>
+
+  <div class="wa-qr-wrap" style="margin-bottom:1.5rem">
+    <div class="wa-qr-side">
+      <div id="botWaStatus" class="wa-status-pill">⏳ Verificando...</div>
+      <div id="botWaQrBox" class="uaz-qr-box">
+        <div class="uaz-qr-placeholder">⏳ Aguarde...</div>
+      </div>
+      <div class="uaz-actions">
+        <button class="cxgo" onclick="botWaGetQr()">📷 Gerar QR Code</button>
+        <button class="cxgo" style="background:#f0f4ff;color:#333" onclick="botWaCheckStatus()">🔄 Verificar</button>
+        <button onclick="botWaDisconnect()" style="background:#fff;color:#c00;border:1px solid #c00;padding:9px 16px;border-radius:10px;cursor:pointer;font-size:13px">Desconectar</button>
+      </div>
+      <p class="uaz-hint">O QR Code expira em ~60 segundos. Clique em <b>Gerar QR Code</b> novamente se expirar.</p>
+    </div>
+    <div class="wa-qr-steps">
+      <h4>Como conectar em 3 passos</h4>
+      <div class="wa-steps">
+        <div><span>1</span> Abra o <b>WhatsApp</b> no celular do restaurante.</div>
+        <div><span>2</span> Toque em <b>⋮ Menu → Dispositivos conectados → Conectar dispositivo</b>.</div>
+        <div><span>3</span> Aponte a câmera para o QR Code aqui na tela.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-title-row" style="margin-top:1rem"><div><h2>💬 Mensagens pré-prontas</h2><p>Personalize as respostas automáticas usadas no WhatsApp. A IA só é chamada quando nenhum gatilho combinar.</p></div></div>
   <?php if(isset($_GET['salvo'])): ?><div class="oknote">Mensagens salvas.</div><?php endif; ?>
   <form method="post" id="botForm">
 
@@ -25,6 +50,65 @@
     <div id="hiddenBot"></div><button class="save bot-save">Salvar alterações</button>
   </form>
 </div>
+<script>
+// WhatsApp QR connection
+const _botSlug = '<?= htmlspecialchars(current_slug(), ENT_QUOTES) ?>';
+function _botWaUrl(r){ return _botSlug ? '?r='+r+'&slug='+encodeURIComponent(_botSlug) : '?r='+r; }
+let _botWaPolling = null;
+const _botStateMap = {disconnected:'⭕ Desconectado',connecting:'⏳ Conectando...',hibernated:'💤 Hibernando',not_configured:'⚙️ Não configurado'};
+
+async function botWaGetQr(){
+  const box=document.getElementById('botWaQrBox'), st=document.getElementById('botWaStatus');
+  box.innerHTML='<div class="uaz-qr-placeholder">⏳ Gerando QR Code...</div>';
+  st.textContent='⏳ Gerando...'; st.className='wa-status-pill';
+  const d=await fetch(_botWaUrl('uazapi_qr'),{method:'POST'}).then(x=>x.json()).catch(()=>({ok:false}));
+  if(d.ok && d.base64){
+    box.innerHTML=`<img src="${d.base64}" alt="QR Code" style="width:240px;height:240px;border-radius:8px;display:block">`;
+    st.textContent='📷 Escaneie com o WhatsApp'; st.className='wa-status-pill scanning';
+    clearInterval(_botWaPolling);
+    _botWaPolling=setInterval(botWaCheckStatus,3000);
+    setTimeout(()=>{
+      clearInterval(_botWaPolling);
+      if(document.getElementById('botWaStatus').textContent.includes('Escaneie')){
+        box.innerHTML='<div class="uaz-qr-placeholder">QR expirou. Clique em <b>Gerar QR Code</b> novamente.</div>';
+        st.textContent='⚠️ QR expirado'; st.className='wa-status-pill';
+      }
+    },65000);
+  } else {
+    box.innerHTML=`<div class="uaz-qr-placeholder" style="color:#c00">${d.erro||'Erro ao gerar QR Code.'}</div>`;
+    st.textContent='❌ Erro'; st.className='wa-status-pill error';
+  }
+}
+
+async function botWaCheckStatus(){
+  const st=document.getElementById('botWaStatus'), box=document.getElementById('botWaQrBox');
+  const d=await fetch(_botWaUrl('uazapi_status')).then(x=>x.json()).catch(()=>({ok:false}));
+  if(d.connected){
+    clearInterval(_botWaPolling); _botWaPolling=null;
+    box.innerHTML='<div class="uaz-connected">✅ WhatsApp conectado!<br><small>O robô está ativo e respondendo às mensagens.</small></div>';
+    st.textContent='✅ Conectado'; st.className='wa-status-pill connected';
+  } else {
+    st.textContent=_botStateMap[d.state]||'⭕ Desconectado'; st.className='wa-status-pill';
+    if(d.qrcode && box.querySelector('img')) box.querySelector('img').src=d.qrcode;
+  }
+}
+
+async function botWaDisconnect(){
+  if(!confirm('Desconectar o WhatsApp?')) return;
+  await fetch(_botWaUrl('uazapi_disconnect'),{method:'POST'});
+  document.getElementById('botWaQrBox').innerHTML='<div class="uaz-qr-placeholder">Desconectado. Clique em <b>Gerar QR Code</b> para reconectar.</div>';
+  document.getElementById('botWaStatus').textContent='⭕ Desconectado';
+  document.getElementById('botWaStatus').className='wa-status-pill';
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  botWaCheckStatus().then(()=>{
+    // Auto-gera QR se não estiver conectado
+    const st=document.getElementById('botWaStatus');
+    if(st && !st.textContent.includes('Conectado')) botWaGetQr();
+  });
+});
+</script>
 <script>
 let messages=<?= json_encode(array_map(fn($b)=>['gatilho'=>$b['gatilho'],'resposta'=>$b['resposta'],'ativo'=>(int)$b['ativo']],$bot),JSON_UNESCAPED_UNICODE) ?>,current=0;
 const botCardsEl=document.getElementById('botCards'),hiddenBotEl=document.getElementById('hiddenBot'),editTriggerEl=document.getElementById('editTrigger'),editReplyEl=document.getElementById('editReply'),editActiveEl=document.getElementById('editActive'),previewTriggerEl=document.getElementById('botPreviewTrigger'),previewReplyEl=document.getElementById('botPreviewReply');

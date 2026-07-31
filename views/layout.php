@@ -62,7 +62,7 @@ if($isAdmin){try{$waCount=(int)db()->query("SELECT COUNT(*) c FROM whatsapp_mess
       <small>CONFIGURAÇÕES</small>
       <a class="<?= $r==='admin_salon'?'on':'' ?>" href="?r=admin_salon">🏠 Configuração do salão</a>
       <a class="<?= $r==='admin_general'?'on':'' ?>" href="?r=admin_general">⚙️ Configurações gerais</a>
-      <a class="<?= $r==='admin_bot_messages'?'on':'' ?>" href="?r=admin_bot_messages">🤖 Mensagens do robô</a>
+      <a class="<?= in_array($r,['admin_bot_messages','admin_whatsapp'],true)?'on':'' ?>" href="?r=admin_bot_messages">🤖 Configuração Robô</a>
       <a class="<?= $r==='admin_links'?'on':'' ?>" href="?r=admin_links">🔗 Acessos e links</a>
       <a class="<?= $r==='admin_settings'?'on':'' ?>" href="?r=admin_settings">👤 Usuários e integrações</a>
     </nav>
