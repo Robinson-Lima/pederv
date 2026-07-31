@@ -1939,19 +1939,21 @@ case 'uazapi_qr':
   if($slug){
     // SaaS tenant — UazAPI nativo (token header, mesmos endpoints do single-restaurant)
     if(!uazapi_configured()) json_out(['ok'=>false,'erro'=>'UazAPI não configurado no painel SaaS.']);
-    // Cria instância se ainda não existe token para este tenant
-    $saasWaTok=setting_get('saas_wa_token','');
-    if($saasWaTok===''){
-      $cr=uazapi_request('POST','/instance/create',['name'=>$slug]);
-      $saasWaTok=$cr['data']['instance']['token']??$cr['data']['token']??'';
-      if($saasWaTok===''){
-        $em=$cr['erro']?:('[HTTP '.$cr['status'].'] '.substr((string)($cr['raw']??''),0,300));
-        json_out(['ok'=>false,'erro'=>'Erro ao criar instância: '.$em]);
-      }
+    // Cria (ou recupera) instância para este tenant
+    $cr=uazapi_request('POST','/instance/create',['name'=>$slug]);
+    $saasWaTok=$cr['data']['instance']['token']??$cr['data']['token']??'';
+    if($saasWaTok!==''){
       setting_set('saas_wa_token',$saasWaTok);
-      // Registra webhook automaticamente
+      // Registra webhook ao criar
       $wbBase=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br');
       uazapi_instance_request($saasWaTok,'POST','/webhook',['enabled'=>true,'url'=>$wbBase.'/?r=webhook_uazapi&slug='.$slug,'events'=>['messages'],'excludeMessages'=>['wasSentByApi','fromMeYes','isGroupYes']]);
+    } else {
+      // instance/create não retornou token — pode já existir; tenta token armazenado
+      $saasWaTok=setting_get('saas_wa_token','');
+    }
+    if($saasWaTok===''){
+      $em=$cr['erro']?:('[HTTP '.$cr['status'].'] '.substr((string)($cr['raw']??''),0,300));
+      json_out(['ok'=>false,'erro'=>'Erro ao criar instância: '.$em]);
     }
     $r=uazapi_instance_request($saasWaTok,'POST','/instance/connect');
     $b64=$r['data']['instance']['qrcode']??'';
@@ -2028,17 +2030,15 @@ case 'uazapi_diag':
   if(!require_role('admin')) json_out(['ok'=>false,'erro'=>'acesso negado']);
   $slug=current_slug();
   $url=_uaz_cfg('saas_uaz_url'); $key=_uaz_cfg('saas_uaz_key');
-  $r=['slug'=>$slug,'saas_uaz_url'=>$url,'saas_uaz_key_set'=>$key!=='','uazapi_configured'=>uazapi_configured()];
+  $storedTok=setting_get('saas_wa_token','');
+  $r=['slug'=>$slug,'saas_uaz_url'=>$url,'saas_uaz_key_set'=>$key!=='','uazapi_configured'=>uazapi_configured(),'saas_wa_token_stored'=>$storedTok!==''?substr($storedTok,0,12).'...':'(vazio)'];
   if($url&&$key){
-    // Testa criação com token: header (formato nativo UazAPI)
-    $t=uazapi_request('POST','instance/create',['name'=>'diag-test-'.time()]);
+    $t=uazapi_request('POST','instance/create',['name'=>$slug.'-diag']);
     $r['create_status']=$t['status']; $r['create_raw']=substr((string)($t['raw']??''),0,500);
-    // Testa também com admintoken: header
-    $t2=_uazapi_curl($url,'instance/create','POST',['name'=>'diag2-'.time()],'admintoken: '.$key);
-    $r['admintoken_status']=$t2['status']; $r['admintoken_raw']=substr((string)($t2['raw']??''),0,300);
-    // Testa com apikey: header
-    $t3=_uazapi_curl($url,'instance/create','POST',['name'=>'diag3-'.time()],'apikey: '.$key);
-    $r['apikey_status']=$t3['status']; $r['apikey_raw']=substr((string)($t3['raw']??''),0,300);
+    if($storedTok!==''){
+      $tc=_uazapi_curl($url,'instance/connect','POST',null,'token: '.$storedTok);
+      $r['connect_status']=$tc['status']; $r['connect_raw']=substr((string)($tc['raw']??''),0,300);
+    }
   }
   json_out($r);
   break;
