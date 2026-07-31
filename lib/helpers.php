@@ -186,13 +186,6 @@ function evolution_delivery_alert($courier,$order){
 function setting_get($k,$def=''){
   $s=db()->prepare("SELECT valor FROM settings WHERE chave=?"); $s->execute([$k]); $r=$s->fetch();
   if($r!==false) return $r['valor'];
-  // Fallback: se há slug (tenant), verifica também o master db (caso setting tenha sido salva sem slug)
-  if(current_slug()!==''){
-    try{
-      $m=master_db()->prepare("SELECT valor FROM settings WHERE chave=?"); $m->execute([$k]); $r=$m->fetch();
-      if($r!==false) return $r['valor'];
-    }catch(Exception $e){}
-  }
   return $def;
 }
 function setting_set($k,$v){
