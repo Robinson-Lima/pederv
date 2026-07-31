@@ -116,12 +116,20 @@ function _uaz_cfg($k){
 function uazapi_configured(){
   return _uaz_cfg('saas_uaz_url')!=='' && _uaz_cfg('saas_uaz_key')!=='';
 }
+// Requisição com admin token (criação de instâncias)
 function uazapi_request($method,$path,$body=null){
   if(!uazapi_configured()||!function_exists('curl_init')) return ['ok'=>false,'erro'=>'uazapi não configurado.'];
-  $url=rtrim(_uaz_cfg('saas_uaz_url'),'/').'/'.ltrim($path,'/');
+  return _uazapi_curl(_uaz_cfg('saas_uaz_url'),$path,$method,$body,'token: '._uaz_cfg('saas_uaz_key'));
+}
+// Requisição com token da instância (connect, status, disconnect)
+function uazapi_instance_request($tok,$method,$path,$body=null){
+  if(!uazapi_configured()||!function_exists('curl_init')) return ['ok'=>false,'erro'=>'uazapi não configurado.'];
+  return _uazapi_curl(_uaz_cfg('saas_uaz_url'),$path,$method,$body,'token: '.$tok);
+}
+function _uazapi_curl($base,$path,$method,$body,$authHeader){
+  $url=rtrim($base,'/').'/'.ltrim($path,'/');
   $ch=curl_init($url);
-  $headers=['apikey: '._uaz_cfg('saas_uaz_key'),'Content-Type: application/json'];
-  curl_setopt_array($ch,[CURLOPT_CUSTOMREQUEST=>$method,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>6,CURLOPT_TIMEOUT=>20,CURLOPT_HTTPHEADER=>$headers]);
+  curl_setopt_array($ch,[CURLOPT_CUSTOMREQUEST=>$method,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>6,CURLOPT_TIMEOUT=>20,CURLOPT_HTTPHEADER=>[$authHeader,'Content-Type: application/json']]);
   if($body!==null)curl_setopt($ch,CURLOPT_POSTFIELDS,json_encode($body,JSON_UNESCAPED_UNICODE));
   $raw=curl_exec($ch);$code=(int)curl_getinfo($ch,CURLINFO_HTTP_CODE);$err=curl_error($ch);curl_close($ch);
   $data=json_decode((string)$raw,true);

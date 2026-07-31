@@ -1937,13 +1937,26 @@ case 'uazapi_qr':
   _start_session();
   $slug=current_slug();
   if($slug){
-    // SaaS tenant — fluxo original (Evolution-compatible endpoints)
-    if(!uazapi_configured()) json_out(['ok'=>false,'erro'=>'não configurado']);
-    uazapi_request('POST','instance/create',['instanceName'=>$slug,'integration'=>'WHATSAPP-BAILEYS','qrcode'=>true]);
-    $uazR=uazapi_request('GET','instance/'.$slug.'/qrcode');
-    $b64=$uazR['data']['base64']??$uazR['data']['qrcode']['base64']??$uazR['data']['code']??'';
-    $errMsg=$uazR['erro']?:($b64===''?('[HTTP '.$uazR['status'].'] '.substr((string)($uazR['raw']??''),0,300)):'');
-    json_out(['ok'=>$uazR['ok']&&$b64!=='','base64'=>$b64,'erro'=>$errMsg]);
+    // SaaS tenant — UazAPI nativo (token header, mesmos endpoints do single-restaurant)
+    if(!uazapi_configured()) json_out(['ok'=>false,'erro'=>'UazAPI não configurado no painel SaaS.']);
+    // Cria instância se ainda não existe token para este tenant
+    $saasWaTok=setting_get('saas_wa_token','');
+    if($saasWaTok===''){
+      $cr=uazapi_request('POST','/instance/create',['name'=>$slug]);
+      $saasWaTok=$cr['data']['token']??'';
+      if($saasWaTok===''){
+        $em=$cr['erro']?:('[HTTP '.$cr['status'].'] '.substr((string)($cr['raw']??''),0,300));
+        json_out(['ok'=>false,'erro'=>'Erro ao criar instância: '.$em]);
+      }
+      setting_set('saas_wa_token',$saasWaTok);
+      // Registra webhook automaticamente
+      $wbBase=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br');
+      uazapi_instance_request($saasWaTok,'POST','/webhook',['enabled'=>true,'url'=>$wbBase.'/?r=webhook_uazapi&slug='.$slug,'events'=>['messages'],'excludeMessages'=>['wasSentByApi','fromMeYes','isGroupYes']]);
+    }
+    $r=uazapi_instance_request($saasWaTok,'POST','/instance/connect');
+    $b64=$r['data']['instance']['qrcode']??'';
+    $em=$r['erro']?:($b64===''?('[HTTP '.$r['status'].'] '.substr((string)($r['raw']??''),0,300)):'');
+    json_out(['ok'=>$b64!=='','base64'=>$b64,'erro'=>$em]);
     break;
   }
   // Painel do restaurante — UazAPI nativa
@@ -1957,7 +1970,6 @@ case 'uazapi_qr':
     if(!$tok) json_out(['ok'=>false,'erro'=>'Erro ao criar instância: '.substr((string)($cr['raw']??''),0,200)]);
     setting_set('uaz_token',$tok);
     setting_set('uaz_instance_name',$instName);
-    // Registra webhook automaticamente ao criar a instância
     $wbBase=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br');
     uaz_r_request('POST','/webhook',['enabled'=>true,'url'=>$wbBase.'/?r=webhook_uazapi','events'=>['messages'],'excludeMessages'=>['wasSentByApi','fromMeYes','isGroupYes']]);
   }
@@ -1970,11 +1982,13 @@ case 'uazapi_status':
   _start_session();
   $slug=current_slug();
   if($slug){
-    // SaaS tenant — fluxo original
     if(!uazapi_configured()) json_out(['ok'=>true,'state'=>'not_configured','connected'=>false]);
-    $uazR=uazapi_request('GET','instance/'.$slug.'/connectionState');
-    $state=$uazR['data']['state']??$uazR['data']['connectionState']['state']??'close';
-    json_out(['ok'=>true,'state'=>$state,'connected'=>$state==='open']);
+    $saasWaTok=setting_get('saas_wa_token','');
+    if($saasWaTok==='') json_out(['ok'=>true,'state'=>'disconnected','connected'=>false]);
+    $r=uazapi_instance_request($saasWaTok,'GET','/instance/status');
+    $connected=(bool)($r['data']['status']['connected']??false);
+    $state=$r['data']['instance']['status']??($connected?'connected':'disconnected');
+    json_out(['ok'=>true,'state'=>$state,'connected'=>$connected]);
     break;
   }
   // Painel do restaurante
@@ -1989,7 +2003,12 @@ case 'uazapi_status':
 case 'uazapi_disconnect':
   _start_session();
   $slug=current_slug();
-  if($slug&&uazapi_configured()){ uazapi_request('DELETE','instance/'.$slug.'/logout'); json_out(['ok'=>true]); break; }
+  if($slug&&uazapi_configured()){
+    $saasWaTok=setting_get('saas_wa_token','');
+    if($saasWaTok!=='') uazapi_instance_request($saasWaTok,'POST','/instance/disconnect');
+    json_out(['ok'=>true]);
+    break;
+  }
   if(!$slug&&uaz_r_configured()) uaz_r_request('POST','/instance/disconnect');
   json_out(['ok'=>true]);
   break;
