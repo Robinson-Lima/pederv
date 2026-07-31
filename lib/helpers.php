@@ -287,22 +287,64 @@ function saas_logged(){ _start_session(); return !empty($_SESSION['saas_ok']); }
 function saas_require(){ if(!saas_logged()){ saas_render('saas_login',['erro'=>'']); exit; } }
 function saas_plan_price($plano){
   // Planos anuais armazenam o valor TOTAL anual (não mensal)
-  $defaults=['pro'=>'149.00','premium'=>'199.00','pro_anual'=>'1548.00','premium_anual'=>'2148.00'];
+  $defaults=['basico'=>'99.00','basico_anual'=>'954.00','pro'=>'149.00','premium'=>'199.00','pro_anual'=>'1548.00','premium_anual'=>'2148.00'];
   return (float)setting_get('saas_preco_'.$plano, $defaults[$plano]??'149.00');
 }
 function saas_plan_info($plano){
+  $pBas=saas_plan_price('basico'); $pBasAn=saas_plan_price('basico_anual');
   $pPro=saas_plan_price('pro'); $pPrem=saas_plan_price('premium');
   $pProAn=saas_plan_price('pro_anual'); $pPremAn=saas_plan_price('premium_anual');
   $map=[
-    'pro'           =>['label'=>'Pró',          'anual'=>false,'valor'=>$pPro,   'mensal'=>$pPro,               'economia'=>0],
-    'pro_anual'     =>['label'=>'Pró Anual',    'anual'=>true, 'valor'=>$pProAn, 'mensal'=>round($pProAn/12,2), 'economia'=>round($pPro*12-$pProAn,2)],
-    'premium'       =>['label'=>'Premium',       'anual'=>false,'valor'=>$pPrem,  'mensal'=>$pPrem,              'economia'=>0],
-    'premium_anual' =>['label'=>'Premium Anual','anual'=>true, 'valor'=>$pPremAn,'mensal'=>round($pPremAn/12,2),'economia'=>round($pPrem*12-$pPremAn,2)],
+    'basico'        =>['label'=>'Básico',        'anual'=>false,'valor'=>$pBas,   'mensal'=>$pBas,               'economia'=>0],
+    'basico_anual'  =>['label'=>'Básico Anual',  'anual'=>true, 'valor'=>$pBasAn, 'mensal'=>round($pBasAn/12,2), 'economia'=>round($pBas*12-$pBasAn,2)],
+    'pro'           =>['label'=>'Pró',           'anual'=>false,'valor'=>$pPro,   'mensal'=>$pPro,               'economia'=>0],
+    'pro_anual'     =>['label'=>'Pró Anual',     'anual'=>true, 'valor'=>$pProAn, 'mensal'=>round($pProAn/12,2), 'economia'=>round($pPro*12-$pProAn,2)],
+    'premium'       =>['label'=>'Premium',        'anual'=>false,'valor'=>$pPrem,  'mensal'=>$pPrem,              'economia'=>0],
+    'premium_anual' =>['label'=>'Premium Anual', 'anual'=>true, 'valor'=>$pPremAn,'mensal'=>round($pPremAn/12,2),'economia'=>round($pPrem*12-$pPremAn,2)],
   ];
   return $map[$plano]??$map['pro'];
 }
 function saas_plan_label($plano){
-  return ['pro'=>'Pró','pro_anual'=>'Pró Anual','premium'=>'Premium','premium_anual'=>'Premium Anual'][$plano]??'Pró';
+  return ['basico'=>'Básico','basico_anual'=>'Básico Anual','pro'=>'Pró','pro_anual'=>'Pró Anual','premium'=>'Premium','premium_anual'=>'Premium Anual'][$plano]??'Pró';
+}
+// Remove sufixo _anual para obter o plano base
+function saas_plan_base($plano){ return preg_replace('/_anual$/','',(string)$plano); }
+// Verifica se um plano dá acesso a uma feature (bot, cozinha)
+function saas_plan_feature_default($feat,$plano,$status){
+  if($status==='trial') return true;
+  $base=saas_plan_base($plano);
+  if($feat==='bot')     return $base!=='basico';  // básico não tem robô
+  if($feat==='cozinha') return $base==='premium'; // só premium tem cozinha (KDS)
+  return true;
+}
+// Retorna ['bot'=>bool,'cozinha'=>bool] do restaurante (plano + override manual)
+function client_features($slug){
+  static $cache=[];
+  $slug=(string)$slug;
+  if($slug==='') return ['bot'=>true,'cozinha'=>true];
+  if(isset($cache[$slug])) return $cache[$slug];
+  $f=['bot'=>true,'cozinha'=>true];
+  try{
+    $q=master_db()->prepare("SELECT status,plano,feat_bot,feat_cozinha FROM saas_clients WHERE slug=? LIMIT 1");
+    $q->execute([$slug]); $c=$q->fetch();
+    if($c){
+      if($c['status']==='trial'){ $f=['bot'=>true,'cozinha'=>true]; }
+      else{
+        $f['bot']     = $c['feat_bot']===null     ? saas_plan_feature_default('bot',$c['plano'],$c['status'])     : ((int)$c['feat_bot']===1);
+        $f['cozinha'] = $c['feat_cozinha']===null ? saas_plan_feature_default('cozinha',$c['plano'],$c['status']) : ((int)$c['feat_cozinha']===1);
+      }
+    }
+  }catch(\Throwable $e){}
+  return $cache[$slug]=$f;
+}
+// Robô só responde se o plano libera E o cliente ativou
+function tenant_bot_active(){
+  return setting_get('wa_bot_active','0')==='1' && client_features(current_slug())['bot'];
+}
+// Pula a cozinha (KDS) se o cliente marcou OU se o plano não libera cozinha
+function tenant_skip_kds(){
+  if(setting_get('skip_kds','0')==='1') return true;
+  return !client_features(current_slug())['cozinha'];
 }
 
 // Recalcula o status de cada cliente: aplica bloqueio automático 15 dias após o
@@ -347,6 +389,8 @@ function saas_metrics(){
     SUM(CASE WHEN status='ativo' AND plano NOT LIKE '%_anual' THEN valor_mensal
              WHEN status='ativo' AND plano     LIKE '%_anual' THEN valor_mensal/12.0
              ELSE 0 END) mrr,
+    SUM(status='ativo' AND plano='basico') basico,
+    SUM(status='ativo' AND plano='basico_anual') basico_anual,
     SUM(status='ativo' AND plano='pro') pro,
     SUM(status='ativo' AND plano='premium') premium,
     SUM(status='ativo' AND plano='pro_anual') pro_anual,

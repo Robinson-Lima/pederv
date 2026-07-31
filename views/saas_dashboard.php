@@ -19,18 +19,22 @@ function saas_status_pill($s){
 <div class="saas-cols">
   <section class="saas-panel">
     <div class="saas-panel-h"><b>Planos ativos</b></div>
-    <?php $tot=max(1,$m['pro']+$m['premium']+$m['pro_anual']+$m['premium_anual']); ?>
+    <?php $tot=max(1,$m['basico']+$m['basico_anual']+$m['pro']+$m['premium']+$m['pro_anual']+$m['premium_anual']); ?>
     <div class="plan-bar">
+      <div class="plan-row"><span>Básico mensal</span><div class="bar"><i style="width:<?= round($m['basico']/$tot*100) ?>%;background:#64748b"></i></div><b><?= $m['basico'] ?></b></div>
+      <div class="plan-row"><span>Básico anual</span><div class="bar"><i style="width:<?= round($m['basico_anual']/$tot*100) ?>%;background:#94a3b8"></i></div><b><?= $m['basico_anual'] ?></b></div>
       <div class="plan-row"><span>Pró mensal</span><div class="bar"><i style="width:<?= round($m['pro']/$tot*100) ?>%"></i></div><b><?= $m['pro'] ?></b></div>
       <div class="plan-row"><span>Pró anual</span><div class="bar" style=""><i style="width:<?= round($m['pro_anual']/$tot*100) ?>%;background:#16a06d"></i></div><b><?= $m['pro_anual'] ?></b></div>
       <div class="plan-row"><span>Premium mensal</span><div class="bar prem"><i style="width:<?= round($m['premium']/$tot*100) ?>%"></i></div><b><?= $m['premium'] ?></b></div>
       <div class="plan-row"><span>Premium anual</span><div class="bar prem"><i style="width:<?= round($m['premium_anual']/$tot*100) ?>%;background:#c2410c"></i></div><b><?= $m['premium_anual'] ?></b></div>
     </div>
     <div class="plan-prices" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:12px;color:#6b7280;margin-top:12px">
+      <span>Básico <?= money(saas_plan_price('basico')) ?>/mês</span>
+      <span>Assinatura BASICO Anual <?= money(saas_plan_price('basico_anual')) ?>/ano</span>
       <span>Pró <?= money(saas_plan_price('pro')) ?>/mês</span>
-      <span>Pró Anual <?= money(saas_plan_price('pro_anual')) ?>/mês</span>
+      <span>Assinatura Pró Anual <?= money(saas_plan_price('pro_anual')) ?>/ano</span>
       <span>Premium <?= money(saas_plan_price('premium')) ?>/mês</span>
-      <span>Premium Anual <?= money(saas_plan_price('premium_anual')) ?>/mês</span>
+      <span>Assinatura Premium Anual <?= money(saas_plan_price('premium_anual')) ?>/ano</span>
     </div>
   </section>
 

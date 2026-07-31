@@ -127,6 +127,8 @@ $pi=saas_plan_info($c['plano']);
         <label>Cidade<input name="cidade" value="<?= e($c['cidade']) ?>"></label>
         <label>UF<input name="uf" maxlength="2" value="<?= e($c['uf']) ?>"></label>
         <label>Plano<select name="plano">
+          <option value="basico" <?= $c['plano']==='basico'?'selected':'' ?>>Básico — R$ 99/mês (sem robô)</option>
+          <option value="basico_anual" <?= $c['plano']==='basico_anual'?'selected':'' ?>>Básico Anual — R$ 954/ano</option>
           <option value="pro" <?= $c['plano']==='pro'?'selected':'' ?>>Pró — R$ 149/mês</option>
           <option value="pro_anual" <?= $c['plano']==='pro_anual'?'selected':'' ?>>Pró Anual — R$ 1.548/ano · 12× R$ 129 · Economize R$ 240</option>
           <option value="premium" <?= $c['plano']==='premium'?'selected':'' ?>>Premium — R$ 199/mês</option>

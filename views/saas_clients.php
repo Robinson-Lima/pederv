@@ -58,7 +58,9 @@ function saas_status_pill($s){
         <label>UF<input name="uf" maxlength="2"></label>
         <label>Plano
           <select name="plano">
-            <option value="pro">Pró — <?= money(saas_plan_price('pro')) ?>/mês</option>
+            <option value="basico">Básico — <?= money(saas_plan_price('basico')) ?>/mês (sem robô)</option>
+            <option value="basico_anual">Básico Anual — <?= money(saas_plan_price('basico_anual')) ?>/ano</option>
+            <option value="pro" selected>Pró — <?= money(saas_plan_price('pro')) ?>/mês</option>
             <option value="pro_anual">Pró Anual — <?= money(saas_plan_price('pro_anual')) ?>/ano</option>
             <option value="premium">Premium — <?= money(saas_plan_price('premium')) ?>/mês</option>
             <option value="premium_anual">Premium Anual — <?= money(saas_plan_price('premium_anual')) ?>/ano</option>
