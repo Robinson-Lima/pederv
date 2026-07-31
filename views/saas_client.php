@@ -97,9 +97,13 @@ $pi=saas_plan_info($c['plano']);
     <div class="saas-panel danger-zone">
       <div class="saas-panel-h"><b>Excluir permanentemente</b></div>
       <p style="font-size:.85rem;color:var(--muted);margin:0 0 .75rem">Remove o cliente e todo o histórico de pagamentos. Irreversível.</p>
-      <form method="post" action="?r=saas_delete_client" onsubmit="return confirm('Excluir PERMANENTEMENTE <?= e($c['restaurante']) ?> e todo o histórico? Não pode ser desfeito.')">
+      <form method="post" action="?r=saas_delete_client" onsubmit="
+        var nome=document.getElementById('confirmDelNome').value.trim();
+        if(nome!=='<?= addslashes($c['restaurante']) ?>'){alert('Nome digitado não confere. Nenhum dado foi apagado.');return false;}
+        return true;">
         <?= saas_csrf_field() ?>
         <input type="hidden" name="id" value="<?= $c['id'] ?>">
+        <label style="font-size:.82rem;margin:0 0 8px;display:block">Digite <b><?= e($c['restaurante']) ?></b> para confirmar:<input id="confirmDelNome" placeholder="<?= e($c['restaurante']) ?>" autocomplete="off" style="margin-top:4px"></label>
         <button class="saas-btn danger full">🗑️ Excluir permanentemente</button>
       </form>
     </div>

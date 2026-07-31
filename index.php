@@ -84,6 +84,7 @@ case 'saas_subscribe':
 // ---------- CADASTRO PÚBLICO (teste grátis 7 dias) ----------
 // Cria o cliente trial no master e provisiona o painel na hora.
 case 'saas_signup':
+  saas_rate_limit_check('signup', 5, 3600);
   $nome=trim($_POST['nome']??'');
   $email=strtolower(trim($_POST['email']??''));
   $senha=(string)($_POST['senha']??'');
@@ -111,6 +112,7 @@ case 'saas_signup':
   master_db()->prepare("INSERT INTO saas_clients(restaurante,responsavel,email,whatsapp,plano,valor_mensal,dia_vencimento,status,trial_ate,slug,obs) VALUES(?,?,?,?,?,?,10,'trial',?,?,?)")
     ->execute([$rest,$nome,$email,$whats,$planoDB,$preco,$trialAte,$slug,$obs]);
   saas_provision_tenant($slug,$email,$senha,$rest);
+  saas_rate_limit_fail([],'signup',5,3600);
   $scheme=(!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off')?'https':'http';
   $host=$_SERVER['HTTP_HOST']??'pederv.com.br';
   $painelUrl=$scheme.'://'.$host.'/painel/'.$slug;
@@ -1020,7 +1022,8 @@ case 'webhook_evolution':
               $humanTimeout=(int)setting_get('saas_human_timeout','4');
               if($convMode==='human'&&$humanTimeout>0&&$lastHuman>0&&(time()-$lastHuman)>($humanTimeout*3600))$convMode='bot';
               if($convMode==='human'){
-                // Conversa em modo humano — robô não responde
+                // DATA-08: resetar timeout a cada mensagem recebida no modo humano
+                master_db()->prepare("UPDATE saas_conv_state SET last_human=? WHERE phone=?")->execute([time(),$waNum]);
               } else {
                 // Detectar pedido de atendente humano
                 $isHumanReq=false;
@@ -1035,7 +1038,10 @@ case 'webhook_evolution':
                 $isNoMatch=false;
                 if($reply===''&&!$isHumanReq){$isNoMatch=true;$reply="Olá! 😊 Deixa eu chamar um de nossos consultores para te atender. Um momento!";}
                 if($reply!==''&&$saasUrl&&$saasKey&&$saasInst){
-                  $reply=str_replace(['{NOME}','{SAUDACAO}','{PLANO}','{TRIAL_DIAS}','{LINK_SITE}'],[$nome?:'cliente',$saudacao,'Pró',setting_get('saas_trial_dias','7'),setting_get('saas_site_url','https://pederv.com.br')],$reply);
+                  // DATA-07: resolver {PLANO} pelo numero do cliente
+                  $planoCli='Pró';
+                  try{ $pcq=master_db()->prepare("SELECT plano FROM saas_clients WHERE REPLACE(REPLACE(REPLACE(REPLACE(whatsapp,' ',''),'-',''),'(',''),')','') LIKE ? LIMIT 1"); $pcq->execute(['%'.substr($waNum,-10)]); $pcr=$pcq->fetch(); if($pcr) $planoCli=saas_plan_label($pcr['plano']??'pro'); }catch(Exception $_pe){}
+                  $reply=str_replace(['{NOME}','{SAUDACAO}','{PLANO}','{TRIAL_DIAS}','{LINK_SITE}'],[$nome?:'cliente',$saudacao,$planoCli,setting_get('saas_trial_dias','7'),setting_get('saas_site_url','https://pederv.com.br')],$reply);
                   // Mostrar "digitando..." antes de responder
                   $chTyp=curl_init(rtrim($saasUrl,'/').'/chat/sendPresence/'.rawurlencode($saasInst));
                   curl_setopt_array($chTyp,[CURLOPT_CUSTOMREQUEST=>'POST',CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>4,CURLOPT_TIMEOUT=>5,CURLOPT_HTTPHEADER=>['apikey: '.$saasKey,'Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode(['number'=>$waNum,'presence'=>'composing','delay'=>1500],JSON_UNESCAPED_UNICODE)]);
@@ -1790,7 +1796,9 @@ case 'saas_pay':
   $q=db()->prepare("SELECT valor_mensal FROM saas_clients WHERE id=?"); $q->execute([$cid]); $cl=$q->fetch();
   $valor=$_POST['valor']!==''?(float)str_replace(',','.',$_POST['valor']):(float)($cl['valor_mensal']??0);
   if($valor<=0){ redirect('?r=saas_client&id='.$cid); break; }
-  saas_registrar_pagamento($cid,$valor,in_array($_POST['metodo']??'pix',['pix','cartao','boleto','dinheiro','transferencia'],true)?$_POST['metodo']:'pix',trim($_POST['obs']??''));
+  $metodo=in_array($_POST['metodo']??'pix',['pix','cartao','boleto','dinheiro','transferencia'],true)?$_POST['metodo']:'pix';
+  if(saas_registrar_pagamento($cid,$valor,$metodo,trim($_POST['obs']??'')))
+    saas_audit('pagamento',$cid,"R\${$valor} via {$metodo}");
   redirect('?r=saas_client&id='.$cid.'&ok=pago');
   break;
 
@@ -1798,6 +1806,7 @@ case 'saas_block':
   saas_require(); saas_csrf_check();
   $cid=(int)($_POST['id']??0);
   db()->prepare("UPDATE saas_clients SET status='bloqueado', bloqueio_manual=1, bloqueado_em=datetime('now','localtime') WHERE id=?")->execute([$cid]);
+  saas_audit('bloqueio',$cid,'manual');
   redirect('?r=saas_client&id='.$cid.'&ok=bloqueado');
   break;
 
@@ -1807,6 +1816,7 @@ case 'saas_unblock':
   $q=db()->prepare("SELECT * FROM saas_clients WHERE id=?"); $q->execute([$cid]); $c=$q->fetch();
   $prox = (!empty($c['proximo_venc']) && $c['proximo_venc']>=date('Y-m-d')) ? $c['proximo_venc'] : date('Y-m-d', strtotime('+7 days'));
   db()->prepare("UPDATE saas_clients SET status='ativo', bloqueio_manual=0, bloqueado_em=NULL, proximo_venc=? WHERE id=?")->execute([$prox,$cid]);
+  saas_audit('desbloqueio',$cid);
   redirect('?r=saas_client&id='.$cid.'&ok=desbloqueado');
   break;
 
@@ -1814,15 +1824,16 @@ case 'saas_cancel':
   saas_require(); saas_csrf_check();
   $cid=(int)($_POST['id']??0);
   db()->prepare("UPDATE saas_clients SET status='cancelado', bloqueado_em=datetime('now','localtime') WHERE id=?")->execute([$cid]);
+  saas_audit('cancelamento',$cid);
   redirect('?r=saas_client&id='.$cid.'&ok=cancelado');
   break;
 
 case 'saas_delete_client':
   saas_require(); saas_csrf_check();
   $cid=(int)($_POST['id']??0);
-  $c=db()->prepare("SELECT slug,status FROM saas_clients WHERE id=?"); $c->execute([$cid]); $row=$c->fetch();
+  $c=db()->prepare("SELECT slug,status,restaurante FROM saas_clients WHERE id=?"); $c->execute([$cid]); $row=$c->fetch();
   if($row && $row['status']==='cancelado'){
-    // DATA-05: preserva histórico de pagamentos (não deleta saas_payments)
+    saas_audit('exclusao',$cid,$row['restaurante']??'');
     db()->prepare("DELETE FROM saas_clients WHERE id=?")->execute([$cid]);
   }
   redirect('?r=saas_clients');
@@ -1833,12 +1844,13 @@ case 'saas_estorno':
   $pid=(int)($_POST['payment_id']??0);
   $cid=(int)($_POST['client_id']??0);
   if($pid && $cid){
-    // BIZ-03: recalcula proximo_venc após estorno
+    $payRow=db()->prepare("SELECT valor,metodo FROM saas_payments WHERE id=?"); $payRow->execute([$pid]); $payRow=$payRow->fetch();
     db()->prepare("DELETE FROM saas_payments WHERE id=?")->execute([$pid]);
+    if($payRow) saas_audit('estorno',$cid,"R\${$payRow['valor']} via {$payRow['metodo']}");
     $cli=db()->prepare("SELECT * FROM saas_clients WHERE id=?"); $cli->execute([$cid]); $cli=$cli->fetch();
     if($cli){
       $lp=db()->prepare("SELECT pago_em FROM saas_payments WHERE client_id=? AND status='pago' ORDER BY id DESC LIMIT 1"); $lp->execute([$cid]); $lp=$lp->fetch();
-      if($lp){ $base=date('Y-m-d',strtotime($lp['pago_em'])); $prox=date('Y-m-d',strtotime($base.(strpos($cli['plano']??'','_anual')!==false?' +1 year':' +1 month')));
+      if($lp){ $base=date('Y-m-d',strtotime($lp['pago_em'])); $prox=_venc_prox($base,$cli['plano']??'pro',$cli['dia_vencimento']??10);
         db()->prepare("UPDATE saas_clients SET proximo_venc=? WHERE id=?")->execute([$prox,$cid]);
       } else { db()->prepare("UPDATE saas_clients SET proximo_venc=NULL WHERE id=?")->execute([$cid]); }
       saas_refresh_status();

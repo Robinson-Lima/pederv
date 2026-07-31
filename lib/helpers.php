@@ -256,26 +256,28 @@ function saas_csrf_check(){
   }
 }
 
-function saas_rate_limit_check(){
+function _rl_file($action='login'){
   $ip=preg_replace('/[^0-9a-f:.\[\]]/','',strtolower($_SERVER['REMOTE_ADDR']??'0'));
-  $f=__DIR__.'/../data/rl_'.md5($ip).'.json';
-  $d=json_decode(@file_get_contents($f)?:'{}',true)??[];
+  return __DIR__.'/../data/rl_'.md5($action.$ip).'.json';
+}
+function saas_rate_limit_check($action='login',$max=5,$window=900){
+  $f=_rl_file($action); $d=json_decode(@file_get_contents($f)?:'{}',true)??[];
   if(($d['until']??0)>time()){
     $mins=ceil(($d['until']-time())/60);
-    saas_render('saas_login',['erro'=>"Muitas tentativas. Aguarde {$mins} minuto(s)."]); exit;
+    $msg="Muitas tentativas. Aguarde {$mins} minuto(s).";
+    if($action==='signup'){ header('Content-Type:application/json'); echo json_encode(['ok'=>false,'erro'=>$msg]); exit; }
+    saas_render('saas_login',['erro'=>$msg]); exit;
   }
   return $d;
 }
-function saas_rate_limit_fail(array $d){
-  $ip=preg_replace('/[^0-9a-f:.\[\]]/','',strtolower($_SERVER['REMOTE_ADDR']??'0'));
-  $f=__DIR__.'/../data/rl_'.md5($ip).'.json';
+function saas_rate_limit_fail(array $d,$action='login',$max=5,$window=900){
+  $f=_rl_file($action);
   $d['fails']=($d['fails']??0)+1;
-  if($d['fails']>=5){ $d=['fails'=>0,'until'=>time()+900]; }
+  if($d['fails']>=$max){ $d=['fails'=>0,'until'=>time()+$window]; }
   file_put_contents($f,json_encode($d));
 }
-function saas_rate_limit_reset(){
-  $ip=preg_replace('/[^0-9a-f:.\[\]]/','',strtolower($_SERVER['REMOTE_ADDR']??'0'));
-  @unlink(__DIR__.'/../data/rl_'.md5($ip).'.json');
+function saas_rate_limit_reset($action='login'){
+  @unlink(_rl_file($action));
 }
 function saas_render($name,$vars=[]){
   $content = view($name,$vars);
@@ -334,27 +336,33 @@ function saas_dias_venc($c){
   return (int)floor((strtotime(date('Y-m-d'))-strtotime($ref))/86400);
 }
 function saas_metrics(){
-  $d=db();
-  $rows=$d->query("SELECT plano,status,valor_mensal FROM saas_clients")->fetchAll();
-  $m=['total'=>0,'ativos'=>0,'trial'=>0,'bloqueados'=>0,'cancelados'=>0,'mrr'=>0,'pro'=>0,'premium'=>0,'pro_anual'=>0,'premium_anual'=>0,'inadimplentes'=>0];
-  foreach($rows as $r){
-    $m['total']++;
-    if($r['status']==='ativo'){ $m['ativos']++; $m['mrr']+=(strpos($r['plano']??'','_anual')!==false?(float)$r['valor_mensal']/12:(float)$r['valor_mensal']); }
-    elseif($r['status']==='trial') $m['trial']++;
-    elseif($r['status']==='bloqueado'){ $m['bloqueados']++; $m['inadimplentes']++; }
-    elseif($r['status']==='cancelado') $m['cancelados']++;
-    if($r['status']==='ativo'){
-      $p=$r['plano'];
-      if($p==='premium_anual') $m['premium_anual']++;
-      elseif($p==='pro_anual') $m['pro_anual']++;
-      elseif($p==='premium') $m['premium']++;
-      else $m['pro']++;
-    }
-  }
-  $mes=date('Y-m');
-  $m['receita_mes']=(float)($d->query("SELECT COALESCE(SUM(valor),0) v FROM saas_payments WHERE status='pago' AND substr(pago_em,1,7)='$mes'")->fetch()['v'] ?? 0);
-  $m['receita_total']=(float)($d->query("SELECT COALESCE(SUM(valor),0) v FROM saas_payments WHERE status='pago'")->fetch()['v'] ?? 0);
+  $d=db(); $mes=date('Y-m');
+  $r=$d->query("SELECT
+    COUNT(*) total,
+    SUM(status='ativo') ativos,
+    SUM(status='trial') trial,
+    SUM(status='bloqueado') bloqueados,
+    SUM(status='cancelado') cancelados,
+    SUM(status='bloqueado') inadimplentes,
+    SUM(CASE WHEN status='ativo' AND plano NOT LIKE '%_anual' THEN valor_mensal
+             WHEN status='ativo' AND plano     LIKE '%_anual' THEN valor_mensal/12.0
+             ELSE 0 END) mrr,
+    SUM(status='ativo' AND plano='pro') pro,
+    SUM(status='ativo' AND plano='premium') premium,
+    SUM(status='ativo' AND plano='pro_anual') pro_anual,
+    SUM(status='ativo' AND plano='premium_anual') premium_anual
+    FROM saas_clients")->fetch();
+  $m=array_map(fn($v)=>(int)$v??0,(array)$r);
+  $m['mrr']=(float)($r['mrr']??0);
+  $m['receita_mes']=(float)($d->query("SELECT COALESCE(SUM(valor),0) v FROM saas_payments WHERE status='pago' AND substr(pago_em,1,7)='$mes'")->fetch()['v']??0);
+  $m['receita_total']=(float)($d->query("SELECT COALESCE(SUM(valor),0) v FROM saas_payments WHERE status='pago'")->fetch()['v']??0);
   return $m;
+}
+function saas_audit($action,$clientId,$details=''){
+  try{
+    master_db()->exec("CREATE TABLE IF NOT EXISTS saas_audit_log(id INTEGER PRIMARY KEY AUTOINCREMENT,action TEXT,client_id INTEGER,details TEXT,user_ip TEXT,ts TEXT DEFAULT(datetime('now','localtime')))");
+    master_db()->prepare("INSERT INTO saas_audit_log(action,client_id,details,user_ip) VALUES(?,?,?,?)")->execute([$action,(int)$clientId,$details,$_SERVER['REMOTE_ADDR']??'']);
+  }catch(Exception $e){}
 }
 // Calcula a data de vencimento ancorando ao dia fixo do cliente.
 function _venc_prox($base,$plano,$dia){
