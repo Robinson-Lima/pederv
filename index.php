@@ -233,7 +233,7 @@ case 'order_create': // POST JSON {itens:[{id,qtd}], nome, fone, endereco, metod
     $frete = $fr['taxa']; $zonaNome = $fr['zona'];
     $total += $frete;
   }
-  $metodosPermitidos=['pix','pix_entrega','cartao_online','cartao_entrega','dinheiro','mesa'];
+  $metodosPermitidos=['pix','pix_entrega','cartao_online','online','cartao_entrega','dinheiro','mesa'];
   $metodo = $tipo==='mesa' ? 'mesa' : (in_array($in['metodo'] ?? '',$metodosPermitidos,true) ? $in['metodo'] : 'pix');
   $nomePedido = $tipo==='mesa' ? 'Mesa '.$mesaQr : ($in['nome']??'Cliente');
 
@@ -717,6 +717,68 @@ case 'admin_delivery_mode': // POST motoboy_app_off -> liga/desliga o app do mot
   if(!require_role('admin')){ redirect('?r=admin_couriers'); }
   setting_set('motoboy_app_off', (($_POST['motoboy_app_off']??'0')==='1')?'1':'0');
   redirect('?r=admin_couriers');
+  break;
+
+case 'order_checkout_link': // GET id -> gera link de pagamento InfinitePay e retorna JSON {ok, checkout_url}
+  $id=(int)($_GET['id']??0);
+  $o=db()->prepare("SELECT * FROM orders WHERE id=?"); $o->execute([$id]); $o=$o->fetch();
+  if(!$o) json_out(['ok'=>false,'erro'=>'Pedido não encontrado.']);
+  $handle=preg_replace('/[^a-zA-Z0-9_.-]/','',(string)setting_get('gw_infinitepay_handle',''));
+  if($handle==='') json_out(['ok'=>false,'erro'=>'O restaurante ainda não configurou a tag InfinitePay.']);
+  $itensQ=db()->prepare("SELECT nome,qtd,preco FROM order_items WHERE order_id=?"); $itensQ->execute([$id]);
+  $items=[];
+  foreach($itensQ->fetchAll() as $it){
+    $items[]=['description'=>$it['nome'],'quantity'=>(int)$it['qtd'],'price'=>(int)round($it['preco']*100*$it['qtd']/$it['qtd'])];
+  }
+  if(!$items) $items=[['description'=>'Pedido '.$o['codigo'],'quantity'=>1,'price'=>(int)round($o['total']*100)]];
+  $scheme=(!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off')?'https':'http';
+  $host=$_SERVER['HTTP_HOST']??'pederv.com.br';
+  $slug=current_slug();
+  $returnUrl=$scheme.'://'.$host.'/cardapio/'.$slug.'?r=order_payment_return&id='.$id;
+  $webhookUrl=$scheme.'://'.$host.'/cardapio/'.$slug.'?r=infinitepay_webhook';
+  $payload=['handle'=>$handle,'order_nsu'=>(string)$o['id'],'items'=>$items,'redirect_url'=>$returnUrl,'webhook_url'=>$webhookUrl];
+  $customerName=trim($o['cliente_nome']??'');
+  $customerPhone=trim($o['cliente_fone']??'');
+  if($customerName!==''||$customerPhone!==''){
+    $payload['customer']=[];
+    if($customerName!=='') $payload['customer']['name']=$customerName;
+    if($customerPhone!=='') $payload['customer']['phone_number']=$customerPhone;
+  }
+  $ch=curl_init('https://api.checkout.infinitepay.io/links');
+  curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_HTTPHEADER=>['Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode($payload),CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>15]);
+  $resp=curl_exec($ch); $httpCode=curl_getinfo($ch,CURLINFO_HTTP_CODE); curl_close($ch);
+  $data=json_decode($resp,true);
+  if($httpCode>=200 && $httpCode<300 && !empty($data['checkout_url'])){
+    json_out(['ok'=>true,'checkout_url'=>$data['checkout_url']]);
+  }
+  $erro=$data['message']??$data['error']??'Erro ao gerar link de pagamento (HTTP '.$httpCode.').';
+  json_out(['ok'=>false,'erro'=>$erro]);
+  break;
+
+case 'order_payment_return': // GET id + query params da InfinitePay -> página de retorno após pagamento
+  $id=(int)($_GET['id']??0);
+  $o=db()->prepare("SELECT * FROM orders WHERE id=?"); $o->execute([$id]); $o=$o->fetch();
+  if(!$o){ echo '<p>Pedido não encontrado.</p>'; break; }
+  $transNsu=$_GET['transaction_nsu']??'';
+  $ipaySlug=$_GET['slug']??'';
+  $captureMethod=$_GET['capture_method']??'';
+  $receiptUrl=$_GET['receipt_url']??'';
+  if($transNsu!==''&&$o['pagamento_status']!=='pago'){
+    $handle=preg_replace('/[^a-zA-Z0-9_.-]/','',(string)setting_get('gw_infinitepay_handle',''));
+    $checkPayload=['handle'=>$handle,'order_nsu'=>(string)$o['id'],'transaction_nsu'=>$transNsu,'slug'=>$ipaySlug];
+    $ch=curl_init('https://api.checkout.infinitepay.io/payment_check');
+    curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_HTTPHEADER=>['Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode($checkPayload),CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>10]);
+    $resp=curl_exec($ch); curl_close($ch);
+    $check=json_decode($resp,true);
+    if(!empty($check['approved'])||!empty($check['paid'])||($check['status']??'')==='approved'){
+      db()->prepare("UPDATE orders SET pagamento_provider_id=?,pagamento_origem='infinitepay_return' WHERE id=?")->execute([$transNsu,$id]);
+      order_mark_paid($id);
+    }
+  }
+  $o=db()->prepare("SELECT * FROM orders WHERE id=?"); $o->execute([$id]); $o=$o->fetch();
+  $pago=$o['pagamento_status']==='pago';
+  $statusUrl='?r=order_status&id='.$id;
+  render('order_payment_return',['order'=>$o,'pago'=>$pago,'receipt_url'=>$receiptUrl,'status_url'=>$statusUrl]);
   break;
 
 case 'admin_caixa': // aba Caixa (abrir, movimentar, fechar)
@@ -1658,6 +1720,20 @@ case 'courier_delivered': // ⭐ POST id  -> motoboy marca entregue -> aparece n
   break;
 
 // ---------- WEBHOOKS ----------
+case 'infinitepay_webhook': // POST -> InfinitePay envia notificação de pagamento aprovado
+  $in=json_decode(file_get_contents('php://input'),true)?:[];
+  $orderNsu=(string)($in['order_nsu']??'');
+  $transNsu=(string)($in['transaction_nsu']??'');
+  if($orderNsu===''||$transNsu===''){http_response_code(400);json_out(['ok'=>false,'erro'=>'Campos obrigatórios ausentes.']);}
+  $q=db()->prepare("SELECT * FROM orders WHERE id=?"); $q->execute([(int)$orderNsu]); $o=$q->fetch();
+  if(!$o){http_response_code(400);json_out(['ok'=>false,'erro'=>'Pedido não encontrado.']);}
+  if($o['pagamento_status']==='pago') json_out(['ok'=>true,'already_paid'=>true]);
+  db()->prepare("UPDATE orders SET pagamento_provider_id=?,pagamento_origem='infinitepay_webhook' WHERE id=?")->execute([$transNsu,$o['id']]);
+  order_mark_paid((int)$o['id']);
+  n8n_event('payment_confirmed',['pedido'=>$o,'provider'=>'infinitepay']);
+  json_out(['ok'=>true,'order_id'=>(int)$o['id']]);
+  break;
+
 case 'payment_webhook':
   $in=json_decode(file_get_contents('php://input'),true)?:$_POST;
   $secret=(string)($_SERVER['HTTP_X_RV_WEBHOOK_SECRET']??($in['secret']??''));

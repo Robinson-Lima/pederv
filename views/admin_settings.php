@@ -21,19 +21,26 @@
 
         <div class="cfgcard">
           <h3>💳 Gateway de pagamento</h3>
-          <p>Cartão/boleto via adquirente (o Pix direto continua sem taxa).</p>
+          <p>Receba cartão online dos seus clientes (o Pix direto continua sem taxa).</p>
           <label>Gateway</label>
-          <select name="s[gw_nome]">
+          <select name="s[gw_nome]" id="gw_nome" onchange="showGwFields()">
             <?php $gw=setting_get('gw_nome','Mercado Pago');
-              foreach(['Mercado Pago','Pagar.me','Stripe','PagSeguro','InfinitPay'] as $g): ?>
+              foreach(['Mercado Pago','Pagar.me','Stripe','PagSeguro','InfinitePay'] as $g): ?>
               <option <?= $gw===$g?'selected':'' ?>><?= $g ?></option>
             <?php endforeach; ?>
           </select>
-          <label>Public Key</label>
-          <input name="s[gw_public_key]" value="<?= e(setting_get('gw_public_key')) ?>" placeholder="APP_USR-...">
-          <label>Access Token (chave secreta)</label>
-          <input name="s[gw_access_token]" type="password" value="<?= e(setting_get('gw_access_token')) ?>" placeholder="token secreto">
-          <div class="warnmini">⚠ Nunca compartilhe suas chaves. Ficam salvas no banco do servidor.</div>
+          <div id="gw-infinitepay" style="<?= $gw==='InfinitePay'?'':'display:none' ?>">
+            <label>Sua InfiniteTag (sem o $)</label>
+            <input name="s[gw_infinitepay_handle]" value="<?= e(setting_get('gw_infinitepay_handle','')) ?>" placeholder="ex: meunegocio">
+            <div class="warnmini">É o nome que aparece no canto superior do app InfinitePay. O cliente será redirecionado para a página segura da InfinitePay para pagar.</div>
+          </div>
+          <div id="gw-apikeys" style="<?= $gw==='InfinitePay'?'display:none':'' ?>">
+            <label>Public Key</label>
+            <input name="s[gw_public_key]" value="<?= e(setting_get('gw_public_key')) ?>" placeholder="APP_USR-...">
+            <label>Access Token (chave secreta)</label>
+            <input name="s[gw_access_token]" type="password" value="<?= e(setting_get('gw_access_token')) ?>" placeholder="token secreto">
+            <div class="warnmini">⚠ Nunca compartilhe suas chaves. Ficam salvas no banco do servidor.</div>
+          </div>
         </div>
 
         <div class="cfgcard">
@@ -203,6 +210,12 @@ function addBot(){
   const d=document.createElement('div'); d.className='botrow';
   d.innerHTML='<input name="bot_gatilho[]" placeholder="palavra1|palavra2"><textarea name="bot_resposta[]" rows="2" placeholder="Resposta pronta"></textarea>';
   document.getElementById('botlist').appendChild(d);
+}
+function showGwFields(){
+  const v=document.getElementById('gw_nome').value;
+  const ip=document.getElementById('gw-infinitepay'), ak=document.getElementById('gw-apikeys');
+  if(ip) ip.style.display=v==='InfinitePay'?'block':'none';
+  if(ak) ak.style.display=v==='InfinitePay'?'none':'block';
 }
 function showDriver(){
   const v=document.getElementById('nf_driver').value;

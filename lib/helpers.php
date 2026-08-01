@@ -472,7 +472,7 @@ function order_mark_paid($orderId){
 }
 
 function payment_is_online($method){
-  return in_array((string)$method,['pix','cartao_online'],true);
+  return in_array((string)$method,['pix','cartao_online','online'],true);
 }
 function payment_blocks_completion($order){
   return $order && payment_is_online($order['pagamento_metodo']??'') && ($order['pagamento_status']??'pendente')!=='pago';
@@ -484,7 +484,7 @@ function payment_situation_label($order){
 }
 
 function payment_label($method){
-  return ['pix'=>'Pix online','pix_entrega'=>'Pix na entrega','debito'=>'Cartão de débito','credito'=>'Cartão de crédito','cartao_online'=>'Cartão online','cartao_entrega'=>'Cartão na entrega','dinheiro'=>'Dinheiro','ifood'=>'iFood','mesa'=>'Mesa'][$method] ?? ucfirst(str_replace('_',' ',(string)$method));
+  return ['pix'=>'Pix online','pix_entrega'=>'Pix na entrega','debito'=>'Cartão de débito','credito'=>'Cartão de crédito','cartao_online'=>'Cartão online','online'=>'Cartão online (InfinitePay)','cartao_entrega'=>'Cartão na entrega','dinheiro'=>'Dinheiro','ifood'=>'iFood','mesa'=>'Mesa'][$method] ?? ucfirst(str_replace('_',' ',(string)$method));
 }
 
 // Comanda (pedido) aberta de uma mesa

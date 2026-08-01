@@ -8,13 +8,31 @@ foreach($orders as $o){
 <div class="wrap dash">
   <h2><?= e(cfg('restaurante')) ?></h2>
   <?= admin_subnav('admin_payments') ?>
-  <form class="payment-webhook-card" method="post" action="?r=admin_payment_webhook_settings" style="margin:16px 0;padding:18px;background:#fff;border:1px solid #ddd;border-radius:14px">
-    <h3>Confirmação automática de Pix e cartão online</h3>
-    <p>Seu provedor de pagamento ou o n8n deve avisar este endereço quando o pagamento for aprovado.</p>
-    <label>Endereço do webhook</label><input readonly value="<?= e((isset($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'rvautomacao.com.br').'/cardapio/?r=payment_webhook') ?>" style="width:100%;padding:10px">
-    <label>Segredo de segurança</label><input name="secret" value="<?= e(setting_get('payment_webhook_secret','')) ?>" placeholder="Deixe vazio para gerar automaticamente" style="width:100%;padding:10px">
-    <button class="markpago" style="margin-top:10px">Salvar / gerar segredo</button>
-  </form>
+  <?php
+    $gwAtivo=setting_get('gw_nome','');
+    $ipayHandle=setting_get('gw_infinitepay_handle','');
+    $pixKey=setting_get('pix_key','');
+  ?>
+  <div style="margin:16px 0;padding:18px;background:#fff;border:1px solid #ddd;border-radius:14px">
+    <h3>Formas de pagamento online ativas</h3>
+    <p style="margin:8px 0;font-size:14px">
+      <?php if($gwAtivo==='InfinitePay'&&$ipayHandle!==''): ?>
+        💳 <b>Cartão online</b> via InfinitePay (tag: <b>$<?= e($ipayHandle) ?></b>) — ativo
+      <?php elseif($gwAtivo!==''&&$gwAtivo!=='InfinitePay'): ?>
+        💳 <b>Cartão online</b> via <?= e($gwAtivo) ?> — configurar em <a href="?r=admin_settings">Configurações</a>
+      <?php else: ?>
+        💳 Cartão online — <b>não configurado</b>. <a href="?r=admin_settings">Configurar gateway</a>
+      <?php endif; ?>
+    </p>
+    <p style="margin:8px 0;font-size:14px">
+      <?php if($pixKey!==''): ?>
+        💠 <b>Pix</b> — ativo (chave: <?= e(mb_substr($pixKey,0,6)) ?>…)
+      <?php else: ?>
+        💠 Pix — <b>não configurado</b>. <a href="?r=admin_settings">Configurar chave Pix</a>
+      <?php endif; ?>
+    </p>
+    <p style="color:#87817b;font-size:12px;margin-top:10px">A confirmação de pagamentos online é automática via InfinitePay.</p>
+  </div>
   <div class="stats" style="grid-template-columns:1fr 1fr">
     <div class="stat"><div class="l">✔ Recebido (pago)</div><div class="v"><?= money($totPago) ?></div></div>
     <div class="stat"><div class="l">⏳ Pendente</div><div class="v"><?= money($totPend) ?></div></div>

@@ -56,7 +56,7 @@
         <?php if(!empty($temZonas)): ?><div class="field frete-check"><button type="button" class="frete-btn" onclick="conferirFrete()">📍 Conferir taxa do meu endereço</button><small id="frete-msg">Informe rua, número e bairro e confira antes de finalizar.</small></div><?php endif; ?>
       </div>
       <?php
-        $ipayOn = setting_get('gw_nome','InfinitePay')==='InfinitePay'
+        $ipayOn = setting_get('gw_nome','')==='InfinitePay'
                && preg_replace('/[^a-zA-Z0-9_.-]/','',(string)setting_get('gw_infinitepay_handle',''))!=='';
       ?>
       <?php if(empty($mesa)): ?><fieldset class="paychoices"><legend>Quando deseja pagar?</legend>
