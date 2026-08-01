@@ -1,5 +1,12 @@
 <div class="mhead"><div class="mh"><div class="lg">🛵</div><div><h2>Minhas entregas</h2><div class="meta">App do motoboy</div></div><a class="courier-logout" href="?r=logout" onclick="return confirm('Sair da sua conta? Outro motoboy poderá entrar neste aparelho.')">Sair ⎋</a></div></div>
 
+<?php if(tenant_motoboy_off()): ?>
+<div style="margin:14px;padding:16px;background:#FFF4DD;border:1px solid #E4B24A;border-radius:12px;color:#8A5A00;text-align:center">
+  <b>App do motoboy desativado</b><br>
+  <small>Este restaurante está operando as entregas manualmente pelo painel. Fale com o gerente se precisar reativar o app.</small>
+</div>
+<?php endif; ?>
+
 <?php $online = !empty($courier['online']); ?>
 <button class="som-permission" id="somPermission" type="button">🔔 Ativar alertas de novas entregas</button>
 <div class="courier-notification-setup" id="notificationSetup">
@@ -28,6 +35,7 @@
     <?php if(!empty($o['lat']) && !empty($o['lng'])): ?><a class="fone" href="https://www.google.com/maps/dir/?api=1&destination=<?= (float)$o['lat'] ?>,<?= (float)$o['lng'] ?>" target="_blank">🗺 Abrir rota no Maps</a><?php endif; ?>
     <?php if(!empty($o['referencia'])): ?><div class="adr ref">Ref: <?= e($o['referencia']) ?></div><?php endif; ?>
     <div class="val"><?= money($o['total']) ?> · <?= e(payment_label($o['pagamento_metodo'])) ?><strong class="pay-situation <?= $o['pagamento_status']==='pago'?'paid':'collect' ?>"><?= e(payment_situation_label($o)) ?></strong></div>
+    <?php if(!empty($o['pagamento_obs']) && $o['pagamento_status']!=='pago'): ?><div class="adr troco-alert">💵 <?= e($o['pagamento_obs']) ?></div><?php endif; ?>
     <?php if(empty($o['aceito'])): ?><button class="done accept" onclick="aceitar(<?= $o['id'] ?>)">✓ Aceitar entrega</button><?php endif; ?>
     <div class="cbtns"><button class="cb ok" <?= (empty($o['aceito'])||$o['status']!=='saiu_entrega')?'disabled title="Aceite e aguarde o pedido sair para entrega"':'' ?> onclick="entregue(<?= $o['id'] ?>)">✓ Entregue</button><button class="cb warn" onclick="ocorrencia(<?= $o['id'] ?>,'não localizado')">Cliente não localizado</button><button class="cb warn" onclick="ocorrencia(<?= $o['id'] ?>,'não atende')">Cliente não atende</button></div>
     <div class="obsbox" id="obs<?= $o['id'] ?>" style="display:none"><textarea id="obst<?= $o['id'] ?>" placeholder="Observação (obrigatória)"></textarea><button class="cb warn" onclick="confirmarOco(<?= $o['id'] ?>)">Registrar ocorrência</button></div>

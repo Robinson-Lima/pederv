@@ -692,6 +692,33 @@ case 'admin_assign_courier': // POST order_id, courier_id -> despacha
   redirect('?r=admin_couriers');
   break;
 
+case 'admin_delivered': // POST id -> operador marca entregue (entrega manual, app do motoboy desligado)
+  if(!require_role('admin')) json_out(['ok'=>false]);
+  $id=(int)($_POST['id']??0);
+  $q=db()->prepare("SELECT * FROM orders WHERE id=?"); $q->execute([$id]); $antes=$q->fetch();
+  if(!$antes || $antes['status']!=='saiu_entrega') json_out(['ok'=>false,'erro'=>'O pedido precisa estar em rota (saiu para entrega).']);
+  if(payment_blocks_completion($antes)) json_out(['ok'=>false,'erro'=>'Pagamento online pendente. Confirme PAGO antes de concluir.']);
+  $o=order_set_status($id,'entregue','admin');
+  if(!empty($o['courier_id'])){
+    $rest=db()->prepare("SELECT COUNT(*) c FROM orders WHERE courier_id=? AND status='saiu_entrega'"); $rest->execute([$o['courier_id']]);
+    if((int)$rest->fetch()['c']===0) db()->prepare("UPDATE couriers SET status='livre' WHERE id=?")->execute([$o['courier_id']]);
+  }
+  // Pagamento recebido na entrega fica pendente de acerto no caixa; o resto já está ok.
+  if(in_array($o['pagamento_metodo'],['dinheiro','cartao_entrega','pix_entrega'],true) && $o['pagamento_status']!=='pago'){
+    db()->prepare("UPDATE orders SET acerto_status='pendente' WHERE id=?")->execute([$id]);
+  } else {
+    db()->prepare("UPDATE orders SET acerto_status='ok', acerto_em=datetime('now','localtime') WHERE id=?")->execute([$id]);
+  }
+  n8n_event('order_delivered',['pedido'=>$o]);
+  json_out(['ok'=>true]);
+  break;
+
+case 'admin_delivery_mode': // POST motoboy_app_off -> liga/desliga o app do motoboy (entrega manual pelo painel)
+  if(!require_role('admin')){ redirect('?r=admin_couriers'); }
+  setting_set('motoboy_app_off', (($_POST['motoboy_app_off']??'0')==='1')?'1':'0');
+  redirect('?r=admin_couriers');
+  break;
+
 case 'admin_caixa': // aba Caixa (abrir, movimentar, fechar)
   if(!require_role('caixa')){ render('login',['role'=>'caixa','titulo'=>'Caixa']); break; }
   $cx = caixa_atual();

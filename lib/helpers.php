@@ -347,6 +347,10 @@ function tenant_skip_kds(){
   if(setting_get('skip_kds','0')==='1') return true;
   return !client_features(current_slug())['cozinha'];
 }
+// App do motoboy desligado (restaurante opera entregas manualmente pelo painel)
+function tenant_motoboy_off(){
+  return setting_get('motoboy_app_off','0')==='1';
+}
 
 // Recalcula o status de cada cliente: aplica bloqueio automático 15 dias após o
 // vencimento (a menos que já esteja cancelado ou desbloqueado manualmente).

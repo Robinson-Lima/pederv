@@ -2,6 +2,15 @@
   <h2><?= e(cfg('restaurante')) ?></h2>
   <?= admin_subnav('admin_couriers') ?>
 
+  <?php $motoOff=setting_get('motoboy_app_off','0')==='1'; ?>
+  <form method="post" action="?r=admin_delivery_mode" id="delivmode" style="margin:6px 0 12px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:12px">
+    <label style="display:flex;align-items:center;gap:12px;cursor:pointer;margin:0">
+      <input type="hidden" name="motoboy_app_off" value="0">
+      <input type="checkbox" name="motoboy_app_off" value="1" <?= $motoOff?'checked':'' ?> onchange="this.form.submit()" style="width:22px;height:22px;flex-shrink:0">
+      <span><b>Desativar app do motoboy — operar entregas manualmente</b><br><small style="color:var(--muted)">Você despacha e clica em <b>“✓ Marcar entregue”</b> aqui no painel, sem precisar do app do motoboy.</small></span>
+    </label>
+  </form>
+
   <?php $pendTotal=0; foreach($pendAcerto as $p)$pendTotal+=$p['total']; ?>
   <div class="stats" style="grid-template-columns:repeat(4,1fr)">
     <div class="stat"><div class="l">Em rota</div><div class="v"><?= count($emrota) ?></div></div>

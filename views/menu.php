@@ -55,22 +55,63 @@
         <div class="field"><label>Ponto de referência (opcional)</label><input id="f-ref" value="<?= e($customer['referencia']??'') ?>" placeholder="Ex: portão azul"></div>
         <?php if(!empty($temZonas)): ?><div class="field frete-check"><button type="button" class="frete-btn" onclick="conferirFrete()">📍 Conferir taxa do meu endereço</button><small id="frete-msg">Informe rua, número e bairro e confira antes de finalizar.</small></div><?php endif; ?>
       </div>
-      <?php if(empty($mesa)): ?><fieldset class="paychoices"><legend>Como deseja pagar?</legend>
-        <label><input type="radio" name="pay" value="pix" checked><span><b>Pix online</b><small>Pague agora pelo QR Code</small></span></label>
-        <label><input type="radio" name="pay" value="pix_entrega"><span><b>Pix na entrega</b><small>Pague ao motoboy quando receber</small></span></label>
-        <label><input type="radio" name="pay" value="cartao_online"><span><b>Cartão online</b><small>Crédito ou débito virtual</small></span></label>
-        <label><input type="radio" name="pay" value="cartao_entrega"><span><b>Cartão na entrega</b><small>O motoboy levará a maquininha</small></span></label>
-        <label><input type="radio" name="pay" value="dinheiro"><span><b>Dinheiro na entrega</b><small>Pague ao receber</small></span></label>
+      <?php
+        $ipayOn = setting_get('gw_nome','InfinitePay')==='InfinitePay'
+               && preg_replace('/[^a-zA-Z0-9_.-]/','',(string)setting_get('gw_infinitepay_handle',''))!=='';
+      ?>
+      <?php if(empty($mesa)): ?><fieldset class="paychoices"><legend>Quando deseja pagar?</legend>
+        <label><input type="radio" name="paywhen" value="agora" onchange="payWhen()"><span><b>Pagar agora</b><small>Pix<?= $ipayOn?' ou cartão':'' ?> na hora</small></span></label>
+        <label><input type="radio" name="paywhen" value="entrega" onchange="payWhen()"><span><b>Pagar na entrega</b><small>Acerte ao receber o pedido</small></span></label>
+
+        <div id="pay-now-opts" style="display:none;grid-column:1/-1">
+          <small class="paysub">Como você quer pagar agora?</small>
+          <div class="payopts">
+            <label><input type="radio" name="paynow" value="pix" onchange="payNow()"><span><b>Pix</b><small>QR Code na tela</small></span></label>
+            <?php if($ipayOn): ?><label><input type="radio" name="paynow" value="online" onchange="payNow()"><span><b>Cartão</b><small>Débito ou crédito à vista</small></span></label><?php endif; ?>
+          </div>
+          <div id="paynow-pix-note" style="display:none"><small class="paysub" style="font-weight:400">💠 O QR Code do Pix aparece na tela após confirmar. Pague ou copie o código.</small></div>
+          <div id="paynow-card-box" style="display:none">
+            <small class="paysub">Débito ou crédito? (à vista, 1x sem juros)</small>
+            <div class="payopts">
+              <label class="paymini"><input type="radio" name="cartaotipo_online" value="credito" checked><span>Crédito</span></label>
+              <label class="paymini"><input type="radio" name="cartaotipo_online" value="debito"><span>Débito</span></label>
+            </div>
+            <small class="paysub" style="font-weight:400">🔒 Você vai para a página segura da InfinitePay para inserir os dados do cartão. O pedido é liberado assim que o pagamento aprovar.</small>
+          </div>
+        </div>
+
+        <div id="pay-later-opts" style="display:none;grid-column:1/-1">
+          <small class="paysub">Só para o restaurante se preparar — nada é cobrado agora.</small>
+          <div class="payopts">
+            <label><input type="radio" name="paylater" value="cartao_entrega" onchange="payLater()"><span><b>Cartão</b><small>Maquininha com o entregador</small></span></label>
+            <label><input type="radio" name="paylater" value="dinheiro" onchange="payLater()"><span><b>Dinheiro</b><small>Pague ao receber</small></span></label>
+          </div>
+          <div id="card-tipo" style="display:none">
+            <small class="paysub">Débito ou crédito?</small>
+            <div class="payopts">
+              <label class="paymini"><input type="radio" name="cartaotipo" value="credito" checked><span>Crédito</span></label>
+              <label class="paymini"><input type="radio" name="cartaotipo" value="debito"><span>Débito</span></label>
+            </div>
+          </div>
+          <div id="troco-box" style="display:none">
+            <label class="paysub" for="f-troco">Se precisar de troco, para quanto? <span style="font-weight:400">(opcional)</span></label>
+            <input id="f-troco" inputmode="numeric" oninput="fmtTroco(this)" placeholder="R$ 0,00">
+          </div>
+        </div>
       </fieldset><?php endif; ?>
       <div class="cototal"><span>Total</span><b id="co-total">R$ 0,00</b></div>
       <button class="btn finish" onclick="finalizar()"><?= !empty($mesa)?'Confirmar pedido da mesa':'Confirmar pedido' ?></button>
     </div>
-    <div id="success-view" style="display:none"><div class="success-icon">✓</div><h3>Pedido confirmado!</h3><p id="success-copy"></p><div id="pix-area" style="display:none" class="qrbox"><div class="amt" id="pix-amt"></div><div id="qrcode"></div><div class="cp"><input id="pix-code" readonly><button onclick="copyPix()">Copiar</button></div></div><a class="btn track" id="track-link">Acompanhar meu pedido</a><button class="btn neworder" onclick="location.href='?r=menu'">Fazer novo pedido</button></div>
+    <div id="success-view" style="display:none"><div class="success-icon">✓</div><h3>Pedido confirmado!</h3><p id="success-copy"></p><div id="pix-area" style="display:none" class="qrbox"><div class="amt" id="pix-amt"></div><div id="qrcode"></div><div class="cp"><input id="pix-code" readonly><button onclick="copyPix()">Copiar</button></div></div><a class="btn track" id="track-link">Acompanhar meu pedido</a><button class="btn neworder" onclick="location.reload()">Fazer novo pedido</button></div>
   </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-const cart={}, TAXA=<?= json_encode((float)cfg('taxa_entrega')) ?>, TEM_AREAS=<?= json_encode(!empty($areas)) ?>, TEM_ZONAS=<?= json_encode(!empty($temZonas)) ?>, CIDADE=<?= json_encode(cfg('cidade')) ?>, MESA=<?= json_encode($mesa??'') ?>, PAY_LABELS={pix:'Pix online',pix_entrega:'Pix na entrega',cartao_online:'Cartão online',cartao_entrega:'Cartão na entrega',dinheiro:'Dinheiro na entrega'};
+const cart={}, TAXA=<?= json_encode((float)cfg('taxa_entrega')) ?>, TEM_AREAS=<?= json_encode(!empty($areas)) ?>, TEM_ZONAS=<?= json_encode(!empty($temZonas)) ?>, CIDADE=<?= json_encode(cfg('cidade')) ?>, MESA=<?= json_encode($mesa??'') ?>, IPAY=<?= json_encode(!empty($ipayOn)) ?>, PAY_LABELS={pix:'Pix (QR Code)',pix_entrega:'Pix na entrega',cartao_online:'Cartão online',cartao_entrega:'Cartão na entrega',dinheiro:'Dinheiro na entrega',online:'Cartão online'};
+function payWhen(){const v=document.querySelector('input[name="paywhen"]:checked')?.value;const n=document.getElementById('pay-now-opts'),l=document.getElementById('pay-later-opts');if(n)n.style.display=v==='agora'?'block':'none';if(l)l.style.display=v==='entrega'?'block':'none'}
+function payNow(){const v=document.querySelector('input[name="paynow"]:checked')?.value;const pn=document.getElementById('paynow-pix-note'),cb=document.getElementById('paynow-card-box');if(pn)pn.style.display=v==='pix'?'block':'none';if(cb)cb.style.display=v==='online'?'block':'none'}
+function payLater(){const v=document.querySelector('input[name="paylater"]:checked')?.value;const ct=document.getElementById('card-tipo'),tb=document.getElementById('troco-box');if(ct)ct.style.display=v==='cartao_entrega'?'block':'none';if(tb)tb.style.display=v==='dinheiro'?'block':'none'}
+function fmtTroco(el){let d=el.value.replace(/\D/g,'');if(!d){el.value='';return}el.value='R$ '+(parseInt(d,10)/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
 const PRODUCT_DATA=<?= json_encode(array_values(array_merge(...array_values($byCat?:[[]]))),JSON_UNESCAPED_UNICODE) ?>;
 const RESTORE_CART=<?= json_encode(!empty($restoreCart)?json_decode($restoreCart['itens_json'],true):[],JSON_UNESCAPED_UNICODE) ?>;
 const CART_TOKEN=(()=>{let t=localStorage.getItem('rv_cart_token');if(!t){t='c'+Date.now().toString(36)+Math.random().toString(36).slice(2);localStorage.setItem('rv_cart_token',t)}return t})();
@@ -99,9 +140,11 @@ async function saveSnapshot(){const itens=Object.values(cart).map(c=>({id:c.id,q
 function toggleEnd(){document.getElementById('end-wrap').style.display=document.getElementById('f-tipo').value==='entrega'?'block':'none';renderCart()}
 function openCart(){renderCart();document.getElementById('sheet').classList.add('on')}
 function closeCart(){document.getElementById('sheet').classList.remove('on')}
-async function finalizar(){const itens=Object.values(cart).map(c=>({id:c.id,qtd:c.qtd}));if(!itens.length)return;const tipo=document.getElementById('f-tipo').value,nome=document.getElementById('f-nome').value.trim(),fone=document.getElementById('f-fone').value.trim(),end=document.getElementById('f-end').value.trim(),b=document.getElementById('f-bairro'),metodo=document.querySelector('input[name="pay"]:checked').value;if(!nome||!fone||(tipo==='entrega'&&!end)){alert('Preencha nome, telefone e endereço para continuar.');return}const btn=document.querySelector('.finish');btn.disabled=true;btn.textContent='Enviando…';try{if(tipo==='entrega'&&TEM_ZONAS&&GEO.ok===null){const chk=await conferirFrete(true);if(chk&&!chk.ok){alert(chk.motivo||'Não entregamos nesse endereço.');btn.disabled=false;btn.textContent='Confirmar pedido';return}}
+async function finalizar(){const itens=Object.values(cart).map(c=>({id:c.id,qtd:c.qtd}));if(!itens.length)return;const tipo=document.getElementById('f-tipo').value,nome=document.getElementById('f-nome').value.trim(),fone=document.getElementById('f-fone').value.trim(),end=document.getElementById('f-end').value.trim(),b=document.getElementById('f-bairro');const paywhen=document.querySelector('input[name="paywhen"]:checked')?.value;if(!paywhen){alert('Escolha quando deseja pagar: agora ou na entrega.');return}let metodo='',cartao_tipo='',troco_para=0;if(paywhen==='agora'){metodo=document.querySelector('input[name="paynow"]:checked')?.value;if(!metodo){alert('Escolha como pagar agora: Pix ou Cartão.');return}if(metodo==='online')cartao_tipo=document.querySelector('input[name="cartaotipo_online"]:checked')?.value||'';}else{metodo=document.querySelector('input[name="paylater"]:checked')?.value;if(!metodo){alert('Escolha a forma de pagamento na entrega.');return}if(metodo==='cartao_entrega')cartao_tipo=document.querySelector('input[name="cartaotipo"]:checked')?.value||'';if(metodo==='dinheiro')troco_para=(parseInt((document.getElementById('f-troco')?.value||'').replace(/\D/g,''),10)||0)/100;}if(!nome||!fone||(tipo==='entrega'&&!end)){alert('Preencha nome, telefone e endereço para continuar.');return}const btn=document.querySelector('.finish');btn.disabled=true;btn.textContent='Enviando…';try{if(tipo==='entrega'&&TEM_ZONAS&&GEO.ok===null){const chk=await conferirFrete(true);if(chk&&!chk.ok){alert(chk.motivo||'Não entregamos nesse endereço.');btn.disabled=false;btn.textContent='Confirmar pedido';return}}
     if(tipo==='entrega'&&GEO.ok===false){alert('Infelizmente não entregamos nesse endereço.');btn.disabled=false;btn.textContent='Confirmar pedido';return}
-    const body={itens,nome,fone,email:document.getElementById('f-email')?.value||'',cart_token:CART_TOKEN,tipo,endereco:end,bairro:b?b.value:'',referencia:document.getElementById('f-ref')?.value||'',metodo,lat:GEO.lat,lng:GEO.lng};const res=await fetch('?r=order_create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());if(!res.ok){alert(res.erro||'Não foi possível enviar o pedido.');btn.disabled=false;btn.textContent='Confirmar pedido';return}localStorage.removeItem('rv_cart_token');localStorage.setItem('rv_last_order',res.order_id);document.getElementById('co-view').style.display='none';document.getElementById('success-view').style.display='block';document.getElementById('track-link').href=res.status_url;document.getElementById('success-copy').textContent=`Pedido ${res.codigo} recebido. Forma de pagamento: ${PAY_LABELS[metodo]}.`;if(metodo==='pix'){const pix=await fetch('?r=order_pix&id='+res.order_id).then(r=>r.json());document.getElementById('pix-area').style.display='block';document.getElementById('pix-amt').textContent='R$ '+pix.valor.toFixed(2).replace('.',',');document.getElementById('pix-code').value=pix.payload;new QRCode(document.getElementById('qrcode'),{text:pix.payload,width:190,height:190})}}catch(e){alert('Não foi possível enviar o pedido. Tente novamente.');btn.disabled=false;btn.textContent='Confirmar pedido'}}
+    const body={itens,nome,fone,email:document.getElementById('f-email')?.value||'',cart_token:CART_TOKEN,tipo,endereco:end,bairro:b?b.value:'',referencia:document.getElementById('f-ref')?.value||'',metodo,cartao_tipo,troco_para,lat:GEO.lat,lng:GEO.lng};const res=await fetch('?r=order_create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());if(!res.ok){alert(res.erro||'Não foi possível enviar o pedido.');btn.disabled=false;btn.textContent='Confirmar pedido';return}localStorage.removeItem('rv_cart_token');localStorage.setItem('rv_last_order',res.order_id);
+    if(metodo==='online'){btn.textContent='Abrindo pagamento seguro…';const pay=await fetch('?r=order_checkout_link&id='+res.order_id).then(r=>r.json()).catch(()=>({ok:false}));if(pay.ok&&pay.checkout_url){location.href=pay.checkout_url;return}alert(pay.erro||'Não foi possível abrir o pagamento online. Acompanhe o pedido e combine o pagamento com o restaurante.')}
+    document.getElementById('co-view').style.display='none';document.getElementById('success-view').style.display='block';document.querySelector('.sheet-in').scrollTop=0;document.getElementById('track-link').href=res.status_url;document.getElementById('success-copy').textContent=`Pedido ${res.codigo} recebido. Forma de pagamento: ${PAY_LABELS[metodo]}.`;if(metodo==='pix'){const pix=await fetch('?r=order_pix&id='+res.order_id).then(r=>r.json());document.getElementById('pix-area').style.display='block';document.getElementById('pix-amt').textContent='R$ '+pix.valor.toFixed(2).replace('.',',');document.getElementById('pix-code').value=pix.payload;const qc=document.getElementById('qrcode');qc.innerHTML='';new QRCode(qc,{text:pix.payload,width:190,height:190})}}catch(e){alert('Não foi possível enviar o pedido. Tente novamente.');btn.disabled=false;btn.textContent='Confirmar pedido'}}
 function acompanharPedido(){const id=localStorage.getItem('rv_last_order');if(id)location.href='?r=order_status&id='+id;else alert('Você ainda não fez um pedido neste aparelho.')}
 // Fluxo exclusivo do QR da mesa: sem cadastro, endereço ou pagamento.
 if(MESA){

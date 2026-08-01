@@ -27,7 +27,7 @@
 const COURIERS=<?= json_encode($couriers) ?>,
 COLS=[['novo','🔵 Novos'],['em_preparo','🟠 Em preparo'],['saiu_entrega','🟣 Despachados'],['concluido','🟢 Finalizados']],
 PAYMENTS={pix:'Pix online',pix_entrega:'Pix na entrega',cartao_online:'Cartão online',cartao_entrega:'Cartão na entrega',dinheiro:'Dinheiro',ifood:'Pago no iFood',debito:'Débito',credito:'Crédito',mesa:'Pagar no caixa'};
-let AUTO=<?= !empty($autoAccept)?'true':'false' ?>,AUTO_IFOOD=<?= !empty($autoAcceptIfood)?'true':'false' ?>,FILTER='<?= ($_GET['origem']??'')==='ifood'?'ifood':'all' ?>',QUERY='',CANCEL_MODE=<?= json_encode($cancelMode??'none') ?>,SKIP_KDS=<?= !empty($skipKds)?'true':'false' ?>;
+let AUTO=<?= !empty($autoAccept)?'true':'false' ?>,AUTO_IFOOD=<?= !empty($autoAcceptIfood)?'true':'false' ?>,FILTER='<?= ($_GET['origem']??'')==='ifood'?'ifood':'all' ?>',QUERY='',CANCEL_MODE=<?= json_encode($cancelMode??'none') ?>,SKIP_KDS=<?= !empty($skipKds)?'true':'false' ?>,MOTOBOY_OFF=<?= !empty($motoboyOff)?'true':'false' ?>;
 let readySeen=JSON.parse(localStorage.getItem('rv_ready_seen')||'[]'),firstFeed=true;
 function colOf(s){return ['entregue','concluido','cancelado'].includes(s)?'concluido':(['aceito','em_preparo','pronto'].includes(s)?'em_preparo':(s==='ocorrencia'?'saiu_entrega':s))}
 function origin(o){if(o.tipo==='mesa')return 'Mesa '+(o.mesa||'');if(o.canal==='ifood')return 'iFood · '+(o.tipo==='retirada'?'retirada':'entrega');if(o.tipo==='balcao')return 'Balcão';return o.tipo==='retirada'?'Retirada':'Entrega'}
@@ -43,12 +43,13 @@ function autoBox(){return `<div class="auto-box"><label class="auto-accept"><inp
 document.getElementById('autoBar').innerHTML=autoBox();
 function contact(o){if(o.tipo!=='entrega')return'';const linhas=[];if(o.cliente_fone)linhas.push(`📞 ${o.cliente_fone}`);const end=[o.endereco,o.bairro].filter(Boolean).join(' — ');if(end)linhas.push(`📍 ${end}`);return linhas.length?`<div class="ord-contact">${linhas.join('<br>')}</div>`:''}
 function canEditPayment(o){return ['novo','aceito','em_preparo','pronto'].includes(o.status)}
-function onlinePending(o){return ['pix','cartao_online'].includes(o.pagamento_metodo)&&o.pagamento_status!=='pago'}
+function onlinePending(o){return ['online','cartao_online'].includes(o.pagamento_metodo)&&o.pagamento_status!=='pago'}
 function paymentBadge(o){
   const label=PAYMENTS[o.pagamento_metodo]||o.pagamento_metodo||'Pagamento';
   const text=o.pagamento_status==='pago'?`PAGO · ${label}`:(onlinePending(o)?`${label} · AGUARDANDO`:`${label} · RECEBER`);
   const click=canEditPayment(o)?` onclick="togglePayment(${o.id})" title="Editar pagamento ou marcar como pago"`:'';
-  return `<span class="chp ${o.pagamento_status} ${onlinePending(o)?'online-wait':''} ${canEditPayment(o)?'clickable':''}"${click}>${text}</span>`;
+  const obs=o.pagamento_obs?`<span class="pay-obs">💬 ${o.pagamento_obs}</span>`:'';
+  return `<span class="chp ${o.pagamento_status} ${onlinePending(o)?'online-wait':''} ${canEditPayment(o)?'clickable':''}"${click}>${text}</span>${obs}`;
 }
 function paymentEditor(o){
   if(!canEditPayment(o))return'';
@@ -59,17 +60,18 @@ function renderOrder(o){
   const locked=onlinePending(o);let action='';
   const podeDespachar=o.status==='pronto'||(SKIP_KDS&&o.status==='aceito');
   if(o.status==='novo') action=`<div class="new-actions"><button class="adv" onclick="setStatus(${o.id},'aceito')">Aceitar pedido</button><button class="reject" onclick="rejectOrder(${o.id})">Recusar</button></div>`;
+  else if(podeDespachar&&o.tipo==='entrega'&&MOTOBOY_OFF) action=`<button class="adv ${locked?'payment-locked':''}" onclick="despacharManual(${o.id},${locked?'true':'false'})">${locked?'🔒 Aguardando pagamento':'Despachar (manual) →'}</button>${locked?'<div class="payment-help">Confirme PAGO na caneta antes de despachar.</div>':''}`;
   else if(podeDespachar&&o.tipo==='entrega') action=`<div class="desp"><select id="cs${o.id}">${courierOptions(o)}</select><button class="${locked?'payment-locked':''}" onclick="despachar(${o.id},${locked?'true':'false'})">${locked?'🔒 Aguardando pagamento':'Despachar →'}</button></div>${locked?'<div class="payment-help">Confirme PAGO na caneta antes de despachar.</div>':''}`;
   else if(podeDespachar) action=`<button class="adv" onclick="setStatus(${o.id},'concluido')">${o.tipo==='mesa'?'Entregue na mesa':'Entregar / concluir'} →</button>`;
+  else if(o.status==='saiu_entrega'&&o.tipo==='entrega'&&MOTOBOY_OFF) action=`<button class="adv" onclick="marcarEntregue(${o.id})">✓ Marcar entregue</button>`;
   const edit=canEditPayment(o)?`<button class="edit-card" onclick="togglePayment(${o.id})" title="Editar forma de pagamento">✎</button>`:'';
   let acerto='';
   if(o.acerto_status==='pendente'){
-    const met=PAYMENTS[o.pagamento_metodo]||o.pagamento_metodo;
-    acerto=`<div class="acerto-pend"><b>⚠ AGUARDANDO ACERTO NO CAIXA</b><small>${o.pagamento_metodo==='dinheiro'?'O motoboy precisa entregar o dinheiro no caixa':'O motoboy precisa entregar o comprovante da maquininha'} · ${met}${o.cnome?' · 🛵 '+o.cnome:''}</small><button onclick="confirmAcerto(${o.id})">✔ Confirmar acerto · marcar PAGO</button></div>`;
+    acerto=`<div class="acerto-pend"><b>⚠ AGUARDANDO ACERTO NO CAIXA</b><button onclick="confirmAcerto(${o.id})">✔ Confirmar · marcar PAGO</button></div>`;
   } else if(o.acerto_status==='ok'&&['entregue','concluido'].includes(o.status)&&['dinheiro','cartao_entrega','pix_entrega'].includes(o.pagamento_metodo)){
     acerto=`<div class="acerto-ok">✔ Acerto conferido no caixa</div>`;
   }
-  return `<div class="tk ${o.status} ${o.acerto_status==='pendente'?'tk-acerto':''}" draggable="true" data-oid="${o.id}" data-status="${o.status}">${edit}${acerto}<div class="id">Comanda ${o.codigo}${source(o)}<span>${origin(o)}</span></div>${kitchenStatus(o)}<div class="nm">${o.cliente_nome}</div><div class="it">${o.itens||''}</div>${contact(o)}${motoTag(o)}<div class="ft">${paymentBadge(o)}<span class="val">R$ ${parseFloat(o.total).toFixed(2).replace('.',',')}</span></div>${paymentEditor(o)}${action}${!['entregue','concluido','cancelado'].includes(o.status)?`<button class="cancel-order" onclick="cancelOrder(${o.id})">Cancelar pedido</button>`:''}</div>`;
+  return `<div class="tk ${o.status} ${o.acerto_status==='pendente'?'tk-acerto':''}">${edit}${acerto}<div class="id">Comanda ${o.codigo}${source(o)}<span>${origin(o)}</span></div>${kitchenStatus(o)}<div class="nm">${o.cliente_nome}</div><div class="it">${o.itens||''}</div>${contact(o)}${motoTag(o)}<div class="ft">${paymentBadge(o)}<span class="val">R$ ${parseFloat(o.total).toFixed(2).replace('.',',')}</span></div>${paymentEditor(o)}${action}${!['entregue','concluido','cancelado'].includes(o.status)?`<button class="cancel-order" onclick="cancelOrder(${o.id})">Cancelar pedido</button>`:''}</div>`;
 }
 function isInteracting(){
   const kan=document.getElementById('kan');if(!kan)return false;
@@ -90,7 +92,7 @@ async function feed(force){
   let html='';
   COLS.forEach(([key,label])=>{
     const ready=key==='em_preparo'&&readyTotal?`<span class="ready-inline hot">🟢 ${readyTotal} pronto${readyTotal>1?'s':''}</span>`:'';
-    html+=`<div class="kcol" data-col="${key}"><div class="kh"><span>${label}${ready}</span><span class="c">${g[key].length}</span></div>`;
+    html+=`<div class="kcol"><div class="kh"><span>${label}${ready}</span><span class="c">${g[key].length}</span></div>`;
     g[key].forEach(o=>html+=renderOrder(o));
     html+='</div>';
   });
@@ -101,51 +103,12 @@ document.querySelector(`.order-filter[data-filter="${FILTER}"]`)?.classList.add(
 document.getElementById('orderSearch').oninput=e=>{QUERY=e.target.value.trim().toLowerCase();feed()};
 async function toggleAuto(chave,v){if(chave==='ifood')AUTO_IFOOD=v;else AUTO=v;await fetch('?r=admin_toggle_auto_accept',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'chave='+chave+'&enabled='+(v?1:0)});feed(true)}
 async function setStatus(id,status){await fetch('?r=admin_set_status',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`id=${id}&status=${status}`});feed(true)}
+async function marcarEntregue(id){const r=await fetch('?r=admin_delivered',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'application/json'},body:'id='+id}).then(x=>x.json()).catch(()=>({ok:false}));if(r&&r.ok===false)alert(r.erro||'Não foi possível concluir a entrega.');feed(true)}
+async function despacharManual(id,locked=false){if(locked)return alert('Pagamento online ainda não confirmado. Clique na caneta, marque PAGO e salve antes de despachar.');const r=await fetch('?r=admin_assign_courier',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'application/json'},body:`order_id=${id}&courier_id=coleta`}).then(x=>x.json()).catch(()=>({ok:true}));if(r&&r.ok===false)alert(r.erro||'Não foi possível despachar.');feed(true)}
 async function rejectOrder(id){if(confirm('Recusar este pedido?')){await fetch('?r=admin_reject_order',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'id='+id});feed(true)}}
 async function cancelOrder(id){if(!confirm('Cancelar este pedido?'))return;let senha='';if(CANCEL_MODE==='master'){senha=prompt('Informe a senha de cancelamento:')||'';if(!senha)return}const r=await fetch('?r=admin_cancel_order',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'id='+id+'&senha='+encodeURIComponent(senha)}).then(x=>x.json());if(!r.ok)alert(r.erro||'Não foi possível cancelar.');feed(true)}
 async function confirmAcerto(id){if(!confirm('Confirmar que o motoboy entregou o valor / comprovante no caixa?'))return;const r=await fetch('?r=admin_acerto_pago',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'application/json'},body:'id='+id}).then(x=>x.json());if(!r.ok)alert(r.erro||'Não foi possível confirmar.');feed(true)}
 async function savePayment(id){const r=await fetch('?r=admin_set_payment',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`id=${id}&metodo=${document.getElementById('pm'+id).value}&pagamento_status=${document.getElementById('ps'+id).value}`}).then(x=>x.json());if(!r.ok)alert(r.erro||'Não foi possível alterar o pagamento.');feed(true)}
 async function despachar(id,locked=false){if(locked)return alert('Pagamento online ainda não confirmado. Clique na caneta, marque PAGO e salve antes de despachar.');const cid=document.getElementById('cs'+id).value;if(!cid)return alert('Escolha o motoboy ou marque Pronto para coleta.');const r=await fetch('?r=admin_assign_courier',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'application/json'},body:`order_id=${id}&courier_id=${cid}`}).then(x=>x.json()).catch(()=>({ok:true}));if(r&&r.ok===false)alert(r.erro||'Não foi possível despachar.');feed(true)}
 if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();feed();setInterval(feed,4000);
-// Kanban drag & drop via event delegation (funciona após rebuilds do innerHTML)
-(function(){
-  const kan=document.getElementById('kan');
-  let dragOid=null,dragStatus=null;
-  const colStatus={em_preparo:'aceito',concluido_from_saiu:'entregue',concluido_from_prep:'concluido'};
-  kan.addEventListener('dragstart',e=>{
-    const tk=e.target.closest('[data-oid]');
-    if(!tk)return;
-    dragOid=tk.dataset.oid; dragStatus=tk.dataset.status;
-    e.dataTransfer.effectAllowed='move';
-    setTimeout(()=>tk.classList.add('dragging'),0);
-  });
-  kan.addEventListener('dragend',e=>{
-    document.querySelectorAll('.tk.dragging').forEach(el=>el.classList.remove('dragging'));
-    document.querySelectorAll('.kcol.drag-over').forEach(el=>el.classList.remove('drag-over'));
-  });
-  kan.addEventListener('dragover',e=>{
-    const col=e.target.closest('[data-col]');
-    if(!col||!dragOid)return;
-    e.preventDefault(); e.dataTransfer.dropEffect='move';
-    document.querySelectorAll('.kcol.drag-over').forEach(el=>el.classList.remove('drag-over'));
-    col.classList.add('drag-over');
-  });
-  kan.addEventListener('dragleave',e=>{
-    const col=e.target.closest('[data-col]');
-    if(col&&!col.contains(e.relatedTarget))col.classList.remove('drag-over');
-  });
-  kan.addEventListener('drop',e=>{
-    e.preventDefault();
-    const col=e.target.closest('[data-col]');
-    if(!col||!dragOid)return;
-    col.classList.remove('drag-over');
-    const target=col.dataset.col;
-    let newStatus=null;
-    if(target==='em_preparo'&&dragStatus==='novo') newStatus='aceito';
-    else if(target==='concluido'&&dragStatus==='saiu_entrega') newStatus='entregue';
-    else if(target==='concluido'&&['pronto'].includes(dragStatus)) newStatus='concluido';
-    if(newStatus) setStatus(parseInt(dragOid),newStatus);
-    dragOid=null; dragStatus=null;
-  });
-})();
 </script>
