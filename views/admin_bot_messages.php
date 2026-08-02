@@ -42,6 +42,26 @@
 
     <h3 class="bot-section-title">🤖 Respostas automáticas por palavra-chave</h3>
     <label class="wa-toggle bot-master"><input type="checkbox" name="wa_bot_active" value="1" <?= setting_get('wa_bot_active','0')==='1'?'checked':'' ?>> <span><b>Ativar respostas automáticas do robô</b><small>Desative quando quiser que todas as conversas sejam atendidas manualmente.</small></span></label>
+
+    <div class="cfgcard" style="margin:16px 0;padding:18px">
+      <h3>👤 Atendimento humano</h3>
+      <p style="font-size:13px;color:#666;margin:0 0 10px">Quando o cliente escrever "atendente" ou uma mensagem que não bata com nenhum gatilho, o robô avisa esses números e para de responder.</p>
+      <label>Números dos representantes (um por linha, com DDD sem 55)</label>
+      <textarea name="bot_notify_phones" rows="3" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px"><?= e(setting_get('bot_notify_phones','')) ?></textarea>
+      <div style="display:flex;gap:16px;margin-top:12px">
+        <label style="flex:1">Delay antes de responder<select name="bot_delay" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px">
+          <?php $bd=(int)setting_get('bot_delay','0'); foreach([0=>'Sem delay',1=>'1 segundo',2=>'2 segundos',3=>'3 segundos',5=>'5 segundos'] as $v=>$l): ?>
+          <option value="<?= $v ?>" <?= $bd===$v?'selected':'' ?>><?= $l ?></option>
+          <?php endforeach; ?>
+        </select></label>
+        <label style="flex:1">Retomar robô após<select name="bot_human_timeout" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px">
+          <?php $ht=(int)setting_get('bot_human_timeout','1'); foreach([1=>'1 hora',2=>'2 horas',4=>'4 horas',8=>'8 horas',24=>'24 horas'] as $v=>$l): ?>
+          <option value="<?= $v ?>" <?= $ht===$v?'selected':'' ?>><?= $l ?></option>
+          <?php endforeach; ?>
+        </select></label>
+      </div>
+    </div>
+
     <div class="bot-studio">
       <aside><h3>Mensagens</h3><p>Separe palavras com <b>|</b>. Use <b>*</b> como resposta padrão quando nenhuma palavra bater.</p><div id="botCards"></div><button type="button" class="cxgo" onclick="addMessage()">＋ Nova mensagem</button></aside>
       <section class="bot-phone-preview" aria-label="Prévia da conversa"><div class="bot-phone-head">WhatsApp · prévia</div><div class="bot-client-bubble" id="botPreviewTrigger">Olá</div><div class="bot-reply-bubble" id="botPreviewReply">Olá! Como posso ajudar?</div></section>

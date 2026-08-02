@@ -25,13 +25,13 @@
   <label>Chave da ScraperAPI<input name="saas_scraper_key" type="password" value="<?= setting_get('saas_scraper_key','')!==''?'••••••••':'' ?>" placeholder="Cole sua API key aqui" autocomplete="off"></label>
   <?php if(setting_get('saas_scraper_key','')): ?><p style="color:#2e7d32;font-size:13px">✅ ScraperAPI configurada — clientes podem importar cardápios pelo link.</p><?php endif; ?>
 
-  <div class="saas-panel-h" style="margin-top:14px"><b>💳 Pagamento online (maquininha de cartão)</b></div>
-  <p style="color:#666;font-size:13px;margin:0 0 10px">Cole aqui a chave da API da sua maquininha (PagSeguro, Mercado Pago, Cielo, Stone, etc.) para aceitar cartão online nas assinaturas do PedeRV.</p>
+  <div class="saas-panel-h" style="margin-top:14px"><b>💳 Pagamento online — InfinitePay</b></div>
+  <p style="color:#666;font-size:13px;margin:0 0 10px">Configure sua InfiniteTag para receber pagamentos de assinaturas por cartão. O cliente é redirecionado para a página segura da InfinitePay.</p>
   <div class="grid2">
-    <label>Chave da API de pagamentos<input name="saas_payment_api_key" type="password" value="<?= setting_get('saas_payment_api_key','')!==''?'••••••••':'' ?>" placeholder="Cole a API Key do seu gateway" autocomplete="off"></label>
-    <label>Provedor (ex: mercadopago, pagseguro, cielo)<input name="saas_payment_provider" value="<?= e(setting_get('saas_payment_provider','')) ?>" placeholder="mercadopago"></label>
+    <label>Sua InfiniteTag (sem o $)<input name="saas_infinitepay_handle" value="<?= e(setting_get('saas_infinitepay_handle','')) ?>" placeholder="ex: pederv" autocomplete="off"></label>
+    <label>Provedor<input value="InfinitePay" disabled style="background:#f5f5f5"></label>
   </div>
-  <?php if(setting_get('saas_payment_api_key','')): ?><p style="color:#b45309;font-size:13px">⚠️ Chave salva — integração pendente de implementação técnica.</p><?php endif; ?>
+  <?php if(setting_get('saas_infinitepay_handle','')): ?><p style="color:#2e7d32;font-size:13px">✅ InfinitePay configurado — tag: <b>$<?= e(setting_get('saas_infinitepay_handle','')) ?></b></p><?php else: ?><p style="color:#b45309;font-size:13px">⚠️ Preencha a tag para ativar pagamentos por cartão nas assinaturas.</p><?php endif; ?>
 
   <div class="saas-panel-h" style="margin-top:14px"><b>PIX para assinaturas</b></div>
   <p style="color:#666;font-size:13px;margin:0 0 10px">Chave PIX exibida no botão "Assinar" do site. Clientes verão esta chave para pagar via PIX.</p>

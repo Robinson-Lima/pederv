@@ -22,7 +22,9 @@ function pix_tlv($id,$valor){
 
 // Remove acentos e limita (nome/cidade EMV são ASCII).
 function pix_ascii($s,$max){
-  $s = preg_replace('/[^A-Za-z0-9 ]/','', iconv('UTF-8','ASCII//TRANSLIT',$s));
+  $conv=@iconv('UTF-8','ASCII//TRANSLIT',$s);
+  if($conv===false) $conv=preg_replace('/[^\x20-\x7E]/','', $s);
+  $s = preg_replace('/[^A-Za-z0-9 ]/','', $conv);
   return strtoupper(substr(trim($s),0,$max));
 }
 

@@ -271,7 +271,9 @@ case 'order_pix': // GET id -> retorna payload
   $pixKey=setting_get('pix_key','');
   $pixFav=setting_get('pix_favorecido','');
   if($pixKey===''){ $pix=cfg('pix'); $pixKey=$pix['chave']??''; $pixFav=$pix['favorecido']??$pixFav; }
-  $payload=pix_payload($pixKey,$pixFav,cfg('cidade'),$o['total'],'RV'.$o['id']);
+  $cidade=cfg('cidade')?:setting_get('cidade','BRASIL');
+  if($pixKey==='') json_out(['ok'=>false,'erro'=>'Chave PIX não configurada.']);
+  $payload=pix_payload($pixKey,$pixFav,$cidade,$o['total'],'RV'.$o['id']);
   json_out(['ok'=>true,'payload'=>$payload,'valor'=>$o['total'],'favorecido'=>$pixFav]);
   break;
 
@@ -748,10 +750,11 @@ case 'order_checkout_link': // GET id -> gera link de pagamento InfinitePay e re
   curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_HTTPHEADER=>['Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode($payload),CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>15]);
   $resp=curl_exec($ch); $httpCode=curl_getinfo($ch,CURLINFO_HTTP_CODE); curl_close($ch);
   $data=json_decode($resp,true);
-  if($httpCode>=200 && $httpCode<300 && !empty($data['checkout_url'])){
-    json_out(['ok'=>true,'checkout_url'=>$data['checkout_url']]);
+  $checkoutUrl=$data['url']??$data['checkout_url']??$data['link']??'';
+  if($httpCode>=200 && $httpCode<300 && $checkoutUrl!==''){
+    json_out(['ok'=>true,'checkout_url'=>$checkoutUrl]);
   }
-  $erro=$data['message']??$data['error']??'Erro ao gerar link de pagamento (HTTP '.$httpCode.').';
+  $erro=$data['message']??$data['error']??'Erro ao gerar link (HTTP '.$httpCode.'). Resposta: '.substr((string)$resp,0,300);
   json_out(['ok'=>false,'erro'=>$erro]);
   break;
 
@@ -1021,6 +1024,9 @@ case 'admin_bot_messages':
   if($method==='POST'){
     setting_set('wa_bot_active',isset($_POST['wa_bot_active'])?'1':'0');
     setting_set('channel_whatsapp',isset($_POST['channel_whatsapp'])?'1':'0');
+    if(isset($_POST['bot_notify_phones'])) setting_set('bot_notify_phones',trim($_POST['bot_notify_phones']));
+    if(isset($_POST['bot_delay'])) setting_set('bot_delay',(string)min(10,max(0,(int)$_POST['bot_delay'])));
+    if(isset($_POST['bot_human_timeout'])) setting_set('bot_human_timeout',(string)max(1,(int)$_POST['bot_human_timeout']));
     foreach(['wa_msg_novo','wa_msg_preparo','wa_msg_saiu','wa_msg_entregue'] as $k)
       if(isset($_POST[$k])) setting_set($k,trim($_POST[$k]));
     db()->exec("DELETE FROM bot_replies");
@@ -1186,13 +1192,50 @@ case 'webhook_evolution':
                 }
               }
             } else {
-              $fechadaMsg=store_closed_message();
-              if($fechadaMsg!==''){ $reply=$fechadaMsg; }
-              else foreach(db()->query("SELECT * FROM bot_replies WHERE ativo=1")->fetchAll() as $br)foreach(explode('|',mb_strtolower($br['gatilho'])) as $kw)if(trim($kw)!==''&&mb_strpos($low,trim($kw))!==false){$reply=$br['resposta'];break 2;}
-              if($reply!==''){
-                $base=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'rvautomacao.com.br').strtok($_SERVER['REQUEST_URI']??'/cardapio/','?');
-                $reply=str_replace(['{LINK_CARDAPIO}','{NOME_CLIENTE}','{SAUDACAO}'],[$base.'?r=menu',$nome?:'cliente',$saudacao],$reply);$sent=evolution_send_text($wa,$reply);
-                if($sent['ok'])db()->prepare("INSERT INTO whatsapp_messages(wa_id,direcao,texto,status) VALUES(?,'saida',?,'enviada')")->execute([$wa,$reply]);
+              // Bot do restaurante — com handoff humano e delay (mesmo critério do SaaS)
+              db()->exec("CREATE TABLE IF NOT EXISTS bot_conv_state(phone TEXT PRIMARY KEY,mode TEXT DEFAULT 'bot',last_human INTEGER DEFAULT 0)");
+              $waNum=preg_replace('/\D/','',(string)$wa);if(strlen($waNum)<=11)$waNum='55'.$waNum;
+              $convStmt=db()->prepare("SELECT mode,last_human FROM bot_conv_state WHERE phone=?");
+              $convStmt->execute([$waNum]);$convRow=$convStmt->fetch(PDO::FETCH_ASSOC);
+              $convMode='bot';$lastHuman=0;
+              if($convRow){$convMode=(string)$convRow['mode'];$lastHuman=(int)$convRow['last_human'];}
+              $humanTimeout=(int)setting_get('bot_human_timeout','1');
+              if($convMode==='human'&&$humanTimeout>0&&$lastHuman>0&&(time()-$lastHuman)>($humanTimeout*3600))$convMode='bot';
+              if($convMode==='human'){
+                db()->prepare("INSERT OR REPLACE INTO bot_conv_state(phone,mode,last_human) VALUES(?,?,?)")->execute([$waNum,'human',time()]);
+              } else {
+                $fechadaMsg=store_closed_message();
+                if($fechadaMsg!==''){ $reply=$fechadaMsg; }
+                else {
+                  $isHumanReq=false;
+                  foreach(explode('|','atendente|humano|garcom|garçom') as $kw)
+                    if(mb_strpos($low,trim($kw))!==false){$isHumanReq=true;break;}
+                  foreach(db()->query("SELECT * FROM bot_replies WHERE ativo=1")->fetchAll() as $br)
+                    foreach(explode('|',mb_strtolower($br['gatilho'])) as $kw)
+                      if(trim($kw)!==''&&mb_strpos($low,trim($kw))!==false){$reply=$br['resposta'];break 2;}
+                  if($reply===''&&!$isHumanReq){$reply="Olá! Vou chamar alguém para te atender. Um momento! 😊";}
+                  $isNoMatch=($reply!==''&&!$isHumanReq&&$reply==='Olá! Vou chamar alguém para te atender. Um momento! 😊');
+                }
+                if($reply!==''){
+                  $base=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'rvautomacao.com.br').strtok($_SERVER['REQUEST_URI']??'/cardapio/','?');
+                  $reply=str_replace(['{LINK_CARDAPIO}','{NOME_CLIENTE}','{SAUDACAO}'],[$base.'?r=menu',$nome?:'cliente',$saudacao],$reply);
+                  $botDelay=min(10,(int)setting_get('bot_delay','0'));
+                  if($botDelay>0)sleep($botDelay);
+                  $sent=evolution_send_text($wa,$reply);
+                  if($sent['ok'])db()->prepare("INSERT INTO whatsapp_messages(wa_id,direcao,texto,status) VALUES(?,'saida',?,'enviada')")->execute([$wa,$reply]);
+                  if($isHumanReq||$isNoMatch){
+                    $notifyPhones=setting_get('bot_notify_phones','');
+                    $notifyTag=$isHumanReq?'pediu atendente':'enviou mensagem sem resposta no bot';
+                    $notifyMsg="🤖 *Bot* — $nome ($waNum) $notifyTag.\nMensagem: \"$text\"";
+                    foreach(array_filter(array_map('trim',preg_split('/[\n,;]+/',$notifyPhones))) as $rn){
+                      $rNum=preg_replace('/\D/','',$rn);if(strlen($rNum)<=11)$rNum='55'.$rNum;
+                      if($rNum==='')continue;
+                      evolution_send_text($rNum,$notifyMsg);
+                    }
+                    if($isHumanReq)
+                      db()->prepare("INSERT OR REPLACE INTO bot_conv_state(phone,mode,last_human) VALUES(?,?,?)")->execute([$waNum,'human',time()]);
+                  }
+                }
               }
             }
           }
@@ -2030,6 +2073,7 @@ case 'saas_settings':
     if(isset($_POST['saas_scraper_key']) && ($v=trim($_POST['saas_scraper_key']))!=='' && $v!=='••••••••') setting_set('saas_scraper_key',$v);
     if(isset($_POST['saas_payment_api_key']) && ($v=trim($_POST['saas_payment_api_key']))!=='' && $v!=='••••••••') setting_set('saas_payment_api_key',$v);
     if(isset($_POST['saas_payment_provider'])) setting_set('saas_payment_provider', trim($_POST['saas_payment_provider']));
+    if(isset($_POST['saas_infinitepay_handle'])) setting_set('saas_infinitepay_handle', preg_replace('/[^a-zA-Z0-9_.-]/','',trim($_POST['saas_infinitepay_handle'])));
     if(isset($_POST['saas_pix_key'])) setting_set('saas_pix_key', trim($_POST['saas_pix_key']));
     if(isset($_POST['saas_pix_nome'])) setting_set('saas_pix_nome', trim($_POST['saas_pix_nome']));
     redirect('?r=saas_settings&salvo=1');
