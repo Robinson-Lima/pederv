@@ -267,7 +267,8 @@ case 'order_create': // POST JSON {itens:[{id,qtd}], nome, fone, endereco, metod
     if($cartToken!=='')db()->prepare("UPDATE abandoned_carts SET status='convertido',convertido_order_id=?,atualizado_em=datetime('now','localtime') WHERE token=?")->execute([$oid,$cartToken]);
   }
   $codigo=$d->query("SELECT codigo FROM orders WHERE id=".(int)$oid)->fetch()['codigo'];
-  json_out(['ok'=>true,'order_id'=>(int)$oid,'codigo'=>$codigo,'total'=>$total,'status_url'=>'?r=order_status&id='.(int)$oid]);
+  $_statusPath=strtok($_SERVER['REQUEST_URI']??'/','?');
+  json_out(['ok'=>true,'order_id'=>(int)$oid,'codigo'=>$codigo,'total'=>$total,'status_url'=>$_statusPath.'?r=order_status&id='.(int)$oid]);
   break;
 
 case 'order_pix': // GET id -> retorna payload
@@ -698,6 +699,27 @@ case 'admin_assign_courier': // POST order_id, courier_id -> despacha
   }
   if(strpos($_SERVER['HTTP_ACCEPT']??'','application/json')!==false) json_out(['ok'=>true]);
   redirect('?r=admin_couriers');
+  break;
+
+case 'admin_drag_move': // POST id, col, courier_id -> drag & drop kanban
+  if(!require_role('admin')) json_out(['ok'=>false]);
+  $id=(int)($_POST['id']??0); $col=$_POST['col']??''; $courierId=$_POST['courier_id']??'';
+  $oq=db()->prepare("SELECT * FROM orders WHERE id=?"); $oq->execute([$id]); $oArr=$oq->fetch();
+  if(!$oArr) json_out(['ok'=>false,'erro'=>'Pedido não encontrado.']);
+  if($col==='saiu_entrega'){
+    $cid=($courierId&&$courierId!=='coleta')?(int)$courierId:0;
+    if($cid){db()->prepare("UPDATE orders SET courier_id=? WHERE id=?")->execute([$cid,$id]);db()->prepare("UPDATE couriers SET status='em_rota' WHERE id=?")->execute([$cid]);}
+    order_set_status($id,'saiu_entrega','admin');
+    if($cid){$q=db()->prepare("SELECT * FROM couriers WHERE id=?");$q->execute([$cid]);$courier=$q->fetch();n8n_event('delivery_assigned',['order_id'=>$id,'motoboy'=>$courier]);evolution_delivery_alert($courier,$oArr);if(!empty($courier['user_id']))webpush_notify_user((int)$courier['user_id'],['title'=>'🛵 Nova entrega para você!','body'=>'Pedido '.$oArr['codigo'].' no balcão. Toque para abrir e aceitar.','tag'=>'rv-entrega-'.$id,'url'=>'?r=courier']);}
+  } elseif($col==='concluido'){
+    order_set_status($id,'concluido','admin');
+  } elseif($col==='em_preparo'){
+    $st=in_array($oArr['status'],['novo'],true)?'aceito':'em_preparo';
+    order_set_status($id,$st,'admin');
+  } elseif($col==='novo'){
+    order_set_status($id,'novo','admin');
+  }
+  json_out(['ok'=>true]);
   break;
 
 case 'admin_delivered': // POST id -> operador marca entregue (entrega manual, app do motoboy desligado)

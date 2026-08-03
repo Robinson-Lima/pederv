@@ -58,7 +58,7 @@ function paymentEditor(o){
 function togglePayment(id){document.getElementById('pe'+id)?.classList.toggle('open')}
 function renderOrder(o){
   const locked=onlinePending(o);let action='';
-  const podeDespachar=o.status==='pronto'||(SKIP_KDS&&o.status==='aceito');
+  const podeDespachar=['pronto','em_preparo'].includes(o.status)||(SKIP_KDS&&o.status==='aceito');
   if(o.status==='novo') action=`<div class="new-actions"><button class="adv" onclick="setStatus(${o.id},'aceito')">Aceitar pedido</button><button class="reject" onclick="rejectOrder(${o.id})">Recusar</button></div>`;
   else if(podeDespachar&&o.tipo==='entrega'&&MOTOBOY_OFF) action=`<button class="adv ${locked?'payment-locked':''}" onclick="despacharManual(${o.id},${locked?'true':'false'})">${locked?'🔒 Aguardando pagamento':'Despachar (manual) →'}</button>${locked?'<div class="payment-help">Confirme PAGO na caneta antes de despachar.</div>':''}`;
   else if(podeDespachar&&o.tipo==='entrega') action=`<div class="desp"><select id="cs${o.id}">${courierOptions(o)}</select><button class="${locked?'payment-locked':''}" onclick="despachar(${o.id},${locked?'true':'false'})">${locked?'🔒 Aguardando pagamento':'Despachar →'}</button></div>${locked?'<div class="payment-help">Confirme PAGO na caneta antes de despachar.</div>':''}`;
