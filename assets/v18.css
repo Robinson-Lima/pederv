@@ -1,0 +1,142 @@
+/* ============================================================
+   V18 — Cardápio do cliente: linguagem "Uber" preto & branco.
+   Aplica-se só quando o <body> tem a classe .menu-uber (rota menu).
+   Camada puramente visual: reestiliza as classes que já existem
+   no menu.php, sem tocar em PHP/JS. Carregada por último.
+   ============================================================ */
+
+.menu-uber{
+  --u-bg:#ffffff; --u-ink:#0f0f0f; --u-body:#6a6a6a; --u-soft:#f1f1f1;
+  --u-line:#ededed; --u-thumb:#f4f4f4; --u-primary:#0f0f0f; --u-on:#ffffff;
+  --u-sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--u-bg); color:var(--u-ink); min-height:100vh;
+}
+.menu-uber h2,.menu-uber h4,.menu-uber h3,.menu-uber .msec{
+  font-family:var(--u-sans); letter-spacing:-.02em;
+}
+
+/* ---------- HERO ---------- */
+.menu-uber .mhero{background:var(--u-bg)}
+.menu-uber .mhero-capa{border-radius:0 0 20px 20px;overflow:hidden}
+.menu-uber .mhead{
+  background:var(--u-bg); color:var(--u-ink);
+  border-bottom:1px solid var(--u-line); padding:34px 18px 16px;
+}
+.menu-uber .mh{max-width:720px;margin:auto;gap:13px}
+.menu-uber .mh .lg{
+  width:52px;height:52px;border-radius:16px;
+  background:var(--u-primary);color:var(--u-on);
+  font-family:var(--u-sans);font-weight:800;font-size:22px;
+}
+.menu-uber .mh h2{font-size:21px;font-weight:800;color:var(--u-ink)}
+.menu-uber .mh .meta{font-size:12.5px;color:var(--u-body);margin-top:3px}
+.menu-uber .mh .meta .op{color:#12a150;font-weight:700}
+.menu-uber .mh .meta .op.closed{color:#c0392b;background:none}
+.menu-uber .menu-account{display:flex;gap:14px;margin-left:auto;align-items:center}
+.menu-uber .track-top{
+  margin-left:0;color:var(--u-ink);border:none;background:none;padding:6px 2px;
+  text-decoration:none;font-size:13px;font-weight:600;
+}
+
+/* ---------- PROMO TICKER ---------- */
+.menu-uber .mpromo{
+  background:var(--u-soft);color:var(--u-body);
+  margin:14px auto 0;max-width:684px;border-radius:12px;
+  padding:10px 14px;font-size:12.5px;font-weight:500;
+}
+.menu-uber .mpromo-track span{color:var(--u-body)}
+
+/* ---------- CATEGORY CHIPS ---------- */
+.menu-uber .chips{
+  background:var(--u-bg);border-bottom:1px solid var(--u-line);
+  padding:14px 18px;gap:8px;
+}
+.menu-uber .chip{
+  background:var(--u-soft);color:var(--u-ink);border:none;
+  font-size:13px;font-weight:600;padding:9px 16px;
+}
+.menu-uber .chip.on{background:var(--u-primary);color:var(--u-on);border:none}
+
+/* ---------- PRODUCT LIST ---------- */
+.menu-uber .mlist{max-width:720px;padding:6px 18px 96px}
+.menu-uber .msec{color:var(--u-ink);font-weight:800;font-size:13px;
+  letter-spacing:.02em;margin:22px 2px 10px}
+.menu-uber .msec::after{background:var(--u-line)}
+.menu-uber .prod{
+  background:var(--u-bg);border:none;border-top:1px solid var(--u-line);
+  border-radius:0;padding:15px 0;margin:0;box-shadow:none;gap:13px;
+}
+.menu-uber .msec + .prod{border-top:none}
+.menu-uber .prod .pic{
+  width:76px;height:76px;border-radius:14px;background:var(--u-thumb);
+  font-size:34px;
+}
+.menu-uber .prod .pic img{width:100%;height:100%;object-fit:cover;border-radius:14px}
+.menu-uber .prod h4{font-size:15px;font-weight:700;color:var(--u-ink)}
+.menu-uber .prod p{font-size:12.5px;color:var(--u-body);margin:3px 0 9px;line-height:1.4}
+.menu-uber .prow{margin-top:8px}
+.menu-uber .price{font-family:var(--u-sans);font-size:15px;font-weight:800;color:var(--u-ink)}
+.menu-uber .add{
+  width:34px;height:34px;border-radius:999px;
+  background:var(--u-primary);color:var(--u-on);border:none;
+  font-size:20px;font-weight:500;
+}
+.menu-uber .menu-combo,.menu-uber .combo-label{
+  background:var(--u-primary);color:var(--u-on);border-radius:999px;
+  font:800 9px var(--u-sans);letter-spacing:.06em;padding:3px 7px;
+}
+.menu-uber .combo-contains{color:var(--u-body);font-size:11px}
+
+/* ---------- FLOATING CART BAR ---------- */
+.menu-uber .cartbar{
+  background:var(--u-primary);color:var(--u-on);border:none;
+  border-radius:999px;padding:15px 22px;font-weight:600;font-size:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,.22);text-align:left;
+}
+.menu-uber .cartbar .mono{font-weight:500;opacity:.85}
+
+/* ---------- CHECKOUT SHEET ---------- */
+.menu-uber .sheet-in{background:var(--u-bg);color:var(--u-ink);border-radius:22px 22px 0 0}
+.menu-uber .grab{background:#d9d9d9}
+.menu-uber .sheet h3{color:var(--u-ink);font-weight:800}
+.menu-uber .coitem{color:var(--u-body);border-color:var(--u-line)}
+.menu-uber .coitem b{color:var(--u-ink)}
+.menu-uber .field label{color:var(--u-body)}
+.menu-uber .field input,.menu-uber .field select{
+  background:var(--u-bg);color:var(--u-ink);border:1px solid #dcdcdc;border-radius:10px;
+}
+.menu-uber .field input:focus,.menu-uber .field select:focus{
+  outline:0;border-color:var(--u-ink);box-shadow:0 0 0 3px rgba(15,15,15,.08);
+}
+.menu-uber .paychoices legend{color:var(--u-ink);font-weight:700}
+.menu-uber .paychoices label{border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink)}
+.menu-uber .paychoices label:has(input:checked){
+  border:2px solid var(--u-ink)!important;background:var(--u-soft);box-shadow:none!important;
+}
+.menu-uber .paychoices small{color:var(--u-body)}
+.menu-uber .paychoices input{accent-color:var(--u-ink)}
+.menu-uber .cototal{color:var(--u-ink)}
+.menu-uber .cototal b{color:var(--u-ink)}
+
+/* Botões do checkout */
+.menu-uber .btn.finish{background:var(--u-primary);color:var(--u-on);border-radius:999px}
+.menu-uber .btn.track{background:var(--u-primary);color:var(--u-on);border-radius:999px}
+.menu-uber .btn.neworder{background:var(--u-soft);color:var(--u-ink);border-radius:999px}
+
+/* Sucesso / Pix */
+.menu-uber .success-icon{color:var(--u-ink)}
+.menu-uber .qrbox{background:var(--u-soft);border-radius:16px}
+.menu-uber .qrbox input{background:var(--u-bg);color:var(--u-ink);border:1px solid #dcdcdc}
+
+/* Banners */
+.menu-uber .table-order-banner{
+  background:var(--u-soft);border:1px solid var(--u-line);color:var(--u-ink);
+  max-width:684px;border-radius:12px;
+}
+.menu-uber.menu-uber .menu-closed-banner{
+  background:var(--u-primary);color:var(--u-on);
+}
+.menu-uber .menu-closed-banner span{opacity:.85}
+
+/* Free-standing add button already styled; sacola summary spacing */
+.menu-uber .cartbar span:last-child{font-variant-numeric:tabular-nums}
