@@ -33,7 +33,14 @@ if($isAdmin){try{$waCount=(int)db()->query("SELECT COUNT(*) c FROM whatsapp_mess
   $promoTxt=$hex6(setting_get('promo_text_color',''), $onFinal);
   echo '<style>:root{--brand:'.$accent.';--brand2:'.$accent.';--brandsoft:'.$accent.'26;--on-brand:'.$onFinal.';--promo-text:'.$promoTxt.'}';
   if($isAdmin) echo '.admin-side{background:'.$corLateral.'!important}';
-  if($r==='menu' && $menuBg!=='') echo 'body.theme-custombg{background:linear-gradient(rgba(8,9,11,.70),rgba(8,9,11,.82)),url("'.e($menuBg).'") center/cover fixed no-repeat!important}';
+  if($r==='menu'){
+    // Aplica o tema de fundo do cardápio selecionado pelo restaurante
+    $_temasBg=['gourmet'=>'radial-gradient(60% 70% at 50% 0,rgba(238,116,48,.18),transparent 62%),#12161F','carvao'=>'radial-gradient(60% 75% at 50% 0,rgba(238,116,48,.15),transparent 60%),#0C0E12','noite'=>'radial-gradient(45% 55% at 50% 0,rgba(247,160,90,.34),transparent 60%),#08090B','madeira'=>'radial-gradient(60% 70% at 50% 0,rgba(238,116,48,.16),transparent 62%),#1A130A','bistro'=>'radial-gradient(60% 70% at 50% 0,rgba(238,116,48,.12),transparent 62%),#0D1712','vinho'=>'radial-gradient(65% 72% at 50% 0,rgba(214,80,84,.22),transparent 60%),#160A0E','escuro'=>'#0B0F14','claro'=>'linear-gradient(180deg,#F8F3EB,#F1E9DD)','branco'=>'#FFFFFF'];
+    $_menuTema=setting_get('menu_theme','escuro');
+    $_menuBgCss=$_temasBg[$_menuTema]??$_temasBg['escuro'];
+    if($menuBg!=='') echo 'body.menu-uber{background:linear-gradient(rgba(8,9,11,.70),rgba(8,9,11,.82)),url("'.e($menuBg).'") center/cover fixed no-repeat!important}';
+    else echo 'body.menu-uber{background:'.$_menuBgCss.'!important}';
+  }
   echo '</style>';
 ?></head>
 <body class="<?= $r==='menu' ? 'menu-uber' : ((in_array($r,['courier','waiter','waiter_comanda','placa','order_status','kds','customer_account'],true)||strpos($r,'login')!==false||strpos($r,'customer_')===0)?'dark':'') ?>"><link rel="stylesheet" href="<?= $asset('assets/qr-admin.css') ?>"><link rel="stylesheet" href="<?= $asset('assets/workflow.css') ?>"><link rel="stylesheet" href="<?= $asset('assets/v11.css') ?>"><link rel="stylesheet" href="<?= $asset('assets/v15.css') ?>"><link rel="stylesheet" href="<?= $asset('assets/v16.css') ?>"><link rel="stylesheet" href="<?= $asset('assets/v17.css') ?>"><link rel="stylesheet" href="<?= $asset('assets/v18.css') ?>"><link rel="stylesheet" href="<?= $asset('assets/v19.css') ?>"><?php if($isAdmin): ?><script defer src="<?= $asset('assets/admin-notify.js') ?>"></script><?php endif; ?>

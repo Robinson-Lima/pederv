@@ -657,7 +657,7 @@ function customer_status_notify($order,$status,$primeiroEvento){
     '{TELEFONE}'=>$order['cliente_fone'],
     '{TAXA}'=>money($taxa),
     '{TOTAL}'=>money($order['total']),
-    '{PAGAMENTO}'=>payment_label($order['pagamento_metodo']),
+    '{PAGAMENTO}'=>payment_label($order['pagamento_metodo']).((!empty($order['troco'])&&(float)$order['troco']>0&&($order['pagamento_metodo']??'')==='dinheiro')?(' — Troco para '.money((float)$order['troco'])):''),
     '{PAGAMENTO_STATUS}'=>$order['pagamento_status']==='pago'?'PAGO':'PENDENTE',
     '{TEMPO_ENTREGA}'=>$tempo,
     '{LINK_ACOMPANHAR}'=>'https://'.($_SERVER['HTTP_HOST']??'pederv.com.br').'/?'.( current_slug()!==''?'slug='.current_slug().'&':'' ).'r=order_status&id='.$order['id'],
