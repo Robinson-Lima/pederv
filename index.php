@@ -267,8 +267,9 @@ case 'order_create': // POST JSON {itens:[{id,qtd}], nome, fone, endereco, metod
     if($cartToken!=='')db()->prepare("UPDATE abandoned_carts SET status='convertido',convertido_order_id=?,atualizado_em=datetime('now','localtime') WHERE token=?")->execute([$oid,$cartToken]);
   }
   $codigo=$d->query("SELECT codigo FROM orders WHERE id=".(int)$oid)->fetch()['codigo'];
-  $_statusPath=strtok($_SERVER['REQUEST_URI']??'/','?');
-  json_out(['ok'=>true,'order_id'=>(int)$oid,'codigo'=>$codigo,'total'=>$total,'status_url'=>$_statusPath.'?r=order_status&id='.(int)$oid]);
+  $_slug=current_slug();
+  $_statusUrl='?r=order_status'.($_slug?'&slug='.$_slug:'').'&id='.(int)$oid;
+  json_out(['ok'=>true,'order_id'=>(int)$oid,'codigo'=>$codigo,'total'=>$total,'status_url'=>$_statusUrl]);
   break;
 
 case 'order_pix': // GET id -> retorna payload

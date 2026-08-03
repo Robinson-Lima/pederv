@@ -654,7 +654,7 @@ function customer_status_notify($order,$status,$primeiroEvento){
     '{PAGAMENTO}'=>payment_label($order['pagamento_metodo']),
     '{PAGAMENTO_STATUS}'=>$order['pagamento_status']==='pago'?'PAGO':'PENDENTE',
     '{TEMPO_ENTREGA}'=>$tempo,
-    '{LINK_ACOMPANHAR}'=>(isset($_SERVER['HTTP_HOST'])?'https://'.$_SERVER['HTTP_HOST'].strtok($_SERVER['REQUEST_URI']??'','?'):'').'?r=order_status&id='.$order['id'],
+    '{LINK_ACOMPANHAR}'=>'https://'.($_SERVER['HTTP_HOST']??'pederv.com.br').'/?'.( current_slug()!==''?'slug='.current_slug().'&':'' ).'r=order_status&id='.$order['id'],
   ];
   $texto=str_replace(array_keys($subst),array_values($subst),$tpl);
   return uaz_r_send_text($order['cliente_fone'],$texto)['ok'] ?? false;
