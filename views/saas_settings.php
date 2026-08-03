@@ -18,6 +18,9 @@
     <label>URL da sua instância uazapi<input name="saas_uaz_url" value="<?= e(_uaz_cfg('saas_uaz_url')) ?>" placeholder="https://api.uazapi.com"></label>
     <label>API Key (master)<input name="saas_uaz_key" type="password" value="<?= _uaz_cfg('saas_uaz_key')!==''?'••••••••':'' ?>" placeholder="sua-chave-aqui" autocomplete="off"></label>
   </div>
+  <div class="grid2" style="margin-top:8px">
+    <label>Nome da instância do robô SaaS (seu número interno)<input name="saas_uaz_instance" value="<?= e(_uaz_cfg('saas_uaz_instance')?:'' ) ?>" placeholder="pederv-sales"><small style="font-size:11px;color:#888">Nome exato da instância no uazapi que será usada como robô interno do PedeRV. Ex: pederv-sales</small></label>
+  </div>
   <?php if(_uaz_cfg('saas_uaz_url')): ?><p style="color:#2e7d32;font-size:13px">✅ uazapi configurado — clientes verão a opção "QR Code" no painel deles.</p><?php endif; ?>
 
   <div class="saas-panel-h" style="margin-top:14px"><b>Importação de cardápio — ScraperAPI</b></div>

@@ -2100,6 +2100,7 @@ case 'saas_settings':
     // uazapi global config — salva sempre no master db via setting_set (sem slug = master)
     if(isset($_POST['saas_uaz_url'])) setting_set('saas_uaz_url', trim($_POST['saas_uaz_url']));
     if(isset($_POST['saas_uaz_key']) && ($v=trim($_POST['saas_uaz_key']))!=='' && $v!=='••••••••') setting_set('saas_uaz_key',$v);
+    if(isset($_POST['saas_uaz_instance'])) setting_set('saas_uaz_instance', preg_replace('/[^a-z0-9_-]/','',strtolower(trim($_POST['saas_uaz_instance']))));
     if(isset($_POST['saas_scraper_key']) && ($v=trim($_POST['saas_scraper_key']))!=='' && $v!=='••••••••') setting_set('saas_scraper_key',$v);
     if(isset($_POST['saas_payment_api_key']) && ($v=trim($_POST['saas_payment_api_key']))!=='' && $v!=='••••••••') setting_set('saas_payment_api_key',$v);
     if(isset($_POST['saas_payment_provider'])) setting_set('saas_payment_provider', trim($_POST['saas_payment_provider']));
@@ -2140,11 +2141,12 @@ case 'uazapi_qr':
   }
   // Painel SaaS master (sem slug) + UazAPI central configurada — robô de vendas SaaS
   if(uazapi_configured()){
+    $_saasInst=_uaz_cfg('saas_uaz_instance'); if($_saasInst==='') $_saasInst='pederv-sales';
     $saasWaTok=setting_get('saas_master_wa_token','');
-    $cr=uazapi_request('POST','/instance/create',['name'=>'saas-master']);
+    $cr=uazapi_request('POST','/instance/create',['name'=>$_saasInst]);
     $newTok=$cr['data']['instance']['token']??$cr['data']['token']??'';
     if($newTok!==''){$saasWaTok=$newTok;setting_set('saas_master_wa_token',$saasWaTok);}
-    if($saasWaTok==='') json_out(['ok'=>false,'erro'=>'Erro ao criar instância SaaS.']);
+    if($saasWaTok==='') json_out(['ok'=>false,'erro'=>'Erro ao criar instância SaaS. Verifique o nome da instância em Configurações → uazapi. Instância configurada: '.$_saasInst]);
     $wbBase=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br');
     uazapi_instance_request($saasWaTok,'POST','/webhook',['enabled'=>true,'url'=>$wbBase.'/?r=webhook_uazapi','events'=>['messages'],'excludeMessages'=>['wasSentByApi','fromMeYes','isGroupYes']]);
     $r=uazapi_instance_request($saasWaTok,'POST','/instance/connect');
@@ -2213,7 +2215,11 @@ case 'uazapi_disconnect':
     json_out(['ok'=>true]);
     break;
   }
-  if(!$slug&&uaz_r_configured()) uaz_r_request('POST','/instance/disconnect');
+  if(!$slug&&uazapi_configured()){
+    $saasWaTok=setting_get('saas_master_wa_token','');
+    if($saasWaTok!=='') uazapi_instance_request($saasWaTok,'POST','/instance/disconnect');
+    setting_set('saas_master_wa_token','');
+  }
   json_out(['ok'=>true]);
   break;
 

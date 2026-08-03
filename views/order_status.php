@@ -1,7 +1,7 @@
 <?php
 $steps=['novo'=>'Pedido recebido','em_preparo'=>'Em preparo','saiu_entrega'=>'Saiu para entrega','entregue'=>'Entregue','concluido'=>'Concluído'];
 $order=array_keys($steps); $current=$o?array_search($o['status'],$order,true):false;
-$_bSlug=current_slug(); $_backMenu='?r=menu'.($_bSlug?'&slug='.$_bSlug:'');
+$_bSlug=current_slug(); $_backMenu=$_bSlug?('/cardapio/'.$_bSlug):'?r=menu';
 ?>
 <div class="status-page">
   <?php if(!$o): ?><h2>Pedido não encontrado</h2><a href="<?= $_backMenu ?>">Voltar ao cardápio</a>
