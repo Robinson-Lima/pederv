@@ -196,6 +196,7 @@ function db_build_schema($d){
     "ALTER TABLE orders ADD COLUMN acerto_por TEXT DEFAULT ''",
     "ALTER TABLE orders ADD COLUMN valor_recebido REAL DEFAULT 0",
     "ALTER TABLE orders ADD COLUMN troco REAL DEFAULT 0",
+    "ALTER TABLE orders ADD COLUMN pagamento_obs TEXT DEFAULT ''",
   ] as $sql){ try{ $d->exec($sql); }catch(Exception $e){} }
 
   $d->exec("

@@ -55,8 +55,8 @@
           <?php endforeach; ?>
         </select></label>
         <label style="flex:1">Retomar robô após<select name="bot_human_timeout" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px">
-          <?php $ht=(int)setting_get('bot_human_timeout','1'); foreach([1=>'1 hora',2=>'2 horas',4=>'4 horas',8=>'8 horas',24=>'24 horas'] as $v=>$l): ?>
-          <option value="<?= $v ?>" <?= $ht===$v?'selected':'' ?>><?= $l ?></option>
+          <?php $ht=(float)setting_get('bot_human_timeout','1'); foreach(['0.5'=>'30 minutos','1'=>'1 hora','2'=>'2 horas','4'=>'4 horas','8'=>'8 horas','24'=>'24 horas'] as $v=>$l): ?>
+          <option value="<?= $v ?>" <?= (float)$v===$ht?'selected':'' ?>><?= $l ?></option>
           <?php endforeach; ?>
         </select></label>
       </div>

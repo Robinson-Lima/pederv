@@ -651,7 +651,7 @@ function customer_status_notify($order,$status,$primeiroEvento){
     '{TELEFONE}'=>$order['cliente_fone'],
     '{TAXA}'=>money($taxa),
     '{TOTAL}'=>money($order['total']),
-    '{PAGAMENTO}'=>payment_label($order['pagamento_metodo']),
+    '{PAGAMENTO}'=>payment_label($order['pagamento_metodo']).(($order['troco']??0)>0?' — Troco para '.money((float)$order['troco']):''),
     '{PAGAMENTO_STATUS}'=>$order['pagamento_status']==='pago'?'PAGO':'PENDENTE',
     '{TEMPO_ENTREGA}'=>$tempo,
     '{LINK_ACOMPANHAR}'=>(isset($_SERVER['HTTP_HOST'])?'https://'.$_SERVER['HTTP_HOST'].strtok($_SERVER['REQUEST_URI']??'','?'):'').'?r=order_status&id='.$order['id'],

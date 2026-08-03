@@ -249,6 +249,12 @@ case 'order_create': // POST JSON {itens:[{id,qtd}], nome, fone, endereco, metod
     $d->prepare("INSERT INTO order_items(order_id,nome,qtd,preco) VALUES(?,?,?,?)")
       ->execute([$oid,$i['nome'],$i['qtd'],$i['preco']]);
 
+  $troco_para = (float)($in['troco_para'] ?? 0);
+  if($metodo === 'dinheiro' && $troco_para > 0){
+    $d->prepare("UPDATE orders SET troco=?, pagamento_obs=? WHERE id=?")
+      ->execute([$troco_para, 'Troco para '.money($troco_para), $oid]);
+  }
+
   $initial = $tipo==='mesa' || setting_get('orders_auto_accept','0')==='1' ? 'aceito' : 'novo';
   order_set_status($oid,$initial,$tipo==='mesa'?'autoatendimento_mesa':'cliente');
   if($tipo==='mesa'){
@@ -1026,7 +1032,7 @@ case 'admin_bot_messages':
     setting_set('channel_whatsapp',isset($_POST['channel_whatsapp'])?'1':'0');
     if(isset($_POST['bot_notify_phones'])) setting_set('bot_notify_phones',trim($_POST['bot_notify_phones']));
     if(isset($_POST['bot_delay'])) setting_set('bot_delay',(string)min(10,max(0,(int)$_POST['bot_delay'])));
-    if(isset($_POST['bot_human_timeout'])) setting_set('bot_human_timeout',(string)max(1,(int)$_POST['bot_human_timeout']));
+    if(isset($_POST['bot_human_timeout'])){$_bht=(float)$_POST['bot_human_timeout'];setting_set('bot_human_timeout',(string)($_bht>0?$_bht:1));}
     foreach(['wa_msg_novo','wa_msg_preparo','wa_msg_saiu','wa_msg_entregue'] as $k)
       if(isset($_POST[$k])) setting_set($k,trim($_POST[$k]));
     db()->exec("DELETE FROM bot_replies");
@@ -1199,7 +1205,7 @@ case 'webhook_evolution':
               $convStmt->execute([$waNum]);$convRow=$convStmt->fetch(PDO::FETCH_ASSOC);
               $convMode='bot';$lastHuman=0;
               if($convRow){$convMode=(string)$convRow['mode'];$lastHuman=(int)$convRow['last_human'];}
-              $humanTimeout=(int)setting_get('bot_human_timeout','1');
+              $humanTimeout=(float)setting_get('bot_human_timeout','1');
               if($convMode==='human'&&$humanTimeout>0&&$lastHuman>0&&(time()-$lastHuman)>($humanTimeout*3600))$convMode='bot';
               if($convMode==='human'){
                 db()->prepare("INSERT OR REPLACE INTO bot_conv_state(phone,mode,last_human) VALUES(?,?,?)")->execute([$waNum,'human',time()]);

@@ -94,7 +94,7 @@
             </div>
           </div>
           <div id="troco-box" style="display:none">
-            <label class="paysub" for="f-troco">Se precisar de troco, para quanto? <span style="font-weight:400">(opcional)</span></label>
+            <label class="paysub" for="f-troco">PRECISA DE TROCO?</label>
             <input id="f-troco" inputmode="numeric" oninput="fmtTroco(this)" placeholder="R$ 0,00">
           </div>
         </div>
