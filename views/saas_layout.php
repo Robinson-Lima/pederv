@@ -3,6 +3,7 @@
 <title>PedeRV · Central SaaS</title><base href="<?= rtrim(dirname($_SERVER['SCRIPT_NAME']??'/'),'/\\').'/' ?>">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= $asset('assets/saas.css') ?>">
+<link rel="stylesheet" href="<?= $asset('assets/v19.css') ?>">
 </head><body class="saas">
 <?php if(saas_logged()): ?>
 <div class="saas-shell">

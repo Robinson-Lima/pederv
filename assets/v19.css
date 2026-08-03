@@ -1,0 +1,153 @@
+/* ============================================================
+   V19 — Painel administrativo + Central SaaS na linguagem "Uber".
+   Camada puramente visual, carregada por último.
+   ADMIN  → escopada em .admin-shell (mantém a cor do sistema via var(--brand)).
+   SAAS   → escopada em body.saas (acento laranja da plataforma).
+   Nenhum PHP/JS de lógica é alterado.
+   ============================================================ */
+
+/* =====================================================================
+   PARTE 1 — PAINEL ADMINISTRATIVO  (.admin-shell)
+   ===================================================================== */
+.admin-shell{
+  --u-sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --u-ink:#131316; --u-body:#6b6b72; --u-line:#ececed; --u-soft:#f5f5f6;
+  --u-canvas:#fbfbfc;
+  background:var(--u-canvas);
+}
+.admin-shell h1,.admin-shell h2,.admin-shell h3,.admin-shell h4{
+  font-family:var(--u-sans);letter-spacing:-.02em;color:var(--u-ink);
+}
+
+/* ---- Sidebar: mantém a cor do sistema (fundo), mas achata e usa o acento ---- */
+.admin-shell .admin-side{box-shadow:none}
+.admin-shell .side-brand{background:#fff}
+.admin-shell .side-brand>div{font-family:var(--u-sans)}
+.admin-shell .side-brand b{color:var(--u-ink)}
+.admin-shell .admin-side nav a{
+  border-radius:10px;font-weight:500;font-size:12.5px;box-shadow:none;
+  border:0;background:transparent;margin:1px 0;
+}
+.admin-shell .admin-side nav a:hover{background:rgba(255,255,255,.08);transform:none}
+.admin-shell .admin-side nav a.on{
+  background:var(--brand);color:var(--on-brand,#fff);font-weight:700;box-shadow:none;
+}
+.admin-shell .admin-side nav>small{
+  color:rgba(255,255,255,.55)!important;font-weight:800;letter-spacing:.14em;
+  border-top-color:rgba(255,255,255,.10)!important;
+}
+.admin-shell .admin-side nav>small::before{display:none}
+.admin-shell .admin-side nav a[href*="logout"]{background:transparent;border:0}
+
+/* ---- Top bar: plana ---- */
+.admin-shell .admin-top{box-shadow:none;border-bottom:1px solid var(--u-line)}
+.admin-shell .admin-top>a{border-radius:999px;border-color:var(--u-line);font-weight:600}
+.admin-shell .wa-head-button{border-radius:999px;border-color:var(--u-line)}
+.admin-shell .store-status{border-radius:999px}
+
+/* ---- Títulos de página ---- */
+.admin-shell .orders-topbar .ot-title h2,
+.admin-shell .dash .orders-title h2,
+.admin-shell .ifa-head h2,
+.admin-shell .page-title-row h2{font-family:var(--u-sans);font-size:23px;font-weight:800}
+
+/* ---- Botões: pílula, acento do sistema ---- */
+.admin-shell .ifood-add a{
+  background:var(--brand);color:var(--on-brand,#fff);border-radius:999px;
+  box-shadow:none;font-weight:700;padding:11px 18px;
+}
+.admin-shell .ifood-add a:hover{filter:brightness(1.05);transform:none;box-shadow:none}
+.admin-shell .ifa-submit,.admin-shell .store-submit{
+  background:var(--brand);color:var(--on-brand,#fff);border-radius:999px;box-shadow:none;
+}
+.admin-shell .order-filter{border-radius:999px;border-color:var(--u-line);font-weight:600}
+.admin-shell .orders-filters .order-filter.on,
+.admin-shell .order-filter.on{background:var(--brand);border-color:var(--brand);color:var(--on-brand,#fff);box-shadow:none}
+.admin-shell .report-tabs a{border-radius:999px}
+.admin-shell .report-tabs a.on{background:var(--brand);border-color:var(--brand);color:var(--on-brand,#fff)}
+
+/* ---- Busca / inputs ---- */
+.admin-shell .orders-subbar #orderSearch,
+.admin-shell .orders-toolbar input{border-radius:999px;border-color:var(--u-line)}
+
+/* ---- Cartões de etapa (stats) ---- */
+.admin-shell .stats-etapas .stat,.admin-shell .stat{
+  border-radius:14px;border-color:var(--u-line);box-shadow:none;background:#fff;
+}
+.admin-shell .stat .v{font-family:var(--u-sans);font-weight:800}
+.admin-shell .stat .l{color:var(--u-body)}
+
+/* ---- Kanban ---- */
+.admin-shell .kcol{background:var(--u-soft);border-radius:16px}
+.admin-shell .tk{
+  border-radius:14px;border-color:var(--u-line);box-shadow:none;padding:13px;
+}
+.admin-shell .tk .id{font-family:var(--u-sans);font-weight:600;color:var(--u-body)}
+.admin-shell .tk .nm{font-size:14px;font-weight:700}
+.admin-shell .tk .val{font-family:var(--u-sans);font-weight:800}
+.admin-shell .tk .ft{border-top:1px solid var(--u-line)}
+.admin-shell .tk .adv,.admin-shell .new-actions .adv{
+  background:var(--brand);color:var(--on-brand,#fff);border:0;border-radius:999px;
+  font-weight:700;padding:9px;font-size:12px;
+}
+.admin-shell .new-actions .reject{border-radius:999px;border-color:var(--u-line);color:#b2352f;font-weight:600}
+.admin-shell .source-badge{border-radius:999px;font-weight:700}
+.admin-shell .kstatus{border-radius:999px}
+.admin-shell .cancel-order{border-radius:999px}
+.admin-shell .desp select,.admin-shell .payedit select{border-radius:10px;border-color:var(--u-line)}
+
+/* ---- Cards genéricos / painéis de conteúdo ---- */
+.admin-shell .card,.admin-shell .salon-card,.admin-shell .ifa-card,
+.admin-shell .cfgcard,.admin-shell .users-card,.admin-shell .area-page,
+.admin-shell .customer-table,.admin-shell .pdv-cart,.admin-shell .pdv-product{
+  border-radius:16px;border-color:var(--u-line);box-shadow:none;
+}
+.admin-shell .pdv-finish,.admin-shell .bot-save,.admin-shell .save{
+  border-radius:999px;background:var(--brand);color:var(--on-brand,#fff);
+}
+.admin-shell .auto-accept{border-radius:999px;border-color:var(--u-line)}
+.admin-shell .trial-banner{border-radius:14px}
+.admin-shell .trial-banner a{border-radius:999px;background:var(--brand)}
+
+/* =====================================================================
+   PARTE 2 — CENTRAL SAAS  (body.saas)
+   Já é bem "Uber"; aqui só refinamos: pílulas, achatar sombras,
+   card de alerta com inversão de polaridade (preto), tipografia.
+   ===================================================================== */
+body.saas{
+  --u-sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-family:var(--u-sans);
+}
+body.saas h1,body.saas h2,body.saas h3,body.saas h4{font-family:var(--u-sans);letter-spacing:-.02em}
+
+/* Sidebar preta já é Uber; achata sombra do item ativo */
+body.saas .saas-side nav a.on{box-shadow:none}
+body.saas .saas-mark{box-shadow:none}
+body.saas .saas-new{border-radius:999px;box-shadow:none}
+
+/* Botões → pílula, sem elevação no hover */
+body.saas .saas-btn{border-radius:999px}
+body.saas .saas-btn:hover{transform:none;box-shadow:none;background:#f3f3f4}
+body.saas .saas-btn.primary{box-shadow:none}
+body.saas .saas-btn.primary:hover{background:#e05e00;filter:none}
+
+/* Cards de métrica: planos, sem barra de acento no topo, sombra plana */
+body.saas .saas-card{box-shadow:none;overflow:visible}
+body.saas .saas-card::before{display:none}
+body.saas .saas-card .c-v{font-family:var(--u-sans)}
+/* Inversão de polaridade no card de alerta (igual ao mockup) */
+body.saas .saas-card.alert{background:#131316;border-color:#131316}
+body.saas .saas-card.alert .c-l,body.saas .saas-card.alert .c-s{color:rgba(255,255,255,.6)}
+body.saas .saas-card.alert .c-v{color:#fff}
+
+/* Painéis planos */
+body.saas .saas-panel{box-shadow:none}
+body.saas .saas-panel-h b{font-family:var(--u-sans);font-weight:800}
+
+/* Login com pílula */
+body.saas .saas-login-card button{border-radius:999px}
+body.saas .saas-login-mark{box-shadow:none;border-radius:16px}
+
+/* Bot studio / cofre */
+body.saas .cxgo,body.saas .bot-save,body.saas .save{border-radius:999px}
+body.saas .bot-section-title{border-bottom-color:var(--sa-brand)}
