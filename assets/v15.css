@@ -45,10 +45,10 @@ body:not(.dark){background:#EEF1F6}
 
 /* Pendência de acerto no card (coluna Finalizados) */
 .tk.tk-acerto{border:1.5px solid #F0A79A;box-shadow:0 8px 22px rgba(226,72,61,.16);background:linear-gradient(180deg,#FFF7F5,#fff)}
-.acerto-pend{background:#FDEDE9;border:1px dashed #EFA294;border-radius:11px;padding:10px;margin:6px 0 8px;display:grid;gap:5px}
+.acerto-pend{background:#FDEDE9;border:1px dashed #EFA294;border-radius:11px;padding:8px 10px;margin:6px 0 8px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .acerto-pend b{font-size:11px;color:#B4362B;letter-spacing:.02em}
 .acerto-pend small{font-size:10px;color:#8A5A52;line-height:1.4}
-.acerto-pend button{margin-top:3px;background:#1B9E58;color:#fff;border-radius:9px;padding:9px 10px;font-size:11px;font-weight:900;box-shadow:0 4px 12px rgba(27,158,88,.3)}
+.acerto-pend button{background:#1B9E58;color:#fff;border-radius:8px;padding:6px 11px;font-size:10.5px;font-weight:800;white-space:nowrap;box-shadow:0 2px 6px rgba(27,158,88,.25)}
 .acerto-pend button:hover{background:#178A4C}
 .acerto-ok{font-size:10px;font-weight:800;color:#0E7A46;background:#E7F8EF;border-radius:8px;padding:5px 8px;margin:4px 0;width:max-content}
 

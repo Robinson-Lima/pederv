@@ -89,29 +89,26 @@
 
   <div class="mtgrid">
     <div>
-      <div class="paysec">🛵 Despachar pedido</div>
-      <?php if(!$aguardando): ?>
-        <p style="color:#727884;font-size:13px">Nenhum pedido de entrega aguardando.</p>
+      <div class="paysec">📦 Todas as entregas do dia</div>
+      <input id="entregaSearch" placeholder="Pesquisar por cliente, código, endereço..." style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:10px;margin-bottom:12px;font-size:13px" oninput="filtrarEntregas()">
+      <div id="entregaList">
+      <?php if(empty($todasEntregas)): ?>
+        <p style="color:#727884;font-size:13px">Nenhuma entrega hoje.</p>
       <?php endif; ?>
-      <?php foreach($aguardando as $o): ?>
-        <form class="dispatch" method="post" action="?r=admin_assign_courier">
-          <input type="hidden" name="order_id" value="<?= $o['id'] ?>">
-          <div class="di">
-            <div class="oid"><?= e($o['codigo']) ?></div>
-            <div class="w"><div class="nm"><?= e($o['cliente_nome']) ?></div>
-              <div class="mt"><?= e($o['endereco'] ?: 'sem endereço') ?> · <?= money($o['total']) ?></div></div>
+      <?php foreach($todasEntregas as $o):
+        $stLabel=['novo'=>'🔵 Novo','aceito'=>'🔵 Aceito','em_preparo'=>'🟠 Preparando','pronto'=>'🟢 Pronto','saiu_entrega'=>'🟣 Em rota','entregue'=>'✅ Entregue','cancelado'=>'❌ Cancelado'];
+      ?>
+        <div class="pcol entrega-row" data-search="<?= e(strtolower($o['codigo'].' '.$o['cliente_nome'].' '.$o['endereco'].' '.$o['bairro'].' '.($o['cnome']??''))) ?>">
+          <div class="oid"><?= e($o['codigo']) ?></div>
+          <div class="w">
+            <div class="nm"><?= e($o['cliente_nome']) ?></div>
+            <div class="mt"><?= e($o['endereco'] ?: 'sem endereço') ?><?= $o['bairro']?' · '.e($o['bairro']):'' ?></div>
+            <div class="mt">🛵 <?= e($o['cnome'] ?: 'sem motoboy') ?> · <?= e(payment_label($o['pagamento_metodo'])) ?> · <?= money($o['total']) ?> · <?= e(substr($o['criado_em']??'',11,5)) ?></div>
           </div>
-          <div class="dact">
-            <select name="courier_id" required>
-              <option value="">Escolher motoboy…</option>
-              <?php foreach($couriers as $c): ?>
-                <option value="<?= $c['id'] ?>"><?= e($c['nome']) ?><?= $c['status']==='em_rota'?' (em rota)':'' ?></option>
-              <?php endforeach; ?>
-            </select>
-            <button class="disp">Despachar →</button>
-          </div>
-        </form>
+          <div class="amt" style="font-size:12px"><?= $stLabel[$o['status']]??e($o['status']) ?></div>
+        </div>
       <?php endforeach; ?>
+      </div>
     </div>
 
     <div>
@@ -154,4 +151,5 @@
 // ou confirmando um acerto (input focado ou envio de formulário em andamento).
 let rvSubmitting=false;document.querySelectorAll('form').forEach(f=>f.addEventListener('submit',()=>rvSubmitting=true));
 setInterval(()=>{const a=document.activeElement;if(rvSubmitting||(a&&['INPUT','SELECT','TEXTAREA'].includes(a.tagName)))return;location.reload()},10000);
+function filtrarEntregas(){const q=document.getElementById('entregaSearch').value.toLowerCase();document.querySelectorAll('.entrega-row').forEach(r=>{r.style.display=!q||r.dataset.search.includes(q)?'':'none'})}
 </script>

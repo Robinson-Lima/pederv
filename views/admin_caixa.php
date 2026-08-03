@@ -40,7 +40,7 @@
       </div>
       <div class="cxesper">Esperado em caixa: <b><?= money($esperado) ?></b></div>
       <?php if(!empty($isAdminUser)): ?><a href="?r=admin_cash_detail&id=<?= (int)$cx['id'] ?>" class="cxgo" style="margin-right:8px">📋 Ver extrato e vendas</a><?php endif; ?>
-      <a href="#fechar" class="cxgo close-cash-main">🔒 FECHAR CAIXA</a>
+      <a href="javascript:void(0)" onclick="document.getElementById('fechar').scrollIntoView({behavior:'smooth'})" class="cxgo close-cash-main">🔒 FECHAR CAIXA</a>
     </div>
 
     <div class="mtgrid cash-workspace">

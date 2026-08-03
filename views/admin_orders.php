@@ -29,7 +29,7 @@ COLS=[['novo','🔵 Novos'],['em_preparo','🟠 Em preparo'],['saiu_entrega','�
 PAYMENTS={pix:'Pix online',pix_entrega:'Pix na entrega',cartao_online:'Cartão online',cartao_entrega:'Cartão na entrega',dinheiro:'Dinheiro',ifood:'Pago no iFood',debito:'Débito',credito:'Crédito',mesa:'Pagar no caixa'};
 let AUTO=<?= !empty($autoAccept)?'true':'false' ?>,AUTO_IFOOD=<?= !empty($autoAcceptIfood)?'true':'false' ?>,FILTER='<?= ($_GET['origem']??'')==='ifood'?'ifood':'all' ?>',QUERY='',CANCEL_MODE=<?= json_encode($cancelMode??'none') ?>,SKIP_KDS=<?= !empty($skipKds)?'true':'false' ?>,MOTOBOY_OFF=<?= !empty($motoboyOff)?'true':'false' ?>;
 let readySeen=JSON.parse(localStorage.getItem('rv_ready_seen')||'[]'),firstFeed=true;
-function colOf(s){return ['entregue','concluido','cancelado'].includes(s)?'concluido':(['aceito','em_preparo','pronto'].includes(s)?'em_preparo':(s==='ocorrencia'?'saiu_entrega':s))}
+function colOf(s){return ['entregue','concluido','cancelado','done'].includes(s)?'concluido':(['aceito','em_preparo','pronto'].includes(s)?'em_preparo':(s==='ocorrencia'?'saiu_entrega':s))}
 function origin(o){if(o.tipo==='mesa')return 'Mesa '+(o.mesa||'');if(o.canal==='ifood')return 'iFood · '+(o.tipo==='retirada'?'retirada':'entrega');if(o.tipo==='balcao')return 'Balcão';return o.tipo==='retirada'?'Retirada':'Entrega'}
 function source(o){if(o.canal==='ifood')return '<span class="source-badge ifood">iFood</span>'+(parseInt(o.simulacao)?'<span class="source-badge simulation">SIMULAÇÃO</span>':'');if(o.tipo==='mesa')return '<span class="source-badge mesa">SALÃO</span>';if(o.tipo==='balcao')return '<span class="source-badge">PDV</span>';return '<span class="source-badge">CARDÁPIO</span>'}
 function kitchenStatus(o){return o.status==='aceito'?'<span class="kstatus pending">PENDENTE · aguardando cozinha</span>':o.status==='em_preparo'?'<span class="kstatus cooking">EM PREPARO</span>':o.status==='pronto'?'<span class="kstatus ready">PRONTO 🔔 · despache agora</span>':''}
@@ -71,7 +71,8 @@ function renderOrder(o){
   } else if(o.acerto_status==='ok'&&['entregue','concluido'].includes(o.status)&&['dinheiro','cartao_entrega','pix_entrega'].includes(o.pagamento_metodo)){
     acerto=`<div class="acerto-ok">✔ Acerto conferido no caixa</div>`;
   }
-  return `<div class="tk ${o.status} ${o.acerto_status==='pendente'?'tk-acerto':''}">${edit}${acerto}<div class="id">Comanda ${o.codigo}${source(o)}<span>${origin(o)}</span></div>${kitchenStatus(o)}<div class="nm">${o.cliente_nome}</div><div class="it">${o.itens||''}</div>${contact(o)}${motoTag(o)}<div class="ft">${paymentBadge(o)}<span class="val">R$ ${parseFloat(o.total).toFixed(2).replace('.',',')}</span></div>${paymentEditor(o)}${action}${!['entregue','concluido','cancelado'].includes(o.status)?`<button class="cancel-order" onclick="cancelOrder(${o.id})">Cancelar pedido</button>`:''}</div>`;
+  const done=['entregue','concluido','cancelado'].includes(o.status);
+  return `<div class="tk ${o.status} ${o.acerto_status==='pendente'?'tk-acerto':''}" draggable="${done?'false':'true'}" data-oid="${o.id}" data-tipo="${o.tipo}" data-status="${o.status}" ondragstart="dragStart(event)">${edit}${acerto}<div class="id">Comanda ${o.codigo}${source(o)}<span>${origin(o)}</span></div>${kitchenStatus(o)}<div class="nm">${o.cliente_nome}</div><div class="it">${o.itens||''}</div>${contact(o)}${motoTag(o)}<div class="ft">${paymentBadge(o)}<span class="val">R$ ${parseFloat(o.total).toFixed(2).replace('.',',')}</span></div>${paymentEditor(o)}${action}${!done?`<button class="cancel-order" onclick="cancelOrder(${o.id})">Cancelar pedido</button>`:''}</div>`;
 }
 function isInteracting(){
   const kan=document.getElementById('kan');if(!kan)return false;
@@ -92,7 +93,7 @@ async function feed(force){
   let html='';
   COLS.forEach(([key,label])=>{
     const ready=key==='em_preparo'&&readyTotal?`<span class="ready-inline hot">🟢 ${readyTotal} pronto${readyTotal>1?'s':''}</span>`:'';
-    html+=`<div class="kcol"><div class="kh"><span>${label}${ready}</span><span class="c">${g[key].length}</span></div>`;
+    html+=`<div class="kcol" data-col="${key}" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropOrder(event)"><div class="kh"><span>${label}${ready}</span><span class="c">${g[key].length}</span></div>`;
     g[key].forEach(o=>html+=renderOrder(o));
     html+='</div>';
   });
@@ -110,5 +111,57 @@ async function cancelOrder(id){if(!confirm('Cancelar este pedido?'))return;let s
 async function confirmAcerto(id){if(!confirm('Confirmar que o motoboy entregou o valor / comprovante no caixa?'))return;const r=await fetch('?r=admin_acerto_pago',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'application/json'},body:'id='+id}).then(x=>x.json());if(!r.ok)alert(r.erro||'Não foi possível confirmar.');feed(true)}
 async function savePayment(id){const r=await fetch('?r=admin_set_payment',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`id=${id}&metodo=${document.getElementById('pm'+id).value}&pagamento_status=${document.getElementById('ps'+id).value}`}).then(x=>x.json());if(!r.ok)alert(r.erro||'Não foi possível alterar o pagamento.');feed(true)}
 async function despachar(id,locked=false){if(locked)return alert('Pagamento online ainda não confirmado. Clique na caneta, marque PAGO e salve antes de despachar.');const cid=document.getElementById('cs'+id).value;if(!cid)return alert('Escolha o motoboy ou marque Pronto para coleta.');const r=await fetch('?r=admin_assign_courier',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','Accept':'application/json'},body:`order_id=${id}&courier_id=${cid}`}).then(x=>x.json()).catch(()=>({ok:true}));if(r&&r.ok===false)alert(r.erro||'Não foi possível despachar.');feed(true)}
+// ---- Drag & Drop ----
+let _dragId=0,_dragTipo='',_dragStatus='';
+const COL_LABELS={novo:'Novos',em_preparo:'Em preparo',saiu_entrega:'Despachados',concluido:'Finalizados'};
+function dragStart(e){
+  const el=e.target.closest('[data-oid]');if(!el)return;
+  _dragId=parseInt(el.dataset.oid);_dragTipo=el.dataset.tipo;_dragStatus=el.dataset.status;
+  e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',_dragId);
+  el.classList.add('dragging');
+}
+function dragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';e.currentTarget.classList.add('drag-over')}
+function dragLeave(e){e.currentTarget.classList.remove('drag-over')}
+function dropOrder(e){
+  e.preventDefault();e.currentTarget.classList.remove('drag-over');
+  const targetCol=e.currentTarget.dataset.col;if(!targetCol||!_dragId)return;
+  const srcColMap={novo:'novo',aceito:'em_preparo',em_preparo:'em_preparo',pronto:'em_preparo',saiu_entrega:'saiu_entrega',ocorrencia:'saiu_entrega',entregue:'concluido',concluido:'concluido',cancelado:'concluido'};
+  if(srcColMap[_dragStatus]===targetCol)return;
+  if(targetCol==='saiu_entrega'&&_dragTipo==='entrega'&&!MOTOBOY_OFF){showMotoboyModal(_dragId);return}
+  let msg='Mover pedido para '+COL_LABELS[targetCol]+'?';
+  if(targetCol==='saiu_entrega'&&srcColMap[_dragStatus]==='novo') msg='Mover direto para Despachados? (vai pular a etapa da cozinha)';
+  else if(targetCol==='em_preparo'&&_dragStatus==='novo') msg='Aceitar este pedido?';
+  else if(targetCol==='concluido') msg='Finalizar este pedido?';
+  if(!confirm(msg))return;
+  execDrag(_dragId,targetCol,'');
+}
+async function execDrag(id,col,courierId){
+  await fetch('?r=admin_drag_move',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`id=${id}&col=${col}&courier_id=${encodeURIComponent(courierId)}`});
+  feed(true);
+}
+function showMotoboyModal(orderId){
+  let existing=document.getElementById('motoboyModal');if(existing)existing.remove();
+  const div=document.createElement('div');div.id='motoboyModal';
+  div.innerHTML=`<div class="drag-modal-bg" onclick="closeMotoboyModal()"></div><div class="drag-modal"><h3>Escolher motoboy</h3><p>Selecione o motoboy para despachar este pedido:</p><select id="dragCourier">${courierOptions({})}</select><div class="drag-modal-btns"><button class="adv" onclick="confirmMotoboy(${orderId})">Despachar</button><button onclick="closeMotoboyModal()">Cancelar</button></div></div>`;
+  document.body.appendChild(div);
+}
+function closeMotoboyModal(){document.getElementById('motoboyModal')?.remove()}
+function confirmMotoboy(orderId){
+  const cid=document.getElementById('dragCourier').value;
+  if(!cid){alert('Escolha o motoboy ou marque Pronto para coleta.');return}
+  closeMotoboyModal();execDrag(orderId,'saiu_entrega',cid);
+}
+document.addEventListener('dragend',function(){document.querySelectorAll('.dragging').forEach(el=>el.classList.remove('dragging'));document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'))});
 if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();feed();setInterval(feed,4000);
 </script>
+<style>
+.tk[draggable="true"]{cursor:grab}.tk[draggable="true"]:active{cursor:grabbing}
+.tk.dragging{opacity:.4;border:2px dashed #ff6726}
+.kcol.drag-over{background:rgba(255,103,38,.08);outline:2px dashed #ff6726;outline-offset:-2px;border-radius:12px}
+.drag-modal-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:9998}
+.drag-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:16px;padding:28px;min-width:340px;z-index:9999;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.drag-modal h3{margin:0 0 8px;font-size:17px}.drag-modal p{color:#666;font-size:14px;margin:0 0 14px}
+.drag-modal select{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;margin-bottom:14px}
+.drag-modal-btns{display:flex;gap:10px}.drag-modal-btns button{flex:1;padding:10px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:1px solid #ddd}
+.drag-modal-btns .adv{background:#ff6726;color:#fff;border-color:#ff6726}
+</style>
