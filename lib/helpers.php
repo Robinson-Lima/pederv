@@ -621,7 +621,13 @@ function customer_status_notify($order,$status,$primeiroEvento){
   if(!$order || empty($order['cliente_fone'])) return false;
   if(($order['tipo']??'')==='mesa') return false; // cliente está no salão, não precisa de WhatsApp
   if(setting_get('channel_whatsapp','1')!=='1') return false;
-  if(!uaz_r_configured()) return false;
+  $_useSaas=false;
+  if(!uaz_r_configured()){
+    // Fallback: tenta UazAPI central do SaaS (saas_wa_token salvo pelo QR do painel)
+    if(setting_get('saas_wa_token','')==='') return false;
+    if(!uazapi_configured()) return false;
+    $_useSaas=true;
+  }
 
   $chave=null;
   if($primeiroEvento && in_array($status,['novo','aceito'],true)) $chave='wa_msg_novo';
@@ -657,6 +663,12 @@ function customer_status_notify($order,$status,$primeiroEvento){
     '{LINK_ACOMPANHAR}'=>'https://'.($_SERVER['HTTP_HOST']??'pederv.com.br').'/?'.( current_slug()!==''?'slug='.current_slug().'&':'' ).'r=order_status&id='.$order['id'],
   ];
   $texto=str_replace(array_keys($subst),array_values($subst),$tpl);
+  if($_useSaas){
+    $num=preg_replace('/\D/','',(string)$order['cliente_fone']);
+    if(strlen($num)<=11)$num='55'.$num;
+    $tok=setting_get('saas_wa_token','');
+    return ($tok!==''?(uazapi_instance_request($tok,'POST','/send/text',['number'=>$num,'text'=>$texto,'delay'=>800])['ok']??false):false);
+  }
   return uaz_r_send_text($order['cliente_fone'],$texto)['ok'] ?? false;
 }
 

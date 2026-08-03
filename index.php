@@ -353,6 +353,7 @@ case 'admin_orders':
     'autoAcceptIfood'=>setting_get('ifood_auto_accept','0')==='1',
     'cancelMode'=>setting_get('cancel_security','none'),
     'skipKds'=>setting_get('skip_kds','0')==='1',
+    'motoboyOff'=>setting_get('motoboy_app_off','0')==='1',
   ]);
   break;
 
@@ -2137,6 +2138,21 @@ case 'uazapi_qr':
     json_out(['ok'=>$b64!=='','base64'=>$b64,'erro'=>$em]);
     break;
   }
+  // Painel SaaS master (sem slug) + UazAPI central configurada — robô de vendas SaaS
+  if(uazapi_configured()){
+    $saasWaTok=setting_get('saas_master_wa_token','');
+    $cr=uazapi_request('POST','/instance/create',['name'=>'saas-master']);
+    $newTok=$cr['data']['instance']['token']??$cr['data']['token']??'';
+    if($newTok!==''){$saasWaTok=$newTok;setting_set('saas_master_wa_token',$saasWaTok);}
+    if($saasWaTok==='') json_out(['ok'=>false,'erro'=>'Erro ao criar instância SaaS.']);
+    $wbBase=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br');
+    uazapi_instance_request($saasWaTok,'POST','/webhook',['enabled'=>true,'url'=>$wbBase.'/?r=webhook_uazapi','events'=>['messages'],'excludeMessages'=>['wasSentByApi','fromMeYes','isGroupYes']]);
+    $r=uazapi_instance_request($saasWaTok,'POST','/instance/connect');
+    $b64=$r['data']['instance']['qrcode']??'';
+    $em=$r['erro']?:($b64===''?('[HTTP '.$r['status'].'] '.substr((string)($r['raw']??''),0,300)):'');
+    json_out(['ok'=>$b64!=='','base64'=>$b64,'erro'=>$em]);
+    break;
+  }
   // Painel do restaurante — UazAPI nativa
   if(!setting_get('uaz_url','')||!setting_get('uaz_admintoken',''))
     json_out(['ok'=>false,'erro'=>'Configure a URL e o Admin Token da UazAPI primeiro.']);
@@ -2162,6 +2178,16 @@ case 'uazapi_status':
   if($slug){
     if(!uazapi_configured()) json_out(['ok'=>true,'state'=>'not_configured','connected'=>false]);
     $saasWaTok=setting_get('saas_wa_token','');
+    if($saasWaTok==='') json_out(['ok'=>true,'state'=>'disconnected','connected'=>false]);
+    $r=uazapi_instance_request($saasWaTok,'GET','/instance/status');
+    $connected=(bool)($r['data']['status']['connected']??false);
+    $state=$r['data']['instance']['status']??($connected?'connected':'disconnected');
+    json_out(['ok'=>true,'state'=>$state,'connected'=>$connected]);
+    break;
+  }
+  // Painel SaaS master (sem slug) + UazAPI central
+  if(uazapi_configured()){
+    $saasWaTok=setting_get('saas_master_wa_token','');
     if($saasWaTok==='') json_out(['ok'=>true,'state'=>'disconnected','connected'=>false]);
     $r=uazapi_instance_request($saasWaTok,'GET','/instance/status');
     $connected=(bool)($r['data']['status']['connected']??false);

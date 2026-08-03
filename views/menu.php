@@ -93,9 +93,9 @@
               <label class="paymini"><input type="radio" name="cartaotipo" value="debito"><span>Débito</span></label>
             </div>
           </div>
-          <div id="troco-box" style="display:none">
-            <label style="font-size:12px;font-weight:600;color:#888;display:block;margin-bottom:4px" for="f-troco">Precisa de troco?</label>
-            <input id="f-troco" inputmode="numeric" oninput="fmtTroco(this)" placeholder="R$ 0,00">
+          <div id="troco-box" style="display:none;margin-top:10px;padding:0">
+            <p style="font-size:12px;font-weight:600;color:#888;margin:0 0 6px;padding:0">Precisa de troco?</p>
+            <input id="f-troco" inputmode="numeric" oninput="fmtTroco(this)" placeholder="R$ 0,00" style="width:100%;box-sizing:border-box">
           </div>
         </div>
       </fieldset><?php endif; ?>
