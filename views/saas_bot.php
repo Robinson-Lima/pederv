@@ -4,32 +4,45 @@
   </div>
   <?php if(!empty($salvo)): ?><div class="oknote">Configurações salvas.</div><?php endif; ?>
 
-  <!-- STATUS DA CONEXÃO + CONFIGURAÇÃO WHATSAPP -->
+  <!-- UAZAPI — ROBÔ INTERNO DO PEDERV -->
   <?php
-  $evoOk = setting_get('saas_evo_url','')!=='' && setting_get('saas_evo_key','')!=='' && setting_get('saas_evo_instance','')!=='';
+  $uazOk        = uazapi_configured(); // usa a mesma UazAPI global configurada em Planos e ajustes
+  $uazMasterTok = setting_get('saas_master_wa_token','');
   ?>
-  <details class="saas-panel" style="margin-bottom:20px" <?= !$evoOk?'open':'' ?>>
+  <details class="saas-panel" style="margin-bottom:20px" open>
     <summary style="cursor:pointer;font-weight:700;font-size:14px;padding:14px 18px;list-style:none;display:flex;align-items:center;gap:10px">
-      <span>📱 Conexão WhatsApp (Evolution API)</span>
-      <?php if($evoOk): ?>
-        <span style="background:#E5F7EF;color:#0c6b4a;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700">✅ Conectado</span>
+      <span>📱 WhatsApp — Robô interno (UazAPI)</span>
+      <?php if($uazOk && $uazMasterTok): ?>
+        <span style="background:#E5F7EF;color:#0c6b4a;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700" id="uazSaasStatusBadge">✅ Conectado</span>
+      <?php elseif($uazOk): ?>
+        <span style="background:#FFF3CD;color:#856404;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700" id="uazSaasStatusBadge">⚠️ Aguardando conexão</span>
       <?php else: ?>
-        <span style="background:#FFF3CD;color:#856404;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700">⚠️ Não configurado</span>
+        <span style="background:#fee2e2;color:#991b1b;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700">⚠️ UazAPI não configurada</span>
       <?php endif; ?>
-      <span style="margin-left:auto;opacity:.5;font-size:12px">clique para <?= $evoOk?'editar':'configurar' ?></span>
+      <span style="margin-left:auto;opacity:.5;font-size:12px">clique para editar</span>
     </summary>
-    <form method="post" action="?r=saas_bot_save" style="padding:0 18px 18px;border-top:1px solid var(--line)">
-      <?= saas_csrf_field() ?>
-      <input type="hidden" name="_tab" value="config">
-      <div class="grid2" style="margin-top:14px">
-        <label>URL da API<input name="saas_evo_url" value="<?= e(setting_get('saas_evo_url','')) ?>" placeholder="https://api.seudominio.com"></label>
-        <label>API Key<input name="saas_evo_key" type="password" value="<?= setting_get('saas_evo_key','')!==''?'••••••••':'' ?>" placeholder="sua-chave-aqui" autocomplete="off"></label>
+    <div style="padding:0 18px 18px;border-top:1px solid var(--line)">
+      <?php if(!$uazOk): ?>
+        <p style="color:#b91c1c;font-size:13px;margin:14px 0 0">Configure a UazAPI em <a href="?r=saas_settings#uazapi">Planos e ajustes → aba UazAPI</a> primeiro.</p>
+      <?php else: ?>
+      <!-- QR CODE ACIMA DOS CAMPOS -->
+      <div style="text-align:center;padding:18px 0 10px">
+        <div id="uazSaasQrWrap" style="display:none;margin-bottom:12px">
+          <img id="uazSaasQrImg" src="" alt="QR Code" style="width:220px;height:220px;border-radius:12px;border:1px solid #eee">
+        </div>
+        <p id="uazSaasMsg" style="font-size:13px;color:#555;margin:0 0 10px"></p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+          <button type="button" class="saas-btn primary" onclick="uazSaasGetQr(this)">📷 Gerar QR Code</button>
+          <button type="button" class="saas-btn" onclick="uazSaasCheckStatus(this)">🔄 Verificar status</button>
+          <button type="button" class="saas-btn" style="color:#c62828;border-color:#fca5a5" onclick="uazSaasDisconnect(this)" <?= !$uazMasterTok?'disabled':'' ?>>Desconectar</button>
+        </div>
       </div>
-      <div class="grid2">
-        <label>Nome da instância<input name="saas_evo_instance" value="<?= e(setting_get('saas_evo_instance','')) ?>" placeholder="pederv-vendas"></label>
-        <label>Número conectado (com DDD)<input name="saas_evo_phone" value="<?= e(setting_get('saas_evo_phone','')) ?>" placeholder="5511999999999"></label>
-      </div>
-      <label class="wa-toggle" style="margin-top:8px">
+      <hr style="margin:14px 0;border:0;border-top:1px solid #eee">
+      <?php endif; ?>
+      <form method="post" action="?r=saas_bot_save">
+        <?= saas_csrf_field() ?>
+        <input type="hidden" name="_tab" value="uazapi">
+      <label class="wa-toggle" style="margin-top:10px">
         <input type="checkbox" name="saas_wa_bot_active" value="1" <?= setting_get('saas_wa_bot_active','0')==='1'?'checked':'' ?>>
         <span><b>Ativar robô de vendas</b><small>Responde automaticamente às mensagens recebidas nessa instância.</small></span>
       </label>
@@ -43,12 +56,14 @@
         <label>Delay antes de responder
           <select name="saas_bot_delay" style="margin-top:5px;width:100%;border:1px solid #D6DDE6;border-radius:10px;padding:10px;font:inherit;font-size:13px">
             <option value="0" <?= setting_get('saas_bot_delay','0')==='0'?'selected':'' ?>>Sem delay</option>
+            <option value="10" <?= setting_get('saas_bot_delay','0')==='10'?'selected':'' ?>>10 segundos</option>
             <option value="30" <?= setting_get('saas_bot_delay','0')==='30'?'selected':'' ?>>30 segundos</option>
             <option value="60" <?= setting_get('saas_bot_delay','0')==='60'?'selected':'' ?>>1 minuto</option>
           </select>
         </label>
         <label>Retomar robô automaticamente após
           <select name="saas_human_timeout" style="margin-top:5px;width:100%;border:1px solid #D6DDE6;border-radius:10px;padding:10px;font:inherit;font-size:13px">
+            <option value="0.5" <?= setting_get('saas_human_timeout','4')==='0.5'?'selected':'' ?>>30 minutos</option>
             <option value="1" <?= setting_get('saas_human_timeout','4')==='1'?'selected':'' ?>>1 hora</option>
             <option value="2" <?= setting_get('saas_human_timeout','4')==='2'?'selected':'' ?>>2 horas</option>
             <option value="4" <?= setting_get('saas_human_timeout','4')==='4'?'selected':'' ?>>4 horas</option>
@@ -57,13 +72,9 @@
           </select>
         </label>
       </div>
-      <div style="display:flex;gap:10px;margin-top:14px;align-items:center">
-        <button class="saas-btn primary">Salvar configuração</button>
-        <?php if($evoOk): ?>
-        <a href="?r=saas_bot_test" class="saas-btn" style="text-decoration:none">Testar conexão</a>
-        <?php endif; ?>
-      </div>
-    </form>
+      <button class="saas-btn primary" style="margin-top:14px">Salvar configuração</button>
+      </form>
+    </div>
   </details>
 
   <!-- MENSAGENS DO ROBÔ (estilo igual ao painel do cliente) -->
@@ -122,7 +133,7 @@ if(!messages.length) messages=[
   {gatilho:'olá|ola|oi|bom dia|boa tarde|boa noite|hello|hey',resposta:'{SAUDACAO}, {NOME}! 👋\nSou o assistente virtual do *PedeRV* — sistema de pedidos e cardápio digital para restaurantes.\nComo posso ajudar?\n1️⃣ Conhecer os planos e preços\n2️⃣ Como funciona o sistema\n3️⃣ Começar o teste grátis\n4️⃣ Falar com um consultor',ativo:1},
 ];
 let current=0;
-const botCardsEl=document.getElementById('botCards'),botJsonEl=document.getElementById('botJsonInput'),editTriggerEl=document.getElementById('editTrigger'),editReplyEl=document.getElementById('editReply'),editActiveEl=document.getElementById('editActive'),previewTriggerEl=document.getElementById('botPreviewTrigger'),previewReplyEl=document.getElementById('botPreviewReply');
+const botCardsEl=document.getElementById('botCards'),editTriggerEl=document.getElementById('editTrigger'),editReplyEl=document.getElementById('editReply'),editActiveEl=document.getElementById('editActive'),previewTriggerEl=document.getElementById('botPreviewTrigger'),previewReplyEl=document.getElementById('botPreviewReply');
 function cards(){botCardsEl.innerHTML=messages.map((m,i)=>`<button type="button" class="bot-card ${i===current?'on':''}" onclick="selectMessage(${i})"><b>${escapeHtml(m.gatilho||'Nova mensagem')}</b><small>${escapeHtml((m.resposta||'').slice(0,80))}</small></button>`).join('')}
 function preview(){const m=messages[current];const saudacao=new Date().getHours()<12?'Bom dia':new Date().getHours()<18?'Boa tarde':'Boa noite';previewTriggerEl.textContent=(m.gatilho||'olá').split('|')[0];previewReplyEl.textContent=(m.resposta||'A resposta aparecerá aqui.').replace('{NOME}','João').replace('{SAUDACAO}',saudacao).replace('{PLANO}','Pró').replace('{TRIAL_DIAS}','7').replace('{LINK_SITE}','pederv.com.br')}
 function draw(){cards();const m=messages[current];editTriggerEl.value=m.gatilho;editReplyEl.value=m.resposta;editActiveEl.checked=!!m.ativo;preview()}
@@ -157,4 +168,65 @@ async function saveMsgs(btn){
   }catch(e){btn.textContent='Salvar mensagens';btn.disabled=false;alert('Erro de rede: '+e.message);}
 }
 draw();
+
+// UazAPI SaaS Master Bot
+async function uazSaasGetQr(btn){
+  const msg=document.getElementById('uazSaasMsg');
+  const qrWrap=document.getElementById('uazSaasQrWrap');
+  const qrImg=document.getElementById('uazSaasQrImg');
+  btn.disabled=true; btn.textContent='Aguardando...'; msg.textContent='Gerando QR Code...';
+  try{
+    const r=await fetch('?r=uazapi_qr',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'saas_csrf=<?= saas_csrf_token() ?>'});
+    const d=await r.json();
+    if(d.ok && d.base64){
+      qrWrap.style.display='block';
+      qrImg.src=d.base64.startsWith('data:')?d.base64:'data:image/png;base64,'+d.base64;
+      msg.textContent='Escaneie o QR Code com o WhatsApp do número interno do PedeRV.';
+    } else {
+      qrWrap.style.display='none';
+      if(d.connected){
+        msg.textContent='✅ Número já está conectado!';
+        const badge=document.getElementById('uazSaasStatusBadge');
+        if(badge){badge.style.background='#E5F7EF';badge.style.color='#0c6b4a';badge.textContent='✅ Conectado';}
+      } else {
+        msg.textContent='Erro: '+(d.erro||'Falha ao gerar QR Code. Verifique URL, API Key e instância.');
+      }
+    }
+  }catch(e){msg.textContent='Erro de rede: '+e.message;}
+  btn.disabled=false; btn.textContent='📷 Gerar QR Code';
+}
+async function uazSaasCheckStatus(btn){
+  const msg=document.getElementById('uazSaasMsg');
+  btn.disabled=true; btn.textContent='Verificando...';
+  try{
+    const r=await fetch('?r=uazapi_status',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'saas_csrf=<?= saas_csrf_token() ?>'});
+    const d=await r.json();
+    const badge=document.getElementById('uazSaasStatusBadge');
+    if(d.connected){
+      msg.textContent='✅ Conectado'+(d.phone?' — número: '+d.phone:'');
+      if(badge){badge.style.background='#E5F7EF';badge.style.color='#0c6b4a';badge.textContent='✅ Conectado';}
+    } else {
+      msg.textContent='Não conectado. Salve a configuração e gere um QR Code para conectar.';
+      if(badge){badge.style.background='#FFF3CD';badge.style.color='#856404';badge.textContent='⚠️ Desconectado';}
+    }
+  }catch(e){msg.textContent='Erro de rede: '+e.message;}
+  btn.disabled=false; btn.textContent='🔄 Verificar status';
+}
+async function uazSaasDisconnect(btn){
+  if(!confirm('Desconectar o robô interno do PedeRV?')) return;
+  const msg=document.getElementById('uazSaasMsg');
+  btn.disabled=true;
+  try{
+    const r=await fetch('?r=uazapi_disconnect',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'saas_csrf=<?= saas_csrf_token() ?>'});
+    const d=await r.json();
+    if(d.ok){
+      msg.textContent='Desconectado.';
+      const badge=document.getElementById('uazSaasStatusBadge');
+      if(badge){badge.style.background='#FFF3CD';badge.style.color='#856404';badge.textContent='⚠️ Desconectado';}
+    } else {
+      msg.textContent='Erro ao desconectar.';
+    }
+  }catch(e){msg.textContent='Erro de rede: '+e.message;}
+  btn.disabled=false; btn.textContent='Desconectar';
+}
 </script>

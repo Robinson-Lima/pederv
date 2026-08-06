@@ -7,7 +7,8 @@
 
 .menu-uber{
   --u-bg:#ffffff; --u-ink:#0f0f0f; --u-body:#6a6a6a; --u-soft:#f1f1f1;
-  --u-line:#ededed; --u-thumb:#f4f4f4; --u-primary:#0f0f0f; --u-on:#ffffff;
+  --u-line:#ededed; --u-thumb:#f4f4f4;
+  --u-primary:var(--brand,#0f0f0f); --u-on:var(--on-brand,#ffffff);
   --u-sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   background:var(--u-bg); color:var(--u-ink); min-height:100vh;
 }
@@ -44,7 +45,7 @@
   margin:14px auto 0;max-width:684px;border-radius:12px;
   padding:10px 14px;font-size:12.5px;font-weight:500;
 }
-.menu-uber .mpromo-track span{color:var(--u-body)}
+.menu-uber .mpromo-track span{color:var(--promo-text,var(--u-body))}
 
 /* ---------- CATEGORY CHIPS ---------- */
 .menu-uber .chips{

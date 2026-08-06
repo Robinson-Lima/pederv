@@ -131,14 +131,15 @@ case 'menu':
   $cats = db()->query("SELECT * FROM categories ORDER BY ordem")->fetchAll();
   $prods = db()->query("SELECT * FROM products WHERE ativo=1")->fetchAll();
   $areas = db()->query("SELECT * FROM delivery_areas ORDER BY bairro")->fetchAll();
-  $temZonas = (int)(db()->query("SELECT COUNT(*) c FROM delivery_zones WHERE ativo=1")->fetch()['c'] ?? 0) > 0;
+  $zonas = db()->query("SELECT id,nome,tipo,taxa FROM delivery_zones WHERE ativo=1 ORDER BY nome")->fetchAll();
+  $temZonas = count($zonas) > 0;
   $byCat = [];
   foreach ($prods as $p) $byCat[$p['category_id']][] = $p;
   $mesa=preg_replace('/[^0-9A-Za-z-]/','',$_GET['mesa']??'');
   $customer=customer_logged();$restoreCart=null;
   $cartToken=preg_replace('/[^a-zA-Z0-9_-]/','',$_GET['cart']??'');
   if($cartToken!==''){$cq=db()->prepare("SELECT * FROM abandoned_carts WHERE token=? AND status='aberto'");$cq->execute([$cartToken]);$restoreCart=$cq->fetch()?:null;}
-  render('menu', ['cats'=>$cats,'byCat'=>$byCat,'areas'=>$areas,'mesa'=>$mesa,'temZonas'=>$temZonas,'customer'=>$customer,'restoreCart'=>$restoreCart]);
+  render('menu', ['cats'=>$cats,'byCat'=>$byCat,'areas'=>$areas,'zonas'=>$zonas,'mesa'=>$mesa,'temZonas'=>$temZonas,'customer'=>$customer,'restoreCart'=>$restoreCart]);
   break;
 
 case 'customer_login':
@@ -395,7 +396,10 @@ case 'admin_pdv':
   if(!require_role('caixa')){ render('login',['role'=>'caixa','titulo'=>'Pedido Balcão PDV']); break; }
   $cats=db()->query("SELECT * FROM categories ORDER BY ordem")->fetchAll();
   $prods=db()->query("SELECT * FROM products WHERE ativo=1 ORDER BY category_id,nome")->fetchAll();
-  render('admin_pdv',['cats'=>$cats,'prods'=>$prods,'cx'=>caixa_atual()]);
+  $zonas=db()->query("SELECT id,nome,tipo,taxa FROM delivery_zones WHERE ativo=1 ORDER BY nome")->fetchAll();
+  $areas=db()->query("SELECT id,bairro,taxa FROM delivery_areas ORDER BY bairro")->fetchAll();
+  $printCfg=['auto'=>setting_get('printer_auto','0')==='1','width'=>setting_get('printer_width','80'),'name'=>setting_get('printer_name','Impressora térmica'),'loja'=>setting_get('store_name','')?:cfg('restaurante'),'cnpj'=>setting_get('nf_cnpj',''),'endereco'=>trim(setting_get('nf_rua','').' '.setting_get('nf_numero_end','')),'fone'=>setting_get('nf_telefone','')];
+  render('admin_pdv',['cats'=>$cats,'prods'=>$prods,'cx'=>caixa_atual(),'zonas'=>$zonas,'areas'=>$areas,'printCfg'=>$printCfg]);
   break;
 case 'pdv_create':
   // PDV agora funciona como frente de caixa: exige caixa aberto, registra a
@@ -407,16 +411,32 @@ case 'pdv_create':
   foreach($in['itens']??[] as $it){$q=$d->prepare("SELECT nome,preco FROM products WHERE id=? AND ativo=1");$q->execute([(int)$it['id']]);$p=$q->fetch();if(!$p)continue;$qt=max(1,(int)$it['qtd']);$items[]=[$p['nome'],$qt,$p['preco']];$total+=$qt*$p['preco'];}
   if(!$items) json_out(['ok'=>false,'erro'=>'Adicione produtos.']);
   $nome=trim($in['nome']??'')?:'Cliente balcão';$met=in_array($in['metodo']??'',['dinheiro','pix','debito','credito'],true)?$in['metodo']:'dinheiro';
+  $cpf_cnpj=trim($in['cpf_cnpj']??'');
+  $tipo=in_array($in['tipo']??'',['entrega','retirada','balcao'],true)?$in['tipo']:'balcao';
+  $endereco=trim($in['endereco']??'');$bairro=trim($in['bairro']??'');$referencia=trim($in['referencia']??'');
+  $fone=trim($in['fone']??'');
+  $taxa_entrega=0;
+  if($tipo==='entrega'&&$bairro!==''){
+    $zt=$d->prepare("SELECT taxa FROM delivery_zones WHERE nome=? AND ativo=1 AND tipo='entrega' LIMIT 1");$zt->execute([$bairro]);$zr=$zt->fetch();
+    if($zr)$taxa_entrega=(float)$zr['taxa'];
+    else{$at=$d->prepare("SELECT taxa FROM delivery_areas WHERE bairro=? LIMIT 1");$at->execute([$bairro]);$ar=$at->fetch();if($ar)$taxa_entrega=(float)$ar['taxa'];}
+    $total+=$taxa_entrega;
+  }
+  $pagar_entrega=!empty($in['pagar_entrega']);
   $recebido=(float)($in['valor_recebido']??0);
-  if($met==='dinheiro'){
-    if($recebido<$total) json_out(['ok'=>false,'erro'=>'Valor recebido menor que o total da venda.']);
-  } else $recebido=$total;
-  $troco=max(0,$recebido-$total);
-  $d->prepare("INSERT INTO orders(codigo,canal,tipo,cliente_nome,status,total,pagamento_metodo,pagamento_status,valor_recebido,troco,recebido_por,acerto_status) VALUES(?,?,?,?,?,?,?,'pago',?,?,?,'ok')")
-    ->execute(['','pdv','balcao',$nome,'aceito',$total,$met,$recebido,$troco,$_SESSION['user_nome']??'caixa']);
+  if($pagar_entrega){
+    $met='na_entrega';$recebido=0;$troco=0;$pagStatus='pendente';$acerto='pendente';
+  } else {
+    if($met==='dinheiro'){
+      if($recebido<$total) json_out(['ok'=>false,'erro'=>'Valor recebido menor que o total da venda.']);
+    } else $recebido=$total;
+    $troco=max(0,$recebido-$total);$pagStatus='pago';$acerto='ok';
+  }
+  $d->prepare("INSERT INTO orders(codigo,canal,tipo,cliente_nome,cliente_fone,endereco,bairro,referencia,status,total,pagamento_metodo,pagamento_status,valor_recebido,troco,recebido_por,acerto_status,cpf_cnpj) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+    ->execute(['','pdv',$tipo,$nome,$fone,$endereco,$bairro,$referencia,'aceito',$total,$met,$pagStatus,$recebido,$troco,$_SESSION['user_nome']??'caixa',$acerto,$cpf_cnpj]);
   $oid=$d->lastInsertId();$d->prepare("UPDATE orders SET codigo=? WHERE id=?")->execute(['#'.str_pad($oid,4,'0',STR_PAD_LEFT),$oid]);
   foreach($items as $it)$d->prepare("INSERT INTO order_items(order_id,nome,qtd,preco) VALUES(?,?,?,?)")->execute([$oid,$it[0],$it[1],$it[2]]);
-  order_set_status($oid,'aceito','caixa');order_mark_paid($oid);customer_upsert($nome,$in['fone']??'','','',$total);
+  order_set_status($oid,'aceito','caixa');if(!$pagar_entrega)order_mark_paid($oid);customer_upsert($nome,$fone,'','',$total);
   json_out(['ok'=>true,'id'=>(int)$oid,'codigo'=>'#'.str_pad($oid,4,'0',STR_PAD_LEFT),'troco'=>$troco]);
   break;
 case 'pdv_last': // F9 — consultar última venda do PDV
@@ -500,6 +520,30 @@ case 'zone_toggle': // POST id -> liga/desliga a zona sem apagar o desenho
   if(!require_role('admin')) json_out(['ok'=>false]);
   db()->prepare("UPDATE delivery_zones SET ativo=1-ativo WHERE id=?")->execute([(int)($_POST['id']??0)]);
   json_out(['ok'=>true]);
+  break;
+
+case 'zone_editar':
+  if(!require_role('admin')) json_out(['ok'=>false]);
+  $d=json_decode(file_get_contents('php://input'),true)?:[];
+  $id=(int)($d['id']??0);$nome=trim($d['nome']??'');$tipo=in_array($d['tipo']??'',['entrega','bloqueio'])?$d['tipo']:'entrega';$taxa=(float)($d['taxa']??0);
+  if(!$id||!$nome) json_out(['ok'=>false,'erro'=>'Dados incompletos.']);
+  db()->prepare("UPDATE delivery_zones SET nome=?,tipo=?,taxa=? WHERE id=?")->execute([$nome,$tipo,$taxa,$id]);
+  json_out(['ok'=>true]);
+  break;
+
+case 'geocode':
+  $cfg=require __DIR__.'/config.php';
+  $gkey=$cfg['google_maps_key']??'';
+  $addr=trim($_REQUEST['address']??'');
+  if(!$gkey||!$addr){json_out(['ok'=>false]);break;}
+  $url='https://maps.googleapis.com/maps/api/geocode/json?address='.urlencode($addr).'&components=country:BR&key='.$gkey;
+  $ctx=stream_context_create(['http'=>['timeout'=>5]]);
+  $resp=@file_get_contents($url,false,$ctx);
+  $data=json_decode($resp,true);
+  if(!empty($data['results'][0]['geometry']['location'])){
+    $loc=$data['results'][0]['geometry']['location'];
+    json_out(['ok'=>true,'lat'=>$loc['lat'],'lng'=>$loc['lng']]);
+  }else{json_out(['ok'=>false]);}
   break;
 
 case 'calc_frete': // GET/POST lat,lng,bairro -> taxa do endereço (usado no cardápio)
@@ -956,13 +1000,14 @@ case 'admin_recovery':
 
 case 'admin_reports':
   if(!require_role('admin')){ redirect('?r=admin'); }
-  $tipos=['geral','caixas','clientes','pedidos','itens','entregadores','garcons','areas'];$tipo=in_array($_GET['tipo']??'geral',$tipos,true)?$_GET['tipo']:'geral';
+  $tipos=['geral','caixas','clientes','pedidos','itens','estoque','entregadores','garcons','areas'];$tipo=in_array($_GET['tipo']??'geral',$tipos,true)?$_GET['tipo']:'geral';
   $de=preg_match('/^\d{4}-\d{2}-\d{2}$/',$_GET['de']??'')?$_GET['de']:date('Y-m-d',strtotime('-30 days'));$ate=preg_match('/^\d{4}-\d{2}-\d{2}$/',$_GET['ate']??'')?$_GET['ate']:date('Y-m-d');$d=db();$rows=[];
   if($tipo==='geral'){$q=$d->prepare("SELECT COUNT(*) pedidos,COALESCE(SUM(CASE WHEN pagamento_status='pago' THEN total ELSE 0 END),0) faturamento,SUM(CASE WHEN status='cancelado' THEN 1 ELSE 0 END) cancelados FROM orders WHERE date(criado_em) BETWEEN ? AND ?");$q->execute([$de,$ate]);$rows=[$q->fetch()];}
   elseif($tipo==='caixas'){$q=$d->prepare("SELECT id,operador,status,saldo_inicial,saldo_informado,aberto_em,fechado_em FROM caixa WHERE date(aberto_em) BETWEEN ? AND ? ORDER BY id DESC");$q->execute([$de,$ate]);$rows=$q->fetchAll();}
   elseif($tipo==='clientes')$rows=$d->query("SELECT nome,telefone,bairro,pedidos,total_gasto,ultimo_pedido FROM customers ORDER BY total_gasto DESC")->fetchAll();
   elseif($tipo==='pedidos'){$q=$d->prepare("SELECT codigo,canal,tipo,cliente_nome,status,pagamento_metodo,pagamento_status,total,criado_em FROM orders WHERE date(criado_em) BETWEEN ? AND ? ORDER BY id DESC");$q->execute([$de,$ate]);$rows=$q->fetchAll();}
   elseif($tipo==='itens'){$q=$d->prepare("SELECT oi.nome,SUM(oi.qtd) quantidade,SUM(oi.qtd*oi.preco) total FROM order_items oi JOIN orders o ON o.id=oi.order_id WHERE date(o.criado_em) BETWEEN ? AND ? GROUP BY oi.nome ORDER BY quantidade DESC");$q->execute([$de,$ate]);$rows=$q->fetchAll();}
+  elseif($tipo==='estoque'){$rows=$d->query("SELECT nome,estoque,estoque_minimo,CASE WHEN estoque<=estoque_minimo THEN '⚠ BAIXO' ELSE 'OK' END AS situacao FROM products WHERE controla_estoque=1 ORDER BY CASE WHEN estoque<=estoque_minimo THEN 0 ELSE 1 END,estoque ASC")->fetchAll();}
   elseif($tipo==='entregadores'){$q=$d->prepare("SELECT c.nome,c.telefone,c.online,COUNT(o.id) entregas,COALESCE(SUM(o.total),0) valor FROM couriers c LEFT JOIN orders o ON o.courier_id=c.id AND o.status='entregue' AND date(o.atualizado_em) BETWEEN ? AND ? GROUP BY c.id ORDER BY entregas DESC");$q->execute([$de,$ate]);$rows=$q->fetchAll();}
   elseif($tipo==='garcons'){$q=$d->prepare("SELECT u.nome,u.usuario,u.telefone,COUNT(o.id) pedidos,COALESCE(SUM(o.total),0) valor FROM users u LEFT JOIN orders o ON o.atendente=u.nome AND date(o.criado_em) BETWEEN ? AND ? WHERE u.role='garcom' GROUP BY u.id ORDER BY pedidos DESC");$q->execute([$de,$ate]);$rows=$q->fetchAll();}
   else $rows=$d->query("SELECT nome,tipo,taxa,ativo,criado_em FROM delivery_zones ORDER BY id DESC")->fetchAll();
@@ -1317,6 +1362,31 @@ case 'webhook_whatsapp':
   json_out(['ok'=>true]);
   break;
 
+case 'admin_fiscal':
+  if(!require_role('admin')){ redirect('?r=admin'); }
+  render('admin_fiscal');
+  break;
+
+case 'admin_fiscal_save':
+  if(!require_role('admin')){ redirect('?r=admin'); }
+  $tab=$_GET['tab']??'empresa';
+  $fields_empresa=['nf_cnpj','nf_razao','nf_fantasia','nf_cep','nf_rua','nf_numero_end','nf_bairro','nf_cidade','nf_uf','nf_cmun','nf_telefone'];
+  $fields_fiscal=['nf_driver','nf_ie','nf_regime','nf_csc','nf_csc_id','nf_serie','nf_numero','nf_ambiente','nf_rodape'];
+  $fields_auto=['nf_auto','nf_auto_print','nf_envio_whatsapp','nf_pedir_cpf','nf_taxa_servico','nf_incluir_frete','nf_nfe_cnpj'];
+  $campos=[];
+  if($tab==='empresa') $campos=$fields_empresa;
+  elseif($tab==='fiscal'){$campos=$fields_fiscal;foreach(fiscal_emissores() as $k=>$em) foreach($em['campos'] as $c=>$l) $campos[]=$c;}
+  elseif($tab==='automacao') $campos=$fields_auto;
+  foreach($campos as $f){
+    if(in_array($f,$fields_auto)){
+      setting_set($f,isset($_POST[$f])?'1':'0');
+    }else{
+      if(isset($_POST[$f])) setting_set($f,trim($_POST[$f]));
+    }
+  }
+  redirect('?r=admin_fiscal&tab='.$tab.'&salvo=1');
+  break;
+
 case 'admin_notas': // aba Notas Fiscais
   if(!require_role('admin')){ redirect('?r=admin'); }
   $notas = db()->query("SELECT n.*, o.codigo, o.cliente_nome FROM notas n
@@ -1445,6 +1515,13 @@ case 'area_salvar': // POST bairro, taxa
       ->execute([trim($_POST['bairro']),(float)str_replace(',','.',$_POST['taxa']??0)]);
   redirect('?r=admin_areas');
   break;
+case 'area_editar':
+  if(!require_role('admin')) json_out(['ok'=>false]);
+  $d=json_decode(file_get_contents('php://input'),true)?:[];
+  db()->prepare("UPDATE delivery_areas SET taxa=? WHERE id=?")->execute([(float)($d['taxa']??0),(int)($d['id']??0)]);
+  json_out(['ok'=>true]);
+  break;
+
 case 'area_excluir':
   if(!require_role('admin')){ redirect('?r=admin'); }
   db()->prepare("DELETE FROM delivery_areas WHERE id=?")->execute([(int)$_POST['id']]);
@@ -2128,6 +2205,10 @@ case 'uazapi_qr':
     } else {
       // instance/create não retornou token — pode já existir; tenta token armazenado
       $saasWaTok=setting_get('saas_wa_token','');
+      if($saasWaTok!==''){
+        $wbBase=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br');
+        uazapi_instance_request($saasWaTok,'POST','/webhook',['enabled'=>true,'url'=>$wbBase.'/?r=webhook_uazapi&slug='.$slug,'events'=>['messages'],'excludeMessages'=>['wasSentByApi','fromMeYes','isGroupYes']]);
+      }
     }
     if($saasWaTok===''){
       $em=$cr['erro']?:('[HTTP '.$cr['status'].'] '.substr((string)($cr['raw']??''),0,300));
@@ -2139,22 +2220,28 @@ case 'uazapi_qr':
     json_out(['ok'=>$b64!=='','base64'=>$b64,'erro'=>$em]);
     break;
   }
-  // Painel SaaS master (sem slug) + UazAPI central configurada — robô de vendas SaaS
-  if(uazapi_configured()){
-    $_saasInst=_uaz_cfg('saas_uaz_instance'); if($_saasInst==='') $_saasInst='pederv-sales';
-    $saasWaTok=setting_get('saas_master_wa_token','');
-    $cr=uazapi_request('POST','/instance/create',['name'=>$_saasInst]);
-    $newTok=$cr['data']['instance']['token']??$cr['data']['token']??'';
-    if($newTok!==''){$saasWaTok=$newTok;setting_set('saas_master_wa_token',$saasWaTok);}
-    if($saasWaTok==='') json_out(['ok'=>false,'erro'=>'Erro ao criar instância SaaS. Verifique o nome da instância em Configurações → uazapi. Instância configurada: '.$_saasInst]);
-    $wbBase=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br');
-    uazapi_instance_request($saasWaTok,'POST','/webhook',['enabled'=>true,'url'=>$wbBase.'/?r=webhook_uazapi','events'=>['messages'],'excludeMessages'=>['wasSentByApi','fromMeYes','isGroupYes']]);
-    $r=uazapi_instance_request($saasWaTok,'POST','/instance/connect');
-    $b64=$r['data']['instance']['qrcode']??'';
-    $em=$r['erro']?:($b64===''?('[HTTP '.$r['status'].'] '.substr((string)($r['raw']??''),0,300)):'');
-    json_out(['ok'=>$b64!=='','base64'=>$b64,'erro'=>$em]);
-    break;
+  // Painel SaaS master (sem slug) — mesma lógica do bot restaurante, instância pederv-sales
+  if(!uazapi_configured()) json_out(['ok'=>false,'erro'=>'Configure a UazAPI em Planos e ajustes → aba UazAPI.']);
+  $_mInst=setting_get('saas_master_uaz_instance','pederv-sales');
+  $saasWaTok=setting_get('saas_master_wa_token','');
+  $cr=uazapi_request('POST','/instance/create',['name'=>$_mInst]);
+  $newTok=$cr['data']['instance']['token']??$cr['data']['token']??'';
+  if($newTok!==''){$saasWaTok=$newTok;setting_set('saas_master_wa_token',$saasWaTok);}
+  if($saasWaTok===''){
+    $em=$cr['erro']?:('[HTTP '.$cr['status'].'] '.substr((string)($cr['raw']??''),0,300));
+    json_out(['ok'=>false,'erro'=>'Erro ao criar instância "'.$_mInst.'": '.$em]);
   }
+  $wbBase=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br');
+  uazapi_instance_request($saasWaTok,'POST','/webhook',['enabled'=>true,'url'=>$wbBase.'/?r=webhook_uazapi','events'=>['messages'],'excludeMessages'=>['wasSentByApi','fromMeYes','isGroupYes']]);
+  $r=uazapi_instance_request($saasWaTok,'POST','/instance/connect');
+  $b64=$r['data']['instance']['qrcode']??'';
+  $status=$r['data']['instance']['status']??$r['data']['status']??'';
+  $connected=in_array($status,['open','connected'],true)||(!$b64&&($r['data']['instance']['connected']??false));
+  if($connected) json_out(['ok'=>false,'connected'=>true,'base64'=>'','erro'=>'']);
+  $em=$r['erro']?:($b64===''?('[HTTP '.$r['status'].'] '.substr((string)($r['raw']??''),0,300)):'');
+  json_out(['ok'=>$b64!=='','connected'=>false,'base64'=>$b64,'erro'=>$em]);
+  break;
+  // (sem bloco isolado — cai direto no break acima)
   // Painel do restaurante — UazAPI nativa
   if(!setting_get('uaz_url','')||!setting_get('uaz_admintoken',''))
     json_out(['ok'=>false,'erro'=>'Configure a URL e o Admin Token da UazAPI primeiro.']);
@@ -2187,16 +2274,15 @@ case 'uazapi_status':
     json_out(['ok'=>true,'state'=>$state,'connected'=>$connected]);
     break;
   }
-  // Painel SaaS master (sem slug) + UazAPI central
-  if(uazapi_configured()){
-    $saasWaTok=setting_get('saas_master_wa_token','');
-    if($saasWaTok==='') json_out(['ok'=>true,'state'=>'disconnected','connected'=>false]);
-    $r=uazapi_instance_request($saasWaTok,'GET','/instance/status');
-    $connected=(bool)($r['data']['status']['connected']??false);
-    $state=$r['data']['instance']['status']??($connected?'connected':'disconnected');
-    json_out(['ok'=>true,'state'=>$state,'connected'=>$connected]);
-    break;
-  }
+  // Painel SaaS master (sem slug) — usa token armazenado via mesma UazAPI global
+  $saasWaTok=setting_get('saas_master_wa_token','');
+  if($saasWaTok===''||!uazapi_configured()) json_out(['ok'=>true,'state'=>'disconnected','connected'=>false]);
+  $r=uazapi_instance_request($saasWaTok,'GET','/instance/status');
+  $connected=(bool)($r['data']['status']['connected']??$r['data']['instance']['connected']??false);
+  $phone=$r['data']['instance']['owner']??$r['data']['instance']['phone']??'';
+  $state=$r['data']['instance']['status']??($connected?'connected':'disconnected');
+  json_out(['ok'=>true,'state'=>$state,'connected'=>$connected,'phone'=>$phone]);
+  break;
   // Painel do restaurante
   if(!uaz_r_configured()) json_out(['ok'=>true,'state'=>'not_configured','connected'=>false]);
   $r=uaz_r_request('GET','/instance/status');
@@ -2215,10 +2301,10 @@ case 'uazapi_disconnect':
     json_out(['ok'=>true]);
     break;
   }
-  if(!$slug&&uazapi_configured()){
+  if(!$slug){
     $saasWaTok=setting_get('saas_master_wa_token','');
-    if($saasWaTok!=='') uazapi_instance_request($saasWaTok,'POST','/instance/disconnect');
-    setting_set('saas_master_wa_token','');
+    if($saasWaTok!==''&&uazapi_configured()) uazapi_instance_request($saasWaTok,'POST','/instance/disconnect');
+    // Token preservado — instância continua existindo, só a sessão WA encerra
   }
   json_out(['ok'=>true]);
   break;
@@ -2253,6 +2339,13 @@ case 'uazapi_diag':
 
 case 'uazapi_webhook_config':
   if(!require_role('admin')) json_out(['ok'=>false,'erro'=>'acesso negado']);
+  $slug=current_slug();
+  if($slug&&setting_get('saas_wa_token','')){
+    $webhookBase=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br');
+    $webhookUrl=$webhookBase.'/?r=webhook_uazapi&slug='.$slug;
+    $r=uazapi_instance_request(setting_get('saas_wa_token'),'POST','/webhook',['enabled'=>true,'url'=>$webhookUrl,'events'=>['messages'],'excludeMessages'=>['wasSentByApi','fromMeYes','isGroupYes']]);
+    json_out(array_merge($r,['webhook_url'=>$webhookUrl]));
+  }
   if(!uaz_r_configured()) json_out(['ok'=>false,'erro'=>'Conecte o WhatsApp primeiro (token da instância necessário).']);
   $webhookBase=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br');
   $webhookUrl=$webhookBase.'/?r=webhook_uazapi';
@@ -2268,11 +2361,84 @@ case 'webhook_uazapi':
   $chat=$payload['chat']??[];
   if($evType!=='messages'&&$evType!=='message'){ http_response_code(200); exit; }
   if(!empty($msg['fromMe'])||!empty($msg['isGroup'])){ http_response_code(200); exit; }
-  $text=trim((string)($msg['content']['text']??$msg['content']['caption']??''));
-  $wa=preg_replace('/\D/','',(string)($chat['phone']??$msg['chatid']??''));
+  $_mc=$msg['content']??null;
+  $text=trim((string)(is_array($_mc)?($_mc['text']??$_mc['caption']??''):($_mc??$msg['text']??'')));
+  $wa=preg_replace('/\D/','',(string)($chat['phone']??$chat['wa_chatid']??$msg['chatid']??''));
   $wa=preg_replace('/@.*/','',$wa);
-  $nome=(string)($chat['wa_name']??$chat['wa_contactName']??'');
+  $nome=(string)($chat['wa_name']??$chat['wa_contactName']??$chat['name']??'');
   if($text===''||$wa===''){http_response_code(200);exit;}
+  // Robô interno do PedeRV (pederv-sales, sem slug)
+  if(current_slug()===''){
+    // Responder ao UazAPI imediatamente; continuar rodando em background
+    ignore_user_abort(true);
+    while(ob_get_level())ob_end_clean();
+    http_response_code(200);
+    if(!headers_sent()){header('Content-Type: application/json');header('Content-Length: 2');header('Connection: close');}
+    echo '{}';flush();
+    try{
+      if(_uaz_cfg('saas_wa_bot_active')!=='1'){exit;}
+      $tok=_uaz_cfg('saas_master_wa_token');
+      if($tok===''){exit;}
+      $waNum=strlen($wa)<=11?'55'.$wa:$wa;
+      $delay=(int)(_uaz_cfg('saas_bot_delay')?:0);
+      $timeoutH=(float)(_uaz_cfg('saas_human_timeout')?:'4');
+      $hora=(int)date('H');$saud=$hora<12?'Bom dia':($hora<18?'Boa tarde':'Boa noite');
+      $trialDias=_uaz_cfg('saas_trial_dias')?:'7';
+      $linkSite=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br');
+      $notifyLines=array_filter(array_map('trim',explode("\n",(string)_uaz_cfg('saas_notify_phones'))));
+      $notifyReps=function(string $nmsg)use($tok,$notifyLines){
+        foreach($notifyLines as $rLine){
+          $rNum=preg_replace('/\D/','',$rLine);if($rNum==='')continue;
+          $rNum=strlen($rNum)<=11?'55'.$rNum:$rNum;
+          uazapi_instance_request($tok,'POST','/send/text',['number'=>$rNum,'text'=>$nmsg,'delay'=>800]);
+        }
+      };
+      // Pausa humana
+      master_db()->exec("CREATE TABLE IF NOT EXISTS saas_bot_paused(wa_id TEXT PRIMARY KEY,resumir_em INTEGER DEFAULT 0)");
+      $ps=master_db()->prepare("SELECT resumir_em FROM saas_bot_paused WHERE wa_id=?");$ps->execute([$wa]);$pr=$ps->fetch(PDO::FETCH_ASSOC);
+      if($pr){
+        $ru=(int)$pr['resumir_em'];
+        if($ru===-1||$ru>time()){$notifyReps("📩 *".($nome?:'cliente')."* (+{$wa}):\n_{$text}_");exit;}
+        master_db()->prepare("DELETE FROM saas_bot_paused WHERE wa_id=?")->execute([$wa]);
+      }
+      // Buscar resposta
+      $low=mb_strtolower($text);$reply='';$matchedGatilho='';
+      foreach(master_db()->query("SELECT * FROM saas_bot_replies WHERE ativo=1 AND gatilho!='*' ORDER BY id")->fetchAll(PDO::FETCH_ASSOC) as $br){
+        foreach(explode('|',mb_strtolower($br['gatilho'])) as $kw){
+          if(trim($kw)!==''&&mb_strpos($low,trim($kw))!==false){$reply=$br['resposta'];$matchedGatilho=mb_strtolower($br['gatilho']);break 2;}
+        }
+      }
+      if($reply===''){$fb=master_db()->query("SELECT resposta FROM saas_bot_replies WHERE ativo=1 AND gatilho='*' LIMIT 1")->fetch(PDO::FETCH_ASSOC);if($fb)$reply=$fb['resposta'];}
+      $isHuman=$matchedGatilho!==''&&(mb_strpos($matchedGatilho,'atendente')!==false||mb_strpos($matchedGatilho,'humano')!==false||mb_strpos($matchedGatilho,'representant')!==false);
+      if($reply!==''){
+        $reply=str_replace(['{NOME}','{SAUDACAO}','{TRIAL_DIAS}','{LINK_SITE}'],[$nome?:'cliente',$saud,$trialDias,$linkSite],$reply);
+        if($delay>0){
+          $chatId=$waNum.'@s.whatsapp.net';
+          $elapsed=0;
+          while($elapsed<$delay){
+            uazapi_instance_request($tok,'POST','/send/presence',['number'=>$chatId,'presence'=>'composing']);
+            $wait=min(3,$delay-$elapsed);
+            sleep($wait);
+            $elapsed+=$wait;
+          }
+        }
+        uazapi_instance_request($tok,'POST','/send/text',['number'=>$waNum,'text'=>$reply,'delay'=>800]);
+      } else {
+        $notifyReps("📩 *".($nome?:'cliente')."* (+{$wa}) enviou uma mensagem sem resposta:\n_{$text}_");
+      }
+      if($isHuman){
+        $ru=$timeoutH<=0?-1:(int)(time()+$timeoutH*3600);
+        master_db()->prepare("INSERT OR REPLACE INTO saas_bot_paused(wa_id,resumir_em) VALUES(?,?)")->execute([$wa,$ru]);
+        $notifyReps("🙋 *".($nome?:'cliente')."* (+{$wa}) pediu atendimento humano.\n_{$text}_");
+      }
+    }catch(Exception $e){}
+    exit;
+  }
+  ignore_user_abort(true);
+  while(ob_get_level())ob_end_clean();
+  http_response_code(200);
+  if(!headers_sent()){header('Content-Type: application/json');header('Content-Length: 2');header('Connection: close');}
+  echo '{}';flush();
   try{
     db()->prepare("INSERT OR IGNORE INTO whatsapp_contacts(wa_id,nome) VALUES(?,?)")->execute([$wa,$nome]);
     db()->prepare("UPDATE whatsapp_contacts SET nome=?,atualizado_em=datetime('now','localtime') WHERE wa_id=?")->execute([$nome,$wa]);
@@ -2282,6 +2448,10 @@ case 'webhook_uazapi':
     if($botActive==='1'){
       $reply='';$low=mb_strtolower($text);
       $hora=(int)date('H');$saudacao=$hora<12?'Bom dia':($hora<18?'Boa tarde':'Boa noite');
+      $delay=(int)setting_get('bot_delay','0');
+      $waNum=strlen($wa)<=11?'55'.$wa:$wa;
+      $saasTok=setting_get('saas_wa_token','');
+      $useSaas=$saasTok!==''&&uazapi_configured();
       $fechadaMsg=store_closed_message();
       if($fechadaMsg!==''){$reply=$fechadaMsg;}
       else{
@@ -2295,9 +2465,23 @@ case 'webhook_uazapi':
       }
       if($reply!==''){
         $linkCardapio=setting_get('cardapio_url','');
-        if($linkCardapio==='') $linkCardapio=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br').'/?r=menu';
+        if($linkCardapio==='') $linkCardapio=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br').'/cardapio/'.current_slug();
         $reply=str_replace(['{LINK_CARDAPIO}','{NOME_CLIENTE}','{SAUDACAO}'],[$linkCardapio,$nome?:'cliente',$saudacao],$reply);
-        $sent=uaz_r_send_text($wa,$reply);
+        if($delay>0&&$useSaas){
+          $chatId=$waNum.'@s.whatsapp.net';
+          $elapsed=0;
+          while($elapsed<$delay){
+            uazapi_instance_request($saasTok,'POST','/send/presence',['number'=>$chatId,'presence'=>'composing']);
+            $wait=min(3,$delay-$elapsed);
+            sleep($wait);
+            $elapsed+=$wait;
+          }
+        }
+        if($useSaas){
+          $sent=uazapi_instance_request($saasTok,'POST','/send/text',['number'=>$waNum,'text'=>$reply,'delay'=>800]);
+        }else{
+          $sent=uaz_r_send_text($wa,$reply);
+        }
         if(!empty($sent['ok']))db()->prepare("INSERT INTO whatsapp_messages(wa_id,direcao,texto,status) VALUES(?,'saida',?,'enviada')")->execute([$wa,$reply]);
       }
     }
@@ -2314,7 +2498,13 @@ case 'saas_bot_save':
   saas_require(); saas_csrf_check();
   master_db()->exec("CREATE TABLE IF NOT EXISTS saas_bot_replies(id INTEGER PRIMARY KEY AUTOINCREMENT, gatilho TEXT, resposta TEXT, ativo INTEGER DEFAULT 1)");
   $tab=$_POST['_tab']??'';
-  if($tab==='config'){
+  if($tab==='uazapi'){
+    // URL/Key usam config global UazAPI (saas_uaz_*) — nada a salvar aqui além do bot config
+    setting_set('saas_wa_bot_active', isset($_POST['saas_wa_bot_active'])?'1':'0');
+    setting_set('saas_notify_phones', trim($_POST['saas_notify_phones']??''));
+    setting_set('saas_bot_delay', trim($_POST['saas_bot_delay']??'0'));
+    setting_set('saas_human_timeout', trim($_POST['saas_human_timeout']??'4'));
+  } elseif($tab==='config'){
     setting_set('saas_evo_url',  trim($_POST['saas_evo_url']??''));
     if(($v=trim($_POST['saas_evo_key']??''))!=='' && $v!=='••••••••') setting_set('saas_evo_key',$v);
     setting_set('saas_evo_instance', trim($_POST['saas_evo_instance']??''));

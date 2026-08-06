@@ -64,21 +64,15 @@ $toggle=function($key,$label,$help,$def='0')use($ck){ ?>
         <label class="setting-field">Pedido mínimo para entrega<input type="number" min="0" step="0.01" name="s[delivery_min_order]" value="<?= e(setting_get('delivery_min_order','0')) ?>"></label>
         <a class="save inline-link" href="?r=admin_areas">Configurar endereço, bairros e áreas no mapa</a>
       <?php elseif($sec==='cardapio'): ?>
-        <h3>8. Marca, cores e cardapio</h3><p>Sua identidade visual, as cores do sistema e a experiencia de compra do cliente.</p>
-
-        <label class="setting-field">Link do cardápio (para o robô do WhatsApp)<input name="s[cardapio_url]" value="<?= e(setting_get('cardapio_url','')) ?>" placeholder="Ex: https://pederv.com.br/cardapio/barbaburguer"><small style="color:#6b7280;font-size:11px">Usado pelo token <code>{LINK_CARDAPIO}</code> nas mensagens automáticas do robô.</small></label>
-
-        <div class="setting-field">
-          <b style="font-size:13px">&#127991; Logo do restaurante</b>
-          <small>Aparece no painel (canto superior esquerdo) e no topo do cardapio, no lugar da inicial. PNG com fundo transparente, quadrado (recomendado 256x256px).</small>
-          <?php $logoAtual=setting_get('brand_logo',''); if($logoAtual): ?>
-            <div class="logo-preview"><img src="<?= e($logoAtual) ?>" alt="Logo atual"><span>Logo atual</span></div>
-            <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:11px;margin-top:6px"><input type="checkbox" name="remover_logo" value="1" style="width:auto"> Remover a logo atual</label>
-          <?php endif; ?>
-          <input type="file" name="logo" accept=".jpg,.jpeg,.png,.webp,.svg">
-        </div>
+        <h3>8. Marca e cores</h3><p>Dividido em dois blocos: a aparencia do seu <b>painel</b> (o que voce e sua equipe veem) e a aparencia do <b>cardapio</b> (o que seus clientes veem).</p>
+        <style>
+          .cfg-section{border:1px solid #e5eaef;border-radius:14px;padding:16px 18px;margin:0 0 20px;background:#fbfcfd}
+          .cfg-section-title{margin:0 0 6px;font-size:15px;font-weight:800;color:#1f2b3a;display:flex;align-items:center;gap:8px;padding-bottom:11px;border-bottom:2px solid #eef2f6}
+          .cfg-section-title small{font-weight:600;font-size:11px;color:#7a8794}
+        </style>
 
         <?php
+          // ---- Helpers de cor (definidos uma vez, usados nos dois blocos abaixo) ----
           $paletaCores=['#EE7430'=>'Laranja','#E23B3B'=>'Vermelho','#1B9E58'=>'Verde','#2F6BE0'=>'Azul','#8B5CF6'=>'Roxo','#E0447E'=>'Rosa','#0EA5A5'=>'Turquesa','#111827'=>'Grafite'];
           $paletaLateral=['#0D1320'=>'Azul-noite','#111827'=>'Grafite','#0B0B0D'=>'Preto','#10241B'=>'Verde-escuro','#22111A'=>'Vinho','#152036'=>'Marinho'];
           $renderPalette=function($campo,$atual,$lista){ ?>
@@ -89,27 +83,6 @@ $toggle=function($key,$label,$help,$def='0')use($ck){ ?>
               <label class="palette-custom">Personalizada<input type="color" id="pal_<?= $campo ?>" name="s[<?= $campo ?>]" value="<?= e($atual) ?>" oninput="markPal('<?= $campo ?>',this.value)"></label>
             </div>
           <?php };
-        ?>
-
-        <div class="setting-field">
-          <b style="font-size:13px">&#127912; Cor do cardapio (cliente)</b>
-          <small>Cor de destaque do cardapio do cliente: botoes, precos e realces.</small>
-          <?php $renderPalette('brand_color', setting_get('brand_color','')?:'#EE7430', $paletaCores); ?>
-        </div>
-
-        <div class="setting-field">
-          <b style="font-size:13px">&#128421; Cor do painel (sistema)</b>
-          <small>Cor de destaque do painel administrativo: item ativo do menu, botoes principais.</small>
-          <?php $renderPalette('panel_color', setting_get('panel_color','')?:'#EE7430', $paletaCores); ?>
-        </div>
-
-        <div class="setting-field">
-          <b style="font-size:13px">&#127761; Cor da barra lateral</b>
-          <small>Fundo do menu lateral do painel.</small>
-          <?php $renderPalette('panel_side', setting_get('panel_side','')?:'#0D1320', $paletaLateral); ?>
-        </div>
-
-        <?php
           $txtOpts=function($campo,$label,$hint){
             $val=setting_get($campo,''); $auto=($val==='');
             ?>
@@ -127,78 +100,118 @@ $toggle=function($key,$label,$help,$def='0')use($ck){ ?>
               <input type="hidden" name="s[<?= $campo ?>]" id="hid_<?= $campo ?>" value="<?= e($val) ?>">
             </div>
           <?php };
-          $txtOpts('menu_btn_text','&#9997; Cor do texto dos botões (cardápio)','Cor das letras dentro dos botões e realces do cardápio do cliente.');
-          $txtOpts('promo_text_color','&#9997; Cor do texto dos anúncios (promoção)','Cor das letras na faixa de anúncios que passa no topo do cardápio.');
-          $txtOpts('panel_btn_text','&#9997; Cor do texto dos botões (painel)','Cor das letras dos botões e do item ativo do menu do painel.');
         ?>
+
+        <!-- ============ BLOCO 1 · PAINEL (sistema) ============ -->
+        <div class="cfg-section">
+          <h4 class="cfg-section-title">&#128421; Aparencia do painel <small>· o que voce e sua equipe veem</small></h4>
+
+          <div class="setting-field">
+            <b style="font-size:13px">&#127991; Logo do restaurante</b>
+            <small>Aparece no painel (canto superior esquerdo) e no topo do cardapio, no lugar da inicial. PNG com fundo transparente, quadrado (recomendado 256x256px).</small>
+            <?php $logoAtual=setting_get('brand_logo',''); if($logoAtual): ?>
+              <div class="logo-preview"><img src="<?= e($logoAtual) ?>" alt="Logo atual"><span>Logo atual</span></div>
+              <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:11px;margin-top:6px"><input type="checkbox" name="remover_logo" value="1" style="width:auto"> Remover a logo atual</label>
+            <?php endif; ?>
+            <input type="file" name="logo" accept=".jpg,.jpeg,.png,.webp,.svg">
+          </div>
+
+          <div class="setting-field">
+            <b style="font-size:13px">&#128421; Cor do painel (sistema)</b>
+            <small>Cor de destaque do painel administrativo: item ativo do menu, botoes principais.</small>
+            <?php $renderPalette('panel_color', setting_get('panel_color','')?:'#EE7430', $paletaCores); ?>
+          </div>
+
+          <div class="setting-field">
+            <b style="font-size:13px">&#127761; Cor da barra lateral</b>
+            <small>Fundo do menu lateral do painel.</small>
+            <?php $renderPalette('panel_side', setting_get('panel_side','')?:'#0D1320', $paletaLateral); ?>
+          </div>
+
+          <?php $txtOpts('panel_btn_text','&#9997; Cor do texto dos botões (painel)','Cor das letras dos botões e do item ativo do menu do painel.'); ?>
+        </div>
+
+        <!-- ============ BLOCO 2 · CARDAPIO (cliente) ============ -->
+        <div class="cfg-section">
+          <h4 class="cfg-section-title">&#127912; Aparencia do cardapio <small>· o que seus clientes veem</small></h4>
+
+          <div class="setting-field">
+            <b style="font-size:13px">&#127912; Cor do cardapio (cliente)</b>
+            <small>Cor de destaque do cardapio do cliente: botoes, precos e realces.</small>
+            <?php $renderPalette('brand_color', setting_get('brand_color','')?:'#EE7430', $paletaCores); ?>
+          </div>
+
+          <?php $txtOpts('menu_btn_text','&#9997; Cor das letras (cardápio)','Cor das letras nos botões, faixa de anúncios e realces do cardápio do cliente.'); ?>
+
+          <div class="setting-field">
+            <b style="font-size:13px">&#128444; Capa do cardapio (vitrine do comercio)</b>
+            <small>Imagem de destaque no topo do cardapio, estilo pagina de apresentacao. Recomendado 1200x400px (JPG/PNG/WebP).</small>
+            <?php $capaAtual=setting_get('menu_capa',''); if($capaAtual): ?>
+              <div class="capa-preview"><img src="<?= e($capaAtual) ?>" alt="Capa atual"></div>
+              <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:11px;margin-top:6px"><input type="checkbox" name="remover_capa" value="1" style="width:auto"> Remover a capa atual</label>
+            <?php endif; ?>
+            <input type="file" name="capa" accept=".jpg,.jpeg,.png,.webp">
+          </div>
+
+          <div class="setting-field">
+            <b style="font-size:13px">&#128247; Fundo do cardapio (imagem propria)</b>
+            <small>Envie uma imagem para ser o fundo do cardapio inteiro. Ela cobre a pagina toda com um leve escurecimento para manter a leitura. Substitui o tema abaixo enquanto estiver ativa.</small>
+            <?php $bgAtual=setting_get('menu_bg_image',''); if($bgAtual): ?>
+              <div class="capa-preview"><img src="<?= e($bgAtual) ?>" alt="Fundo atual"></div>
+              <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:11px;margin-top:6px"><input type="checkbox" name="remover_menubg" value="1" style="width:auto"> Remover o fundo enviado (voltar ao tema)</label>
+            <?php endif; ?>
+            <input type="file" name="menubg" accept=".jpg,.jpeg,.png,.webp">
+          </div>
+
+          <div class="setting-field">
+            <b style="font-size:13px">&#127761; Tema de fundo (se nao usar imagem propria)</b>
+            <small>Clique no fundo que quiser. "Preto liso" e "Branco liso" definem a cor base. A previa grande mostra como fica.</small>
+            <?php
+              $tema=setting_get('menu_theme','gourmet');
+              $temas=[
+                'gourmet'=>['Gourmet','radial-gradient(60% 70% at 50% 0,rgba(238,116,48,.18),transparent 62%),#12161F','escuro'],
+                'carvao'=>['Carvao','radial-gradient(60% 75% at 50% 0,rgba(238,116,48,.15),transparent 60%),#0C0E12','escuro'],
+                'noite'=>['Noite Ambar','radial-gradient(45% 55% at 50% 0,rgba(247,160,90,.34),transparent 60%),#08090B','escuro'],
+                'madeira'=>['Madeira','radial-gradient(60% 70% at 50% 0,rgba(238,116,48,.16),transparent 62%),#1A130A','escuro'],
+                'bistro'=>['Bistro','radial-gradient(60% 70% at 50% 0,rgba(238,116,48,.12),transparent 62%),#0D1712','escuro'],
+                'vinho'=>['Vinho','radial-gradient(65% 72% at 50% 0,rgba(214,80,84,.22),transparent 60%),#160A0E','escuro'],
+                'escuro'=>['Preto liso','#0B0F14','preto'],
+                'claro'=>['Marfim','linear-gradient(180deg,#F8F3EB,#F1E9DD)','claro'],
+                'branco'=>['Branco liso','#FFFFFF','branco'],
+              ];
+              $temasJson=[]; foreach($temas as $k=>$t)$temasJson[$k]=['bg'=>$t[1],'base'=>$t[2],'nome'=>$t[0]];
+            ?>
+            <div class="theme-live">
+              <div class="theme-live-prev" id="themeLivePrev">
+                <div class="tl-top"><span class="tl-logo"></span><b class="tl-nm">Seu Restaurante</b></div>
+                <div class="tl-chips"><span class="tl-chip on">Destaques</span><span class="tl-chip">Burgers</span></div>
+                <div class="tl-card"><div><b>Smash Duplo</b><small>2 blends, cheddar e molho da casa</small></div><span class="tl-price">R$ 28,90</span></div>
+              </div>
+              <div class="theme-live-name" id="themeLiveName"></div>
+            </div>
+            <div class="theme-picker">
+              <?php foreach($temas as $tv=>$t): $baseLight=in_array($t[2],['claro','branco']); ?>
+                <label class="theme-opt <?= $tema===$tv?'sel':'' ?>" data-theme="<?= $tv ?>">
+                  <input type="radio" name="s[menu_theme]" value="<?= $tv ?>" <?= $tema===$tv?'checked':'' ?> onchange="pickTheme('<?= $tv ?>')">
+                  <span class="theme-prev" style="background:<?= $t[1] ?>"><span class="tp-card" style="<?= $baseLight?'background:#fff':'background:rgba(255,255,255,.10)' ?>"></span></span>
+                  <span class="theme-name"><?= e($t[0]) ?></span>
+                </label>
+              <?php endforeach; ?>
+            </div>
+          </div>
+
+          <label class="setting-field">&#128226; Anuncios que passam no topo do cardapio<textarea name="s[menu_banner]" rows="3" placeholder="Um anuncio por linha. Ex.:&#10;Entrega gratis acima de R$ 50&#10;Combo do dia com 20% OFF"><?= e(setting_get('menu_banner','')) ?></textarea><small>Escreva um anuncio por linha. Eles ficam passando automaticamente numa faixa no topo do cardapio. Deixe vazio para ocultar.</small></label>
+
+          <label class="setting-field">Link do cardápio (para o robô do WhatsApp)<input name="s[cardapio_url]" value="<?= e(setting_get('cardapio_url','')) ?>" placeholder="Ex: https://pederv.com.br/cardapio/barbaburguer"><small style="color:#6b7280;font-size:11px">Usado pelo token <code>{LINK_CARDAPIO}</code> nas mensagens automáticas do robô.</small></label>
+
+          <?php $toggle('customer_accounts','Permitir conta do cliente','Ativa cadastro com e-mail, senha, enderecos salvos e historico.','1'); ?>
+          <?php $toggle('cart_recovery_capture','Registrar carrinhos abandonados','Prepara as compras esquecidas para o Recuperador de vendas.','1'); ?>
+          <?php $toggle('menu_show_featured','Exibir destaques primeiro','Prioriza produtos e combos marcados como destaque.','1'); ?>
+          <?php $toggle('menu_show_order_tracking','Mostrar Acompanhar pedido','Permite consultar a situacao sem entrar na conta.','1'); ?>
+        </div>
+
         <script>
         function txtMode(campo,val){document.getElementById('hid_'+campo).value=(val==='auto')?'':val}
-        </script>
-
-        <div class="setting-field">
-          <b style="font-size:13px">&#128444; Capa do cardapio (vitrine do comercio)</b>
-          <small>Imagem de destaque no topo do cardapio, estilo pagina de apresentacao. Recomendado 1200x400px (JPG/PNG/WebP).</small>
-          <?php $capaAtual=setting_get('menu_capa',''); if($capaAtual): ?>
-            <div class="capa-preview"><img src="<?= e($capaAtual) ?>" alt="Capa atual"></div>
-            <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:11px;margin-top:6px"><input type="checkbox" name="remover_capa" value="1" style="width:auto"> Remover a capa atual</label>
-          <?php endif; ?>
-          <input type="file" name="capa" accept=".jpg,.jpeg,.png,.webp">
-        </div>
-
-        <div class="setting-field">
-          <b style="font-size:13px">&#128247; Fundo do cardapio (imagem propria)</b>
-          <small>Envie uma imagem para ser o fundo do cardapio inteiro. Ela cobre a pagina toda com um leve escurecimento para manter a leitura. Substitui o tema abaixo enquanto estiver ativa.</small>
-          <?php $bgAtual=setting_get('menu_bg_image',''); if($bgAtual): ?>
-            <div class="capa-preview"><img src="<?= e($bgAtual) ?>" alt="Fundo atual"></div>
-            <label style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:11px;margin-top:6px"><input type="checkbox" name="remover_menubg" value="1" style="width:auto"> Remover o fundo enviado (voltar ao tema)</label>
-          <?php endif; ?>
-          <input type="file" name="menubg" accept=".jpg,.jpeg,.png,.webp">
-        </div>
-
-        <div class="setting-field">
-          <b style="font-size:13px">&#127761; Tema de fundo (se nao usar imagem propria)</b>
-          <small>Clique no fundo que quiser. "Preto liso" e "Branco liso" definem a cor base. A previa grande mostra como fica.</small>
-          <?php
-            $tema=setting_get('menu_theme','gourmet');
-            $temas=[
-              'gourmet'=>['Gourmet','radial-gradient(60% 70% at 50% 0,rgba(238,116,48,.18),transparent 62%),#12161F','escuro'],
-              'carvao'=>['Carvao','radial-gradient(60% 75% at 50% 0,rgba(238,116,48,.15),transparent 60%),#0C0E12','escuro'],
-              'noite'=>['Noite Ambar','radial-gradient(45% 55% at 50% 0,rgba(247,160,90,.34),transparent 60%),#08090B','escuro'],
-              'madeira'=>['Madeira','radial-gradient(60% 70% at 50% 0,rgba(238,116,48,.16),transparent 62%),#1A130A','escuro'],
-              'bistro'=>['Bistro','radial-gradient(60% 70% at 50% 0,rgba(238,116,48,.12),transparent 62%),#0D1712','escuro'],
-              'vinho'=>['Vinho','radial-gradient(65% 72% at 50% 0,rgba(214,80,84,.22),transparent 60%),#160A0E','escuro'],
-              'escuro'=>['Preto liso','#0B0F14','preto'],
-              'claro'=>['Marfim','linear-gradient(180deg,#F8F3EB,#F1E9DD)','claro'],
-              'branco'=>['Branco liso','#FFFFFF','branco'],
-            ];
-            $temasJson=[]; foreach($temas as $k=>$t)$temasJson[$k]=['bg'=>$t[1],'base'=>$t[2],'nome'=>$t[0]];
-          ?>
-          <div class="theme-live">
-            <div class="theme-live-prev" id="themeLivePrev">
-              <div class="tl-top"><span class="tl-logo"></span><b class="tl-nm">Seu Restaurante</b></div>
-              <div class="tl-chips"><span class="tl-chip on">Destaques</span><span class="tl-chip">Burgers</span></div>
-              <div class="tl-card"><div><b>Smash Duplo</b><small>2 blends, cheddar e molho da casa</small></div><span class="tl-price">R$ 28,90</span></div>
-            </div>
-            <div class="theme-live-name" id="themeLiveName"></div>
-          </div>
-          <div class="theme-picker">
-            <?php foreach($temas as $tv=>$t): $baseLight=in_array($t[2],['claro','branco']); ?>
-              <label class="theme-opt <?= $tema===$tv?'sel':'' ?>" data-theme="<?= $tv ?>">
-                <input type="radio" name="s[menu_theme]" value="<?= $tv ?>" <?= $tema===$tv?'checked':'' ?> onchange="pickTheme('<?= $tv ?>')">
-                <span class="theme-prev" style="background:<?= $t[1] ?>"><span class="tp-card" style="<?= $baseLight?'background:#fff':'background:rgba(255,255,255,.10)' ?>"></span></span>
-                <span class="theme-name"><?= e($t[0]) ?></span>
-              </label>
-            <?php endforeach; ?>
-          </div>
-        </div>
-
-        <label class="setting-field">&#128226; Anuncios que passam no topo do cardapio<textarea name="s[menu_banner]" rows="3" placeholder="Um anuncio por linha. Ex.:&#10;Entrega gratis acima de R$ 50&#10;Combo do dia com 20% OFF"><?= e(setting_get('menu_banner','')) ?></textarea><small>Escreva um anuncio por linha. Eles ficam passando automaticamente numa faixa no topo do cardapio. Deixe vazio para ocultar.</small></label>
-
-        <?php $toggle('customer_accounts','Permitir conta do cliente','Ativa cadastro com e-mail, senha, enderecos salvos e historico.','1'); ?>
-        <?php $toggle('cart_recovery_capture','Registrar carrinhos abandonados','Prepara as compras esquecidas para o Recuperador de vendas.','1'); ?>
-        <?php $toggle('menu_show_featured','Exibir destaques primeiro','Prioriza produtos e combos marcados como destaque.','1'); ?>
-        <?php $toggle('menu_show_order_tracking','Mostrar Acompanhar pedido','Permite consultar a situacao sem entrar na conta.','1'); ?>
-        <script>
         const THEMES=<?= json_encode($temasJson,JSON_UNESCAPED_UNICODE) ?>;
         function pickTheme(k){
           document.querySelectorAll('.theme-opt').forEach(o=>o.classList.toggle('sel',o.dataset.theme===k));

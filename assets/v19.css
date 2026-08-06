@@ -38,11 +38,14 @@
   border-left:3px solid var(--brand);padding-left:calc(var(--side-pad,16px) - 3px);
 }
 .admin-shell .admin-side nav>small{
-  color:var(--u-body)!important;font-weight:800;letter-spacing:.14em;
-  border-top-color:var(--u-line)!important;
+  color:rgba(255,255,255,.92)!important;font-weight:800;letter-spacing:.15em;font-size:10px;
+  border-top-color:rgba(255,255,255,.16)!important;padding-top:15px;
 }
 .admin-shell .admin-side nav>small::before{display:none}
-.admin-shell .admin-side nav a[href*="logout"]{background:transparent;border:0;color:var(--u-body)!important}
+.admin-shell .admin-side nav a[href*="logout"]{background:transparent;border:0}
+.admin-shell .side-group summary{color:rgba(255,255,255,.9)!important}
+.admin-shell .side-group summary:hover,.admin-shell .side-group[open] summary{background:rgba(255,255,255,.09)!important}
+.admin-shell .side-group div a{color:rgba(255,255,255,.75)!important}
 
 /* ---- Top bar: plana ---- */
 .admin-shell .admin-top{box-shadow:none;border-bottom:1px solid var(--u-line)}

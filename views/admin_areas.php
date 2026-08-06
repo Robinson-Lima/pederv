@@ -51,6 +51,7 @@
       <div class="area-row zone-row <?= $z['ativo']?'':'off' ?>">
         <div><b><?= $z['tipo']==='bloqueio'?'⛔':'✅' ?> <?= e($z['nome']) ?></b><small><?= $z['tipo']==='bloqueio'?'Região bloqueada — o cardápio recusa o pedido':'Taxa aplicada automaticamente no checkout' ?><?= $z['ativo']?'':' · DESATIVADA' ?></small></div>
         <strong><?= $z['tipo']==='bloqueio'?'—':money($z['taxa']) ?></strong>
+        <button onclick="editarZona(<?= $z['id'] ?>,'<?= e(addslashes($z['nome'])) ?>','<?= e($z['tipo']) ?>','<?= (float)$z['taxa'] ?>')">Editar</button>
         <button onclick="toggleZona(<?= $z['id'] ?>)"><?= $z['ativo']?'Desativar':'Ativar' ?></button>
         <button onclick="excluirZona(<?= $z['id'] ?>)">Excluir</button>
       </div>
@@ -67,7 +68,8 @@
       <button class="cxgo or">+ Cadastrar bairro</button>
     </form>
     <?php foreach($areas as $a): ?>
-      <div class="area-row"><div><b><?= e($a['bairro']) ?></b><small>Taxa calculada no checkout</small></div><strong><?= money($a['taxa']) ?></strong>
+      <div class="area-row"><div><b><?= e($a['bairro']) ?></b><small>Taxa calculada no checkout</small></div><strong id="area-taxa-<?= $a['id'] ?>"><?= money($a['taxa']) ?></strong>
+      <button onclick="editarBairro(<?= $a['id'] ?>,'<?= e(addslashes($a['bairro'])) ?>',<?= (float)$a['taxa'] ?>)">Editar</button>
       <form method="post" action="?r=area_excluir" onsubmit="return confirm('Excluir este bairro?')"><input type="hidden" name="id" value="<?= $a['id'] ?>"><button>Excluir</button></form></div>
     <?php endforeach; ?>
     <?php if(!$areas): ?><p>Nenhum bairro cadastrado.</p><?php endif; ?>
@@ -157,6 +159,18 @@ async function buscarCep(){
 function localizarCompleto(){
   const end=enderecoCompletoRest();if(!val('restLogradouro')||!val('restCidade'))return alert('Informe CEP ou rua e cidade.');
   document.getElementById('restEnd').value=end;localizarRest();
+}
+function editarZona(id,nome,tipo,taxa){
+  const novoNome=prompt('Nome da área:',nome);if(novoNome===null)return;
+  const novoTipo=prompt('Tipo (entrega ou bloqueio):',tipo);if(novoTipo===null)return;
+  let novaTaxa=taxa;
+  if(novoTipo==='entrega'){const t=prompt('Taxa de entrega:',taxa.toFixed(2).replace('.',','));if(t===null)return;novaTaxa=parseFloat(t.replace(',','.'))||0}
+  fetch('?r=zone_editar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,nome:novoNome,tipo:novoTipo,taxa:novaTaxa})}).then(r=>r.json()).then(r=>{if(r.ok)location.reload();else alert(r.erro||'Erro ao salvar.')})
+}
+function editarBairro(id,bairro,taxa){
+  const novaTaxa=prompt('Nova taxa para "'+bairro+'" (ex: 7,00):',taxa.toFixed(2).replace('.',','));
+  if(novaTaxa===null)return;
+  fetch('?r=area_editar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,taxa:parseFloat(novaTaxa.replace(',','.'))||0})}).then(r=>r.json()).then(r=>{if(r.ok)location.reload();else alert(r.erro||'Erro ao salvar.')})
 }
 async function localizarRest(){
   const end=document.getElementById('restEnd').value.trim();

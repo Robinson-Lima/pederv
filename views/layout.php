@@ -12,7 +12,7 @@ $corPainel  =$hex6(setting_get('panel_color',''),'#EE7430');   // cor do painel 
 $corLateral =$hex6(setting_get('panel_side',''),'#0D1320');    // cor da barra lateral
 $menuBg     =setting_get('menu_bg_image','');                  // fundo enviado pelo cliente
 $r=$_GET['r']??'menu';
-$adminRoutes=['admin_orders','admin_pdv','admin_customers','admin_areas','admin_payments','admin_ifood','admin_ifood_add','admin_tables','admin_qr_tables','admin_couriers','admin_caixa','admin_cash_detail','admin_settings','admin_notas','admin_produtos','admin_import','admin_import_raw','admin_financeiro','admin_whatsapp','admin_bot_messages','admin_salon','admin_reports','admin_general','admin_recovery','admin_links'];
+$adminRoutes=['admin_orders','admin_pdv','admin_customers','admin_areas','admin_payments','admin_ifood','admin_ifood_add','admin_tables','admin_qr_tables','admin_couriers','admin_caixa','admin_cash_detail','admin_settings','admin_notas','admin_fiscal','admin_produtos','admin_import','admin_import_raw','admin_financeiro','admin_whatsapp','admin_bot_messages','admin_salon','admin_reports','admin_general','admin_recovery','admin_links'];
 $isAdmin=in_array($r,$adminRoutes,true);
 // PWA: cada área instala como um app próprio, com o ícone abrindo direto na tela certa.
 $pwaApp = in_array($r,['admin_caixa','admin_pdv'],true) ? 'caixa'
@@ -30,12 +30,24 @@ if($isAdmin){try{$waCount=(int)db()->query("SELECT COUNT(*) c FROM whatsapp_mess
   // Cor do texto dos botões: 'auto' calcula pelo contraste; senão usa a cor escolhida.
   $txtCard=$hex6(setting_get('menu_btn_text',''),''); $txtPanel=$hex6(setting_get('panel_btn_text',''),'');
   $onFinal = $isAdmin ? ($txtPanel?:$onAccent) : ($txtCard?:$onAccent);
-  $promoTxt=$hex6(setting_get('promo_text_color',''), $onFinal);
-  echo '<style>:root{--brand:'.$accent.';--brand2:'.$accent.';--brandsoft:'.$accent.'26;--on-brand:'.$onFinal.';--promo-text:'.$promoTxt.'}';
-  if($isAdmin) echo '.admin-side{background:'.$corLateral.'!important}';
+  $promoTxt=$txtCard?:$hex6(setting_get('promo_text_color',''), $onFinal);
+  echo '<style>:root{--brand:'.$accent.';--brand2:'.$accent.';--brandsoft:'.$accent.'26;--on-brand:'.$onFinal.'!important;--promo-text:'.$promoTxt.'!important}';
+  if($isAdmin) echo '.admin-shell .admin-side{background:'.$corLateral.'!important}'
+    .'.admin-shell .side-brand{background:#fff!important}'
+    .'.admin-shell .side-search{background:#fff!important;color:#5b6b7a!important;border:1px solid rgba(0,0,0,.05)}'
+    .'.admin-shell .side-search span{color:#5b6b7a!important}'
+    .'.admin-shell .side-user{background:rgba(255,255,255,.09)!important;border-color:rgba(255,255,255,.16)!important}';
   if($r==='menu'){
     $_menuTema=setting_get('menu_theme','gourmet');
-    if($menuBg!=='') echo 'body.menu-uber{background:linear-gradient(rgba(8,9,11,.70),rgba(8,9,11,.82)),url("'.e($menuBg).'") center/cover fixed no-repeat!important}';
+    // Override v18.css white CSS variables for dark themes (specificity 0,2,1 beats v18 0,1,0)
+    $_darkUbg=['gourmet'=>'#12161F','carvao'=>'#0C0E12','noite'=>'#08090B','madeira'=>'#1A130A','bistro'=>'#0D1712','vinho'=>'#160A0E','escuro'=>'#0B0F14'];
+    if($menuBg!==''){
+      echo 'body.menu-uber{background:linear-gradient(rgba(8,9,11,.70),rgba(8,9,11,.82)),url("'.e($menuBg).'") center/cover fixed no-repeat!important}';
+      echo 'body.menu-uber{--u-bg:#0B0F14;--u-ink:#e8e8e8;--u-body:#9a9a9a;--u-line:rgba(255,255,255,.08);--u-soft:rgba(255,255,255,.06);--u-thumb:rgba(255,255,255,.10)}';
+    } elseif(isset($_darkUbg[$_menuTema])){
+      $_dbg=$_darkUbg[$_menuTema];
+      echo 'body.theme-'.$_menuTema.'.menu-uber{--u-bg:'.$_dbg.';--u-ink:#e8e8e8;--u-body:#9a9a9a;--u-line:rgba(255,255,255,.08);--u-soft:rgba(255,255,255,.06);--u-thumb:rgba(255,255,255,.10)}';
+    }
   }
   echo '</style>';
 ?></head>
@@ -60,8 +72,9 @@ if($isAdmin){try{$waCount=(int)db()->query("SELECT COUNT(*) c FROM whatsapp_mess
       <a class="<?= $r==='admin_caixa'?'on':'' ?>" href="?r=admin_caixa">💵 Caixa</a>
       <a class="<?= $r==='admin_payments'?'on':'' ?>" href="?r=admin_payments">💰 Pagamentos</a>
       <a class="<?= $r==='admin_notas'?'on':'' ?>" href="?r=admin_notas">🧾 Notas fiscais</a>
+      <a class="<?= $r==='admin_fiscal'?'on':'' ?>" href="?r=admin_fiscal">📋 Config. fiscal</a>
       <a class="<?= $r==='admin_recovery'?'on':'' ?>" href="?r=admin_recovery">🔄 Recuperador de vendas</a>
-      <details class="side-group" <?= $r==='admin_reports'?'open':'' ?>><summary>📊 Relatórios <span>⌄</span></summary><div><?php foreach(['geral'=>'Geral','caixas'=>'Caixas','clientes'=>'Clientes','pedidos'=>'Pedidos','itens'=>'Itens','entregadores'=>'Entregadores','garcons'=>'Garçons','areas'=>'Área de entrega'] as $tipo=>$lbl): ?><a class="<?= $r==='admin_reports'&&($_GET['tipo']??'geral')===$tipo?'on':'' ?>" href="?r=admin_reports&tipo=<?= $tipo ?>"><?= $lbl ?></a><?php endforeach; ?></div></details>
+      <details class="side-group" <?= $r==='admin_reports'?'open':'' ?>><summary>📊 Relatórios <span>⌄</span></summary><div><?php foreach(['geral'=>'Geral','caixas'=>'Caixas','clientes'=>'Clientes','pedidos'=>'Pedidos','itens'=>'Itens','estoque'=>'Estoque','entregadores'=>'Entregadores','garcons'=>'Garçons','areas'=>'Área de entrega'] as $tipo=>$lbl): ?><a class="<?= $r==='admin_reports'&&($_GET['tipo']??'geral')===$tipo?'on':'' ?>" href="?r=admin_reports&tipo=<?= $tipo ?>"><?= $lbl ?></a><?php endforeach; ?></div></details>
       <small>CONFIGURAÇÕES</small>
       <a class="<?= $r==='admin_salon'?'on':'' ?>" href="?r=admin_salon">🏠 Configuração do salão</a>
       <a class="<?= $r==='admin_general'?'on':'' ?>" href="?r=admin_general">⚙️ Configurações gerais</a>

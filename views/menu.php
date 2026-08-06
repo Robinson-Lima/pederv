@@ -47,11 +47,40 @@
       <div id="co-items"></div>
       <div class="field" <?= !empty($mesa)?'style="display:none"':'' ?>><label>Seu nome</label><input id="f-nome" value="<?= !empty($mesa)?'Mesa '.e($mesa):e($customer['nome']??'') ?>" placeholder="Nome" autocomplete="name"></div>
       <div class="field" <?= !empty($mesa)?'style="display:none"':'' ?>><label>Telefone / WhatsApp</label><input id="f-fone" value="<?= e($customer['telefone']??'') ?>" placeholder="(00) 00000-0000" inputmode="tel" autocomplete="tel"></div>
-      <div class="field" <?= !empty($mesa)?'style="display:none"':'' ?>><label>E-mail <small>(salva seu histórico)</small></label><input id="f-email" value="<?= e($customer['email']??'') ?>" placeholder="voce@email.com" type="email" autocomplete="email"></div>
+      <input type="hidden" id="f-email" value="<?= e($customer['email']??'') ?>">
       <div class="field" <?= !empty($mesa)?'style="display:none"':'' ?>><label>Tipo</label><select id="f-tipo" onchange="toggleEnd()"><?php if(!empty($mesa)): ?><option value="mesa">Consumir na mesa</option><?php else: ?><option value="entrega">Entrega</option><option value="retirada">Retirada</option><?php endif; ?></select></div>
       <div id="end-wrap" <?= !empty($mesa)?'style="display:none"':'' ?>>
-        <div class="field"><label>Endereço (rua e número)</label><input id="f-end" value="<?= e(trim(($customer['endereco']??'').' '.($customer['numero']??''))) ?>" placeholder="Rua, número" autocomplete="street-address"></div>
-        <div class="field"><label>Bairro</label><?php if(!empty($areas)): ?><select id="f-bairro" onchange="renderCart()"><option value="">Selecione o bairro…</option><?php foreach($areas as $a): ?><option value="<?= e($a['bairro']) ?>" data-taxa="<?= (float)$a['taxa'] ?>"><?= e($a['bairro']) ?> — <?= money($a['taxa']) ?></option><?php endforeach; ?></select><?php else: ?><input id="f-bairro" placeholder="Bairro"><?php endif; ?></div>
+        <div class="field"><label>Rua</label><input id="f-end" value="<?= e($customer['endereco']??'') ?>" placeholder="Rua / avenida" autocomplete="street-address"></div>
+        <?php
+          $bairroOpts = [];
+          if(!empty($areas)) {
+            foreach($areas as $a) $bairroOpts[] = ['nome'=>$a['bairro'],'taxa'=>(float)$a['taxa'],'tipo'=>'entrega'];
+          } elseif(!empty($zonas)) {
+            foreach($zonas as $z) $bairroOpts[] = ['nome'=>$z['nome'],'taxa'=>(float)$z['taxa'],'tipo'=>$z['tipo']];
+          }
+        ?>
+        <?php if(!empty($bairroOpts)): ?>
+        <div class="field"><label>Bairro</label>
+          <input type="hidden" id="f-bairro" value="">
+          <input type="hidden" id="f-bairro-taxa" value="0">
+          <input type="hidden" id="f-bairro-tipo" value="">
+          <button type="button" class="bairro-selector-btn" id="bairroBtn" onclick="abrirBairros()">Selecione o bairro…</button>
+        </div>
+        <div class="bairro-modal" id="bairroModal">
+          <div class="bairro-modal-in">
+            <div class="bairro-modal-head"><b>Selecione Seu Bairro</b><button type="button" onclick="fecharBairros()">×</button></div>
+            <div class="bairro-search"><input type="text" id="bairroSearch" placeholder="Pesquisar" oninput="filtrarBairros()"></div>
+            <div class="bairro-list" id="bairroList">
+              <?php foreach($bairroOpts as $bo): ?>
+              <label class="bairro-item"><span><?= e($bo['nome']) ?></span><input type="radio" name="bairro_pick" value="<?= e($bo['nome']) ?>" data-taxa="<?= $bo['taxa'] ?>" data-tipo="<?= e($bo['tipo']) ?>" onchange="selecionarBairro(this)"><span class="bairro-radio"></span></label>
+              <?php endforeach; ?>
+            </div>
+          </div>
+        </div>
+        <?php else: ?>
+        <input type="hidden" id="f-bairro" value="">
+        <?php endif; ?>
+        <div class="field"><label>Número</label><input id="f-numero" value="<?= e($customer['numero']??'') ?>" placeholder="Nº" inputmode="numeric" autocomplete="address-line2"></div>
         <div class="field"><label>Ponto de referência (opcional)</label><input id="f-ref" value="<?= e($customer['referencia']??'') ?>" placeholder="Ex: portão azul"></div>
         <?php if(!empty($temZonas)): ?><div class="field frete-check"><button type="button" class="frete-btn" onclick="conferirFrete()">📍 Conferir taxa do meu endereço</button><small id="frete-msg">Informe rua, número e bairro e confira antes de finalizar.</small></div><?php endif; ?>
       </div>
@@ -94,8 +123,8 @@
             </div>
           </div>
           <div id="troco-box" style="display:none;margin-top:10px;padding:0">
-            <p style="font-size:12px;font-weight:600;color:#888;margin:0 0 6px;padding:0">Precisa de troco?</p>
-            <input id="f-troco" inputmode="numeric" oninput="fmtTroco(this)" placeholder="R$ 0,00" style="width:100%;box-sizing:border-box">
+            <p style="font-size:13px;font-weight:700;color:#999;margin:0 0 8px;padding:0">Precisa de troco?</p>
+            <input id="f-troco" inputmode="numeric" oninput="fmtTroco(this)" placeholder="R$ 0,00" style="width:100%;box-sizing:border-box;font-size:22px;font-weight:700;padding:14px 16px;letter-spacing:.5px">
           </div>
         </div>
       </fieldset><?php endif; ?>
@@ -117,19 +146,28 @@ const RESTORE_CART=<?= json_encode(!empty($restoreCart)?json_decode($restoreCart
 const CART_TOKEN=(()=>{let t=localStorage.getItem('rv_cart_token');if(!t){t='c'+Date.now().toString(36)+Math.random().toString(36).slice(2);localStorage.setItem('rv_cart_token',t)}return t})();
 let snapshotTimer=null;
 let GEO={lat:0,lng:0,taxa:null,zona:'',ok:null};
-function freteAtual(){if(document.getElementById('f-tipo').value!=='entrega')return 0;if(GEO.taxa!==null&&GEO.ok)return GEO.taxa;const b=document.getElementById('f-bairro');if(TEM_AREAS&&b?.tagName==='SELECT'){const op=b.options[b.selectedIndex];return op?.dataset.taxa?parseFloat(op.dataset.taxa):0}return TAXA}
-function enderecoCompleto(){const end=document.getElementById('f-end').value.trim(),b=document.getElementById('f-bairro');return [end,b?b.value:'',CIDADE].filter(Boolean).join(', ')}
-async function geocodificar(){const q=enderecoCompleto();if(!q)return null;try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q='+encodeURIComponent(q)).then(x=>x.json());if(!r.length)return null;return{lat:parseFloat(r[0].lat),lng:parseFloat(r[0].lon)}}catch(e){return null}}
+function freteAtual(){if(document.getElementById('f-tipo').value!=='entrega')return 0;if(GEO.taxa!==null&&GEO.ok)return GEO.taxa;const tx=document.getElementById('f-bairro-taxa');const bairroTipo=document.getElementById('f-bairro-tipo');if(bairroTipo&&bairroTipo.value==='bloqueio')return 0;if(tx&&tx.value!=='0'){const v=parseFloat(tx.value);if(!isNaN(v)&&v>=0)return v}return TAXA}
+function enderecoCompleto(){const end=document.getElementById('f-end').value.trim(),num=document.getElementById('f-numero')?.value.trim()||'',b=document.getElementById('f-bairro');return [end+(num?' '+num:''),b?b.value:'',CIDADE].filter(Boolean).join(', ')}
+function abrirBairros(){document.getElementById('bairroModal').classList.add('on');document.getElementById('bairroSearch').value='';filtrarBairros();document.getElementById('bairroSearch').focus()}
+function fecharBairros(){document.getElementById('bairroModal').classList.remove('on')}
+function filtrarBairros(){const q=document.getElementById('bairroSearch').value.toLowerCase();document.querySelectorAll('.bairro-item').forEach(el=>{el.style.display=el.querySelector('span').textContent.toLowerCase().includes(q)?'':'none'})}
+function selecionarBairro(radio){document.getElementById('f-bairro').value=radio.value;document.getElementById('f-bairro-taxa').value=radio.dataset.taxa;const tipoEl=document.getElementById('f-bairro-tipo');if(tipoEl)tipoEl.value=radio.dataset.tipo||'entrega';const btn=document.getElementById('bairroBtn');btn.textContent=radio.value;btn.classList.add('selected');if(radio.dataset.tipo==='bloqueio'){btn.style.borderColor='#e53935';btn.style.color='#e53935';const msg=document.getElementById('frete-msg');if(msg){msg.textContent='⚠ Restaurante não atende essa região.';msg.style.color='#e53935'}}else{btn.style.borderColor='';btn.style.color='';const msg=document.getElementById('frete-msg');if(msg){msg.textContent='';msg.style.color=''}}fecharBairros();renderCart()}
+async function geocodificar(){const q=enderecoCompleto();if(!q)return null;try{const r=await fetch('?r=geocode&address='+encodeURIComponent(q)).then(x=>x.json());if(!r.ok)return null;return{lat:r.lat,lng:r.lng}}catch(e){return null}}
 async function conferirFrete(silencioso){
   const msg=document.getElementById('frete-msg');
   if(!document.getElementById('f-end').value.trim()){if(msg)msg.textContent='Digite o endereço primeiro.';return null}
+  const bairroTipo=document.getElementById('f-bairro-tipo');
+  const bairroVal=document.getElementById('f-bairro')?.value;
+  const bairroTaxa=document.getElementById('f-bairro-taxa');
+  if(bairroTipo&&bairroTipo.value==='bloqueio'){if(msg){msg.textContent='⛔ Restaurante não atende essa região.';msg.style.color='#e53935'}GEO={lat:0,lng:0,taxa:null,zona:'',ok:false};return{ok:false,motivo:'Região bloqueada'}}
+  if(bairroVal&&bairroTaxa){const tx=parseFloat(bairroTaxa.value);if(!isNaN(tx)&&tx>=0){GEO={lat:0,lng:0,taxa:tx,zona:bairroVal,ok:true};if(msg){msg.textContent=`✓ Entregamos aí! Taxa: R$ ${tx.toFixed(2).replace('.',',')} (${bairroVal})`;msg.style.color=''}renderCart();return{ok:true,taxa:tx,zona:bairroVal}}}
   if(msg)msg.textContent='Consultando a área de entrega…';
   const pt=await geocodificar();
-  if(!pt){if(msg)msg.textContent='Não localizamos seu endereço no mapa — a taxa será confirmada pelo restaurante.';GEO={lat:0,lng:0,taxa:null,zona:'',ok:null};return null}
+  if(!pt){if(msg){msg.textContent='Não localizamos seu endereço no mapa — a taxa será confirmada pelo restaurante.';msg.style.color=''}GEO={lat:0,lng:0,taxa:null,zona:'',ok:null};return null}
   const b=document.getElementById('f-bairro');
   const r=await fetch(`?r=calc_frete&lat=${pt.lat}&lng=${pt.lng}&bairro=`+encodeURIComponent(b?b.value:'')).then(x=>x.json());
   GEO={lat:pt.lat,lng:pt.lng,taxa:r.taxa,zona:r.zona,ok:r.ok};
-  if(msg)msg.textContent=r.ok?`✓ Entregamos aí! Taxa: R$ ${parseFloat(r.taxa).toFixed(2).replace('.',',')}${r.zona?' ('+r.zona+')':''}`:('⛔ '+(r.motivo||'Fora da área de entrega.'));
+  if(msg){msg.textContent=r.ok?`✓ Entregamos aí! Taxa: R$ ${parseFloat(r.taxa).toFixed(2).replace('.',',')}${r.zona?' ('+r.zona+')':''}`:('⛔ '+(r.motivo||'Fora da área de entrega.'));msg.style.color=r.ok?'':'#e53935'}
   renderCart();
   return r;
 }
@@ -141,9 +179,10 @@ async function saveSnapshot(){const itens=Object.values(cart).map(c=>({id:c.id,q
 function toggleEnd(){document.getElementById('end-wrap').style.display=document.getElementById('f-tipo').value==='entrega'?'block':'none';renderCart()}
 function openCart(){renderCart();document.getElementById('sheet').classList.add('on')}
 function closeCart(){document.getElementById('sheet').classList.remove('on')}
-async function finalizar(){const itens=Object.values(cart).map(c=>({id:c.id,qtd:c.qtd}));if(!itens.length)return;const tipo=document.getElementById('f-tipo').value,nome=document.getElementById('f-nome').value.trim(),fone=document.getElementById('f-fone').value.trim(),end=document.getElementById('f-end').value.trim(),b=document.getElementById('f-bairro');const paywhen=document.querySelector('input[name="paywhen"]:checked')?.value;if(!paywhen){alert('Escolha quando deseja pagar: agora ou na entrega.');return}let metodo='',cartao_tipo='',troco_para=0;if(paywhen==='agora'){metodo=document.querySelector('input[name="paynow"]:checked')?.value;if(!metodo){alert('Escolha como pagar agora: Pix ou Cartão.');return}if(metodo==='online')cartao_tipo=document.querySelector('input[name="cartaotipo_online"]:checked')?.value||'';}else{metodo=document.querySelector('input[name="paylater"]:checked')?.value;if(!metodo){alert('Escolha a forma de pagamento na entrega.');return}if(metodo==='cartao_entrega')cartao_tipo=document.querySelector('input[name="cartaotipo"]:checked')?.value||'';if(metodo==='dinheiro')troco_para=(parseInt((document.getElementById('f-troco')?.value||'').replace(/\D/g,''),10)||0)/100;}if(!nome||!fone||(tipo==='entrega'&&!end)){alert('Preencha nome, telefone e endereço para continuar.');return}const btn=document.querySelector('.finish');btn.disabled=true;btn.textContent='Enviando…';try{if(tipo==='entrega'&&TEM_ZONAS&&GEO.ok===null){const chk=await conferirFrete(true);if(chk&&!chk.ok){alert(chk.motivo||'Não entregamos nesse endereço.');btn.disabled=false;btn.textContent='Confirmar pedido';return}}
+async function finalizar(){const itens=Object.values(cart).map(c=>({id:c.id,qtd:c.qtd}));if(!itens.length)return;const tipo=document.getElementById('f-tipo').value,nome=document.getElementById('f-nome').value.trim(),fone=document.getElementById('f-fone').value.trim(),end=document.getElementById('f-end').value.trim(),b=document.getElementById('f-bairro');const bairroTipo=document.getElementById('f-bairro-tipo');if(tipo==='entrega'&&bairroTipo&&bairroTipo.value==='bloqueio'){alert('Restaurante não atende essa região. Selecione outro bairro.');return}const bairroBtn=document.getElementById('bairroBtn');if(tipo==='entrega'&&bairroBtn&&(!b||!b.value)){alert('Selecione o bairro para continuar.');return}const paywhen=document.querySelector('input[name="paywhen"]:checked')?.value;if(!paywhen){alert('Escolha quando deseja pagar: agora ou na entrega.');return}let metodo='',cartao_tipo='',troco_para=0;if(paywhen==='agora'){metodo=document.querySelector('input[name="paynow"]:checked')?.value;if(!metodo){alert('Escolha como pagar agora: Pix ou Cartão.');return}if(metodo==='online')cartao_tipo=document.querySelector('input[name="cartaotipo_online"]:checked')?.value||'';}else{metodo=document.querySelector('input[name="paylater"]:checked')?.value;if(!metodo){alert('Escolha a forma de pagamento na entrega.');return}if(metodo==='cartao_entrega')cartao_tipo=document.querySelector('input[name="cartaotipo"]:checked')?.value||'';if(metodo==='dinheiro')troco_para=(parseInt((document.getElementById('f-troco')?.value||'').replace(/\D/g,''),10)||0)/100;}if(!nome||!fone||(tipo==='entrega'&&!end)){alert('Preencha nome, telefone e endereço para continuar.');return}const btn=document.querySelector('.finish');btn.disabled=true;btn.textContent='Enviando…';try{if(tipo==='entrega'&&TEM_ZONAS&&GEO.ok===null){const chk=await conferirFrete(true);if(chk&&!chk.ok){alert(chk.motivo||'Não entregamos nesse endereço.');btn.disabled=false;btn.textContent='Confirmar pedido';return}}
     if(tipo==='entrega'&&GEO.ok===false){alert('Infelizmente não entregamos nesse endereço.');btn.disabled=false;btn.textContent='Confirmar pedido';return}
-    const body={itens,nome,fone,email:document.getElementById('f-email')?.value||'',cart_token:CART_TOKEN,tipo,endereco:end,bairro:b?b.value:'',referencia:document.getElementById('f-ref')?.value||'',metodo,cartao_tipo,troco_para,lat:GEO.lat,lng:GEO.lng};const res=await fetch('?r=order_create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());if(!res.ok){alert(res.erro||'Não foi possível enviar o pedido.');btn.disabled=false;btn.textContent='Confirmar pedido';return}localStorage.removeItem('rv_cart_token');localStorage.setItem('rv_last_order',res.order_id);localStorage.setItem('rv_last_status_url',res.status_url);
+    const numero=document.getElementById('f-numero')?.value.trim()||'';
+    const body={itens,nome,fone,email:document.getElementById('f-email')?.value||'',cart_token:CART_TOKEN,tipo,endereco:end,numero,bairro:b?b.value:'',referencia:document.getElementById('f-ref')?.value||'',metodo,cartao_tipo,troco_para,lat:GEO.lat,lng:GEO.lng};const res=await fetch('?r=order_create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());if(!res.ok){alert(res.erro||'Não foi possível enviar o pedido.');btn.disabled=false;btn.textContent='Confirmar pedido';return}localStorage.removeItem('rv_cart_token');localStorage.setItem('rv_last_order',res.order_id);localStorage.setItem('rv_last_status_url',res.status_url);
     if(metodo==='online'){btn.textContent='Abrindo pagamento seguro…';const pay=await fetch('?r=order_checkout_link&id='+res.order_id).then(r=>r.json()).catch(()=>({ok:false}));if(pay.ok&&pay.checkout_url){location.href=pay.checkout_url;return}alert(pay.erro||'Não foi possível abrir o pagamento online. Acompanhe o pedido e combine o pagamento com o restaurante.')}
     document.getElementById('co-view').style.display='none';document.getElementById('success-view').style.display='block';document.querySelector('.sheet-in').scrollTop=0;document.getElementById('track-link').href=res.status_url;
     if(metodo==='pix'){document.getElementById('success-icon').textContent='💠';document.getElementById('success-title').textContent='Pague o Pix para confirmar';document.getElementById('success-copy').textContent=`Pedido ${res.codigo} registrado. Escaneie o QR Code ou copie o código Pix abaixo.`;const pix=await fetch('?r=order_pix&id='+res.order_id).then(r=>r.json());document.getElementById('pix-area').style.display='block';document.getElementById('pix-amt').textContent='R$ '+pix.valor.toFixed(2).replace('.',',');document.getElementById('pix-code').value=pix.payload;const qc=document.getElementById('qrcode');qc.innerHTML='';new QRCode(qc,{text:pix.payload,width:190,height:190})}else{document.getElementById('success-icon').textContent='✓';document.getElementById('success-title').textContent='Pedido confirmado!';document.getElementById('success-copy').textContent=`Pedido ${res.codigo} recebido. Forma de pagamento: ${PAY_LABELS[metodo]}.`}}catch(e){alert('Não foi possível enviar o pedido. Tente novamente.');btn.disabled=false;btn.textContent='Confirmar pedido'}}
@@ -177,3 +216,22 @@ function copyPix(){navigator.clipboard?navigator.clipboard.writeText(document.ge
 ['f-nome','f-fone','f-email'].forEach(id=>document.getElementById(id)?.addEventListener('input',scheduleSnapshot));
 if(Array.isArray(RESTORE_CART)&&RESTORE_CART.length){RESTORE_CART.forEach(i=>{const p=PRODUCT_DATA.find(x=>Number(x.id)===Number(i.id));if(p)cart[p.id]={id:Number(p.id),nome:p.nome,preco:Number(p.preco),qtd:Math.max(1,Number(i.qtd)||1)}});renderCart()}
 </script>
+<style>
+.bairro-selector-btn{display:block;width:100%;padding:14px 16px;border:1px solid rgba(255,255,255,.15);border-radius:10px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);font-size:14px;font-weight:600;text-align:left;cursor:pointer}
+.bairro-selector-btn.selected{color:#fff}
+.bairro-modal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);align-items:flex-end;justify-content:center}
+.bairro-modal.on{display:flex}
+.bairro-modal-in{width:100%;max-width:420px;max-height:70vh;background:#fff;border-radius:18px 18px 0 0;display:flex;flex-direction:column;overflow:hidden}
+.bairro-modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #eee}
+.bairro-modal-head b{font-size:16px;color:#111}
+.bairro-modal-head button{background:none;border:none;font-size:22px;color:#888;cursor:pointer}
+.bairro-search{padding:10px 16px}
+.bairro-search input{width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:10px;font-size:14px;box-sizing:border-box}
+.bairro-list{overflow-y:auto;flex:1;padding:0 8px 16px}
+.bairro-item{display:flex;align-items:center;justify-content:space-between;padding:14px 12px;border-bottom:1px solid #f0f0f0;cursor:pointer;font-size:14px;color:#222}
+.bairro-item:last-child{border-bottom:0}
+.bairro-item input{display:none}
+.bairro-radio{width:22px;height:22px;border-radius:50%;border:2px solid #ccc;flex-shrink:0;position:relative}
+.bairro-item input:checked~.bairro-radio{border-color:#e53935}
+.bairro-item input:checked~.bairro-radio::after{content:'';position:absolute;inset:4px;border-radius:50%;background:#e53935}
+</style>

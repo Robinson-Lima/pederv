@@ -111,13 +111,13 @@ body:not(.dark){background:#EEF1F6}
 .pdv-cash-quick{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .pdv-cash-quick button{background:#F0F3F8;border-radius:9px;padding:8px 11px;font-size:11px;font-weight:800;color:#3A4460}
 .pdv-cash-quick button:hover{background:var(--brandsoft);color:#B4530F}
-.pdv-troco{display:flex;justify-content:space-between;align-items:center;background:#E7F8EF;border-radius:11px;padding:11px 14px;margin-top:9px}
-.pdv-troco span{font-size:10.5px;font-weight:850;color:#0E7A46;letter-spacing:.04em}
-.pdv-troco b{font-family:var(--mono);font-size:17px;color:#0E7A46}
+.pdv-troco{display:flex;justify-content:space-between;align-items:center;background:#E7F8EF;border-radius:11px;padding:13px 16px;margin-top:9px}
+.pdv-troco span{font-size:12px;font-weight:850;color:#0E7A46;letter-spacing:.04em}
+.pdv-troco b{font-family:var(--mono);font-size:28px;font-weight:700;color:#0E7A46;line-height:1}
 .pdv-troco.neg{background:#FDEDE9}
 .pdv-troco.neg span,.pdv-troco.neg b{color:#B4362B}
-.pdv-troco.big{padding:16px;justify-content:center;gap:14px}
-.pdv-troco.big b{font-size:26px}
+.pdv-troco.big{padding:18px;justify-content:center;gap:16px}
+.pdv-troco.big b{font-size:32px}
 .pdv-modal-err{background:#FDEDE9;color:#B4362B;border-radius:10px;padding:10px;font-size:11.5px;font-weight:700}
 .pdv-modal-in.done{text-align:center}
 .pdv-done-icon{width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,#1B9E58,#2FC474);color:#fff;font-size:30px;display:grid;place-items:center;margin:4px auto 0;box-shadow:0 10px 26px rgba(27,158,88,.4)}
