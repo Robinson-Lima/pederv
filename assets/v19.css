@@ -19,23 +19,18 @@
   font-family:var(--u-sans);letter-spacing:-.02em;color:var(--u-ink);
 }
 
-/* ---- Sidebar: fundo branco, borda fina, textos escuros (Uber puro) ---- */
-.admin-shell .admin-side{
-  background:#fff!important;box-shadow:none;
-  border-right:1px solid var(--u-line);
-}
+/* ---- Sidebar: mantém a cor do sistema (fundo), mas achata e usa o acento ---- */
+.admin-shell .admin-side{box-shadow:none}
 .admin-shell .side-brand{background:#fff}
 .admin-shell .side-brand>div{font-family:var(--u-sans)}
 .admin-shell .side-brand b{color:var(--u-ink)}
 .admin-shell .admin-side nav a{
   border-radius:10px;font-weight:500;font-size:12.5px;box-shadow:none;
   border:0;background:transparent;margin:1px 0;
-  color:var(--u-ink)!important;
 }
-.admin-shell .admin-side nav a:hover{background:var(--u-soft);transform:none;color:var(--u-ink)!important}
+.admin-shell .admin-side nav a:hover{background:rgba(255,255,255,.08);transform:none}
 .admin-shell .admin-side nav a.on{
-  background:var(--u-soft);color:var(--u-ink)!important;font-weight:700;box-shadow:none;
-  border-left:3px solid var(--brand);padding-left:calc(var(--side-pad,16px) - 3px);
+  background:var(--brand);color:var(--on-brand,#fff);font-weight:700;box-shadow:none;
 }
 .admin-shell .admin-side nav>small{
   color:rgba(255,255,255,.92)!important;font-weight:800;letter-spacing:.15em;font-size:10px;
@@ -43,6 +38,7 @@
 }
 .admin-shell .admin-side nav>small::before{display:none}
 .admin-shell .admin-side nav a[href*="logout"]{background:transparent;border:0}
+/* Grupo Relatórios: legível sobre qualquer cor de barra lateral */
 .admin-shell .side-group summary{color:rgba(255,255,255,.9)!important}
 .admin-shell .side-group summary:hover,.admin-shell .side-group[open] summary{background:rgba(255,255,255,.09)!important}
 .admin-shell .side-group div a{color:rgba(255,255,255,.75)!important}
