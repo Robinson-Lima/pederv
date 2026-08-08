@@ -77,6 +77,7 @@ function do_login($role,$senha,$usuario=''){
         $q=$_lpdo->prepare("SELECT * FROM users WHERE usuario=? AND role=? AND ativo=1 LIMIT 1");
         $q->execute([$usuario,$role]); $u=$q->fetch();
         if($u && password_verify($senha,$u['senha_hash'])){
+          session_regenerate_id(true);
           $_SESSION['user_id']=$u['id']; $_SESSION['user_role']=$u['role']; $_SESSION['user_nome']=$u['nome'];
           return true;
         }
@@ -84,7 +85,7 @@ function do_login($role,$senha,$usuario=''){
     }
     return false;
   }
-  if ($senha === cfg($role.'_senha')){ $_SESSION['role_'.$role] = $senha; if($role==='admin') $_SESSION['user_role']='admin'; return true; }
+  if ($senha === cfg($role.'_senha')){ session_regenerate_id(true); $_SESSION['role_'.$role] = $senha; if($role==='admin') $_SESSION['user_role']='admin'; return true; }
   return false;
 }
 
@@ -129,7 +130,9 @@ function uazapi_instance_request($tok,$method,$path,$body=null){
 function _uazapi_curl($base,$path,$method,$body,$authHeader){
   $url=rtrim($base,'/').'/'.ltrim($path,'/');
   $ch=curl_init($url);
-  curl_setopt_array($ch,[CURLOPT_CUSTOMREQUEST=>$method,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>6,CURLOPT_TIMEOUT=>20,CURLOPT_HTTPHEADER=>[$authHeader,'Content-Type: application/json']]);
+  $timeout=20;
+  if($body!==null&&isset($body['delay']))$timeout=max(20,intval($body['delay']/1000)+10);
+  curl_setopt_array($ch,[CURLOPT_CUSTOMREQUEST=>$method,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>6,CURLOPT_TIMEOUT=>$timeout,CURLOPT_HTTPHEADER=>[$authHeader,'Content-Type: application/json']]);
   if($body!==null)curl_setopt($ch,CURLOPT_POSTFIELDS,json_encode($body,JSON_UNESCAPED_UNICODE));
   $raw=curl_exec($ch);$code=(int)curl_getinfo($ch,CURLINFO_HTTP_CODE);$err=curl_error($ch);curl_close($ch);
   $data=json_decode((string)$raw,true);
@@ -148,7 +151,9 @@ function uaz_r_request($method,$path,$body=null,$admin=false){
   if(!$token) return ['ok'=>false,'erro'=>$admin?'Admin token não configurado.':'Token da instância não configurado.'];
   $ch=curl_init($base.'/'.ltrim($path,'/'));
   $headers=[($admin?'admintoken':'token').': '.$token,'Content-Type: application/json'];
-  curl_setopt_array($ch,[CURLOPT_CUSTOMREQUEST=>$method,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>6,CURLOPT_TIMEOUT=>20,CURLOPT_HTTPHEADER=>$headers]);
+  $timeout=20;
+  if($body!==null&&isset($body['delay']))$timeout=max(20,intval($body['delay']/1000)+10);
+  curl_setopt_array($ch,[CURLOPT_CUSTOMREQUEST=>$method,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>6,CURLOPT_TIMEOUT=>$timeout,CURLOPT_HTTPHEADER=>$headers]);
   if($body!==null)curl_setopt($ch,CURLOPT_POSTFIELDS,json_encode($body,JSON_UNESCAPED_UNICODE));
   $raw=curl_exec($ch);$code=(int)curl_getinfo($ch,CURLINFO_HTTP_CODE);$err=curl_error($ch);curl_close($ch);
   $data=json_decode((string)$raw,true);
@@ -484,7 +489,10 @@ function payment_situation_label($order){
 }
 
 function payment_label($method){
-  return ['pix'=>'Pix online','pix_entrega'=>'Pix na entrega','debito'=>'Cartão de débito','credito'=>'Cartão de crédito','cartao_online'=>'Cartão online','online'=>'Cartão online (InfinitePay)','cartao_entrega'=>'Cartão na entrega','dinheiro'=>'Dinheiro','ifood'=>'iFood','mesa'=>'Mesa'][$method] ?? ucfirst(str_replace('_',' ',(string)$method));
+  $map=['pix'=>'Pix online','pix_entrega'=>'Pix na entrega','debito'=>'Cartão de débito','credito'=>'Cartão de crédito','cartao_online'=>'Cartão online','online'=>'Cartão online (InfinitePay)','cartao_entrega'=>'Cartão na entrega','dinheiro'=>'Dinheiro','ifood'=>'iFood','mesa'=>'Mesa','na_entrega'=>'Na entrega'];
+  if(isset($map[$method])) return $map[$method];
+  if(str_contains((string)$method,'+')){return implode(' + ',array_map(fn($m)=>$map[trim($m)]??ucfirst(trim($m)),explode('+',$method)));}
+  return ucfirst(str_replace('_',' ',(string)$method));
 }
 
 // Comanda (pedido) aberta de uma mesa

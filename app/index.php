@@ -391,13 +391,23 @@ case 'pdv_create':
   foreach($in['itens']??[] as $it){$q=$d->prepare("SELECT nome,preco FROM products WHERE id=? AND ativo=1");$q->execute([(int)$it['id']]);$p=$q->fetch();if(!$p)continue;$qt=max(1,(int)$it['qtd']);$items[]=[$p['nome'],$qt,$p['preco']];$total+=$qt*$p['preco'];}
   if(!$items) json_out(['ok'=>false,'erro'=>'Adicione produtos.']);
   $nome=trim($in['nome']??'')?:'Cliente balcão';$met=in_array($in['metodo']??'',['dinheiro','pix','debito','credito'],true)?$in['metodo']:'dinheiro';
+  $pagamentos=$in['pagamentos']??[];$pagDetalhe='';
   $recebido=(float)($in['valor_recebido']??0);
-  if($met==='dinheiro'){
-    if($recebido<$total) json_out(['ok'=>false,'erro'=>'Valor recebido menor que o total da venda.']);
-  } else $recebido=$total;
+  if(!empty($pagamentos)){
+    $somaPag=0;$metodos=[];
+    foreach($pagamentos as $pg){$somaPag+=(float)($pg['valor']??0);$metodos[]=$pg['metodo']??'dinheiro';}
+    if($somaPag<$total) json_out(['ok'=>false,'erro'=>'Soma dos pagamentos menor que o total.']);
+    $recebido=$somaPag;$met=implode('+',array_unique($metodos));
+    $pagDetalhe=json_encode($pagamentos,JSON_UNESCAPED_UNICODE);
+  } else {
+    if($met==='dinheiro'){
+      if($recebido<$total) json_out(['ok'=>false,'erro'=>'Valor recebido menor que o total da venda.']);
+    } else $recebido=$total;
+  }
   $troco=max(0,$recebido-$total);
   $d->prepare("INSERT INTO orders(codigo,canal,tipo,cliente_nome,status,total,pagamento_metodo,pagamento_status,valor_recebido,troco,recebido_por,acerto_status) VALUES(?,?,?,?,?,?,?,'pago',?,?,?,'ok')")
     ->execute(['','pdv','balcao',$nome,'aceito',$total,$met,$recebido,$troco,$_SESSION['user_nome']??'caixa']);
+  if($pagDetalhe!==''){try{$d->prepare("UPDATE orders SET pagamentos_detalhe=? WHERE id=".$d->lastInsertId())->execute([$pagDetalhe]);}catch(\Throwable $e){}}
   $oid=$d->lastInsertId();$d->prepare("UPDATE orders SET codigo=? WHERE id=?")->execute(['#'.str_pad($oid,4,'0',STR_PAD_LEFT),$oid]);
   foreach($items as $it)$d->prepare("INSERT INTO order_items(order_id,nome,qtd,preco) VALUES(?,?,?,?)")->execute([$oid,$it[0],$it[1],$it[2]]);
   order_set_status($oid,'aceito','caixa');order_mark_paid($oid);customer_upsert($nome,$in['fone']??'','','',$total);
@@ -976,9 +986,6 @@ case 'webhook_evolution':
   $payload=json_decode(file_get_contents('php://input'),true)?:[];
   $event=strtolower((string)($payload['event']??''));$data=$payload['data']??[];
   if(isset($data[0]))$data=$data[0];
-  // DEBUG TEMPORARIO
-  $dbg=['ts'=>date('Y-m-d H:i:s'),'event'=>$event,'slug'=>current_slug(),'payload_keys'=>array_keys($payload),'data_keys'=>is_array($data)?array_keys($data):[]];
-  file_put_contents(__DIR__.'/../data/webhook_debug.txt', json_encode($dbg,JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT)."\n---\n", FILE_APPEND);
   if(strpos($event,'messages.upsert')!==false || strpos($event,'messages_upsert')!==false){
     $key=$data['key']??[];$jid=(string)($key['remoteJid']??'');$fromMe=!empty($key['fromMe']);
     if(strpos($jid,'@g.us')===false && strpos($jid,'status@')===false){
@@ -1430,7 +1437,9 @@ case 'admin_feed': // GET -> JSON com pedidos do dia (polling = tempo real)
                            AND NOT (o.canal='garcom' AND o.status IN ('mesa_rascunho','mesa_aberta'))
                          ORDER BY o.id DESC")->fetchAll();
   $items = [];
-  foreach (db()->query("SELECT order_id,nome,qtd FROM order_items")->fetchAll() as $it)
+  $oids=array_column($orders,'id');
+  $oidsPlc=$oids?implode(',',array_map('intval',$oids)):'0';
+  foreach (db()->query("SELECT order_id,nome,qtd FROM order_items WHERE order_id IN ($oidsPlc)")->fetchAll() as $it)
     $items[$it['order_id']][] = $it['qtd'].'× '.$it['nome'];
   foreach ($orders as &$o) $o['itens'] = implode(' · ', $items[$o['id']] ?? []);
   // Pendências de acerto (inclui dias anteriores: não some do painel até acertar)

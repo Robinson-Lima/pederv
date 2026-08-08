@@ -1,8 +1,6 @@
 <?php
-$ems = fiscal_emissores();
 $cfg = fiscal_config();
-$driverLabel = $ems[$cfg['driver']]['label'] ?? $cfg['driver'];
-$pronto = ($cfg['driver']==='sped') ? false : ($cfg[array_key_first($ems[$cfg['driver']]['campos'])] ?? '')!=='';
+$certOk = is_file(__DIR__.'/../data/certificado.pfx') && $cfg['cert_senha']!=='' && $cfg['cnpj']!=='' && $cfg['csc']!=='';
 $badge = function($s){
   $m=['autorizada'=>['#E5F7EF','#0c6b4a','Autorizada'],'rejeitada'=>['#FDE7E7','#b71c1c','Rejeitada'],
       'cancelada'=>['#EEE','#555','Cancelada'],'erro'=>['#FDE7E7','#b71c1c','Erro'],
@@ -17,21 +15,23 @@ $badge = function($s){
 
   <div class="ifhead" style="border-left-color:#3B82F6">
     <div class="lg" style="background:#3B82F6">NF</div>
-    <div class="tt"><b>Notas Fiscais (NFC-e) — emissor: <?= e($driverLabel) ?></b>
+    <div class="tt"><b>Notas Fiscais (NFC-e) — Direto SEFAZ</b>
       <div>Ambiente: <?= $cfg['ambiente']==='1'?'Produção':'Homologação' ?>
         · Emissão automática: <?= $cfg['auto']==='1'?'ligada':'desligada' ?></div></div>
-    <div class="conn" style="color:<?= $pronto?'#22A06B':'#9a6512' ?>">
-      ● <?= $pronto?'Emissor configurado':'Emissor não configurado' ?></div>
+    <div class="conn" style="color:<?= $certOk?'#22A06B':'#9a6512' ?>">
+      ● <?= $certOk?'Configurada':'Configuração pendente' ?></div>
   </div>
 
-  <?php if(!$pronto): ?>
-    <div class="note">Nenhum emissor conectado ainda. Escolha o emissor e cole a API em
-      <a href="?r=admin_settings"><b>⚙ Config</b></a>. Enquanto isso, as notas ficam como <b>pendente</b>.</div>
+  <?php if(setting_get('nf_simular','0')==='1'): ?>
+    <div class="note" style="background:#FFF1DE;border-left:3px solid #F59E0B;color:#9a6512"><b>Modo simulação ativo</b> — notas são geradas localmente mas NÃO enviadas ao SEFAZ. <a href="?r=admin_fiscal&tab=fiscal">Configurar</a></div>
+  <?php elseif(!$certOk): ?>
+    <div class="note">Configure o certificado A1 e os dados fiscais em
+      <a href="?r=admin_fiscal"><b>Config. fiscal</b></a> para emitir notas.</div>
   <?php endif; ?>
 
   <div class="two">
     <div>
-      <div class="paysec">🧾 Pedidos pagos sem nota</div>
+      <div class="paysec">Pedidos pagos sem nota</div>
       <?php if(!$semNota): ?><p style="color:#727884;font-size:13px">Nenhum pedido pago pendente de nota.</p><?php endif; ?>
       <?php foreach($semNota as $o): ?>
         <div class="pcol">
@@ -47,7 +47,7 @@ $badge = function($s){
     </div>
 
     <div>
-      <div class="paysec">📄 Notas recentes</div>
+      <div class="paysec">Notas recentes</div>
       <?php if(!$notas): ?><p style="color:#727884;font-size:13px">Nenhuma nota emitida ainda.</p><?php endif; ?>
       <?php foreach($notas as $n): ?>
         <div class="pcol" style="align-items:flex-start;flex-direction:column;gap:6px">

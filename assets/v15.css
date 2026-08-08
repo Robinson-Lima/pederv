@@ -169,7 +169,7 @@ body:not(.dark){background:#EEF1F6}
 /* Capa / vitrine do comércio */
 .mhero{position:relative}
 .mhero-capa{position:relative;height:190px;overflow:hidden}
-.mhero-capa img{width:100%;height:100%;object-fit:cover}
+.mhero-capa img{width:100%;height:100%;object-fit:cover;object-position:center}
 .mhero-fade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,15,20,.15) 0%,rgba(11,15,20,.05) 45%,var(--menu-bg,#0B0F14) 100%)}
 .mhero.has-capa .mhead{margin-top:-46px;position:relative;z-index:2}
 .mhero.has-capa .mh .lg{border:3px solid var(--menu-bg,#0B0F14);width:64px;height:64px;border-radius:19px}

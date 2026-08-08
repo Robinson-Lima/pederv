@@ -198,6 +198,13 @@ function db_build_schema($d){
     "ALTER TABLE orders ADD COLUMN troco REAL DEFAULT 0",
     "ALTER TABLE orders ADD COLUMN pagamento_obs TEXT DEFAULT ''",
     "ALTER TABLE orders ADD COLUMN cpf_cnpj TEXT DEFAULT ''",
+    "ALTER TABLE orders ADD COLUMN pagamentos_detalhe TEXT DEFAULT ''",
+  ] as $sql){ try{ $d->exec($sql); }catch(Exception $e){} }
+
+  foreach([
+    "CREATE INDEX IF NOT EXISTS idx_orders_criado ON orders(criado_em)",
+    "CREATE INDEX IF NOT EXISTS idx_orders_acerto ON orders(acerto_status)",
+    "CREATE INDEX IF NOT EXISTS idx_order_items_oid ON order_items(order_id)",
   ] as $sql){ try{ $d->exec($sql); }catch(Exception $e){} }
 
   $d->exec("

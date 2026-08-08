@@ -43,61 +43,6 @@
           </div>
         </div>
 
-        <div class="cfgcard">
-          <h3>🧾 Nota Fiscal (NFC-e)</h3>
-          <p>Escolha o emissor e cole a API dele. Você pode trocar quando quiser.</p>
-
-          <label>Emissor de nota</label>
-          <select name="s[nf_driver]" id="nf_driver" onchange="showDriver()">
-            <?php $dv=setting_get('nf_driver','plugnotas');
-              foreach(fiscal_emissores() as $k=>$em): ?>
-              <option value="<?= $k ?>" <?= $dv===$k?'selected':'' ?>><?= e($em['label']) ?></option>
-            <?php endforeach; ?>
-          </select>
-
-          <?php foreach(fiscal_emissores() as $k=>$em): ?>
-            <div class="drvbox" data-drv="<?= $k ?>" style="<?= $dv===$k?'':'display:none' ?>">
-              <?php foreach($em['campos'] as $campo=>$lbl): ?>
-                <label><?= e($lbl) ?></label>
-                <input name="s[<?= $campo ?>]" type="<?= strpos($campo,'senha')!==false||strpos($campo,'token')!==false||strpos($campo,'apikey')!==false?'password':'text' ?>"
-                       value="<?= e(setting_get($campo)) ?>" placeholder="<?= e($lbl) ?>">
-              <?php endforeach; ?>
-            </div>
-          <?php endforeach; ?>
-
-          <div style="height:10px"></div>
-          <label>Dados fiscais (comuns a todos)</label>
-          <div class="fisc2">
-            <input name="s[nf_cnpj]" value="<?= e(setting_get('nf_cnpj')) ?>" placeholder="CNPJ">
-            <input name="s[nf_ie]" value="<?= e(setting_get('nf_ie')) ?>" placeholder="Inscrição Estadual">
-          </div>
-          <div class="fisc2">
-            <input name="s[nf_uf]" value="<?= e(setting_get('nf_uf','SP')) ?>" placeholder="UF (ex: SP)">
-            <input name="s[nf_serie]" value="<?= e(setting_get('nf_serie','1')) ?>" placeholder="Série (ex: 1)">
-          </div>
-          <div class="fisc2">
-            <select name="s[nf_regime]">
-              <?php $rg=setting_get('nf_regime','1'); ?>
-              <option value="1" <?= $rg==='1'?'selected':'' ?>>Simples Nacional</option>
-              <option value="3" <?= $rg==='3'?'selected':'' ?>>Regime Normal</option>
-            </select>
-            <select name="s[nf_ambiente]">
-              <?php $am=setting_get('nf_ambiente','2'); ?>
-              <option value="2" <?= $am==='2'?'selected':'' ?>>Homologação (teste)</option>
-              <option value="1" <?= $am==='1'?'selected':'' ?>>Produção (valendo)</option>
-            </select>
-          </div>
-          <label>CSC / ID Token (para o QR Code da NFC-e)</label>
-          <div class="fisc2">
-            <input name="s[nf_csc]" type="password" value="<?= e(setting_get('nf_csc')) ?>" placeholder="CSC">
-            <input name="s[nf_csc_id]" value="<?= e(setting_get('nf_csc_id','1')) ?>" placeholder="ID CSC (ex: 1)">
-          </div>
-          <label style="display:flex;align-items:center;gap:9px;margin-top:12px">
-            <input type="checkbox" name="s[nf_auto]" value="1" <?= setting_get('nf_auto')==='1'?'checked':'' ?> style="width:auto">
-            Emitir NFC-e automaticamente a cada venda paga
-          </label>
-          <div class="warnmini">A emissão real exige o emissor configurado + credenciamento na SEFAZ. Certificado A1 (se usar Direto SEFAZ) vai por FTP em <code>data/certificado.pfx</code>.</div>
-        </div>
       </div>
 
       <div>
@@ -216,9 +161,5 @@ function showGwFields(){
   const ip=document.getElementById('gw-infinitepay'), ak=document.getElementById('gw-apikeys');
   if(ip) ip.style.display=v==='InfinitePay'?'block':'none';
   if(ak) ak.style.display=v==='InfinitePay'?'none':'block';
-}
-function showDriver(){
-  const v=document.getElementById('nf_driver').value;
-  document.querySelectorAll('.drvbox').forEach(b=>b.style.display = b.dataset.drv===v?'block':'none');
 }
 </script>

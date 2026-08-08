@@ -32,7 +32,12 @@ if($isAdmin){try{$waCount=(int)db()->query("SELECT COUNT(*) c FROM whatsapp_mess
   $onFinal = $isAdmin ? ($txtPanel?:$onAccent) : ($txtCard?:$onAccent);
   $promoTxt=$txtCard?:$hex6(setting_get('promo_text_color',''), $onFinal);
   echo '<style>:root{--brand:'.$accent.';--brand2:'.$accent.';--brandsoft:'.$accent.'26;--on-brand:'.$onFinal.'!important;--promo-text:'.$promoTxt.'!important}';
+  $sideText=$txtPanel?:$onColor($corLateral);
   if($isAdmin) echo '.admin-shell .admin-side{background:'.$corLateral.'!important}'
+    .'.admin-shell .admin-side nav a{color:'.$sideText.'!important;opacity:.75}'
+    .'.admin-shell .admin-side nav a.on{opacity:1}'
+    .'.admin-shell .admin-side nav a i{color:'.$sideText.'!important}'
+    .'.admin-shell .admin-side .sec{color:'.$sideText.'!important;opacity:.5}'
     .'.admin-shell .side-brand{background:#fff!important}'
     .'.admin-shell .side-search{background:#fff!important;color:#5b6b7a!important;border:1px solid rgba(0,0,0,.05)}'
     .'.admin-shell .side-search span{color:#5b6b7a!important}'

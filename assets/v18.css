@@ -79,7 +79,7 @@
 .menu-uber .price{font-family:var(--u-sans);font-size:15px;font-weight:800;color:var(--u-ink)}
 .menu-uber .add{
   width:34px;height:34px;border-radius:999px;
-  background:var(--u-primary);color:var(--u-on);border:none;
+  background:var(--u-primary);color:#111!important;border:none;
   font-size:20px;font-weight:500;
 }
 .menu-uber .menu-combo,.menu-uber .combo-label{

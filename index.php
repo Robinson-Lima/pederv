@@ -112,7 +112,6 @@ case 'saas_signup':
   master_db()->prepare("INSERT INTO saas_clients(restaurante,responsavel,email,whatsapp,plano,valor_mensal,dia_vencimento,status,trial_ate,slug,obs) VALUES(?,?,?,?,?,?,10,'trial',?,?,?)")
     ->execute([$rest,$nome,$email,$whats,$planoDB,$preco,$trialAte,$slug,$obs]);
   saas_provision_tenant($slug,$email,$senha,$rest);
-  saas_rate_limit_fail([],'signup',5,3600);
   $scheme=(!empty($_SERVER['HTTPS'])&&$_SERVER['HTTPS']!=='off')?'https':'http';
   $host=$_SERVER['HTTP_HOST']??'pederv.com.br';
   $painelUrl=$scheme.'://'.$host.'/painel/'.$slug;
@@ -282,8 +281,9 @@ case 'order_pix': // GET id -> retorna payload
   if($pixKey===''){ $pix=cfg('pix'); $pixKey=$pix['chave']??''; $pixFav=$pix['favorecido']??$pixFav; }
   $cidade=cfg('cidade')?:setting_get('cidade','BRASIL');
   if($pixKey==='') json_out(['ok'=>false,'erro'=>'Chave PIX não configurada.']);
-  $payload=pix_payload($pixKey,$pixFav,$cidade,$o['total'],'RV'.$o['id']);
-  json_out(['ok'=>true,'payload'=>$payload,'valor'=>$o['total'],'favorecido'=>$pixFav]);
+  $valor=isset($_GET['valor'])&&(float)$_GET['valor']>0?(float)$_GET['valor']:(float)$o['total'];
+  $payload=pix_payload($pixKey,$pixFav,$cidade,$valor,'RV'.$o['id']);
+  json_out(['ok'=>true,'payload'=>$payload,'valor'=>$valor,'favorecido'=>$pixFav]);
   break;
 
 case 'order_status': // GET id -> tela de acompanhamento
@@ -423,9 +423,19 @@ case 'pdv_create':
     $total+=$taxa_entrega;
   }
   $pagar_entrega=!empty($in['pagar_entrega']);
+  $pagamentos=$in['pagamentos']??[];
+  $pagDetalhe='';
   $recebido=(float)($in['valor_recebido']??0);
   if($pagar_entrega){
-    $met='na_entrega';$recebido=0;$troco=0;$pagStatus='pendente';$acerto='pendente';
+    $met='na_entrega';$recebido=0;$troco=0;$pagStatus='pendente';$acerto='';
+  } elseif(!empty($pagamentos)){
+    $somaPag=0;$metodos=[];
+    foreach($pagamentos as $pg){$somaPag+=(float)($pg['valor']??0);$metodos[]=$pg['metodo']??'dinheiro';}
+    if($somaPag<$total) json_out(['ok'=>false,'erro'=>'Soma dos pagamentos menor que o total.']);
+    $recebido=$somaPag;$troco=max(0,$somaPag-$total);
+    $met=implode('+',array_unique($metodos));
+    $pagDetalhe=json_encode($pagamentos,JSON_UNESCAPED_UNICODE);
+    $pagStatus='pago';$acerto='ok';
   } else {
     if($met==='dinheiro'){
       if($recebido<$total) json_out(['ok'=>false,'erro'=>'Valor recebido menor que o total da venda.']);
@@ -434,9 +444,13 @@ case 'pdv_create':
   }
   $d->prepare("INSERT INTO orders(codigo,canal,tipo,cliente_nome,cliente_fone,endereco,bairro,referencia,status,total,pagamento_metodo,pagamento_status,valor_recebido,troco,recebido_por,acerto_status,cpf_cnpj) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
     ->execute(['','pdv',$tipo,$nome,$fone,$endereco,$bairro,$referencia,'aceito',$total,$met,$pagStatus,$recebido,$troco,$_SESSION['user_nome']??'caixa',$acerto,$cpf_cnpj]);
-  $oid=$d->lastInsertId();$d->prepare("UPDATE orders SET codigo=? WHERE id=?")->execute(['#'.str_pad($oid,4,'0',STR_PAD_LEFT),$oid]);
+  $oid=$d->lastInsertId();
+  if($pagDetalhe!==''){try{$d->prepare("UPDATE orders SET pagamentos_detalhe=? WHERE id=?")->execute([$pagDetalhe,$oid]);}catch(\Throwable $e){}}
+  $d->prepare("UPDATE orders SET codigo=? WHERE id=?")->execute(['#'.str_pad($oid,4,'0',STR_PAD_LEFT),$oid]);
   foreach($items as $it)$d->prepare("INSERT INTO order_items(order_id,nome,qtd,preco) VALUES(?,?,?,?)")->execute([$oid,$it[0],$it[1],$it[2]]);
   order_set_status($oid,'aceito','caixa');if(!$pagar_entrega)order_mark_paid($oid);customer_upsert($nome,$fone,'','',$total);
+  $sem_nota=!empty($in['sem_nota']);
+  try{ if(!$sem_nota && !$pagar_entrega) fiscal_auto_ao_pagar($oid); }catch(\Throwable $e){}
   json_out(['ok'=>true,'id'=>(int)$oid,'codigo'=>'#'.str_pad($oid,4,'0',STR_PAD_LEFT),'troco'=>$troco]);
   break;
 case 'pdv_last': // F9 — consultar última venda do PDV
@@ -1100,7 +1114,7 @@ case 'admin_bot_messages':
     setting_set('wa_bot_active',isset($_POST['wa_bot_active'])?'1':'0');
     setting_set('channel_whatsapp',isset($_POST['channel_whatsapp'])?'1':'0');
     if(isset($_POST['bot_notify_phones'])) setting_set('bot_notify_phones',trim($_POST['bot_notify_phones']));
-    if(isset($_POST['bot_delay'])) setting_set('bot_delay',(string)min(10,max(0,(int)$_POST['bot_delay'])));
+    if(isset($_POST['bot_delay'])) setting_set('bot_delay',(string)min(30,max(0,(int)$_POST['bot_delay'])));
     if(isset($_POST['bot_human_timeout'])){$_bht=(float)$_POST['bot_human_timeout'];setting_set('bot_human_timeout',(string)($_bht>0?$_bht:1));}
     foreach(['wa_msg_novo','wa_msg_preparo','wa_msg_saiu','wa_msg_entregue'] as $k)
       if(isset($_POST[$k])) setting_set($k,trim($_POST[$k]));
@@ -1236,13 +1250,16 @@ case 'webhook_evolution':
                   $planoCli='Pró';
                   try{ $pcq=master_db()->prepare("SELECT plano FROM saas_clients WHERE REPLACE(REPLACE(REPLACE(REPLACE(whatsapp,' ',''),'-',''),'(',''),')','') LIKE ? LIMIT 1"); $pcq->execute(['%'.substr($waNum,-10)]); $pcr=$pcq->fetch(); if($pcr) $planoCli=saas_plan_label($pcr['plano']??'pro'); }catch(Exception $_pe){}
                   $reply=str_replace(['{NOME}','{SAUDACAO}','{PLANO}','{TRIAL_DIAS}','{LINK_SITE}'],[$nome?:'cliente',$saudacao,$planoCli,setting_get('saas_trial_dias','7'),setting_get('saas_site_url','https://pederv.com.br')],$reply);
-                  // Mostrar "digitando..." antes de responder
-                  $chTyp=curl_init(rtrim($saasUrl,'/').'/chat/sendPresence/'.rawurlencode($saasInst));
-                  curl_setopt_array($chTyp,[CURLOPT_CUSTOMREQUEST=>'POST',CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>4,CURLOPT_TIMEOUT=>5,CURLOPT_HTTPHEADER=>['apikey: '.$saasKey,'Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode(['number'=>$waNum,'presence'=>'composing','delay'=>1500],JSON_UNESCAPED_UNICODE)]);
-                  curl_exec($chTyp);curl_close($chTyp);
-                  // Aplicar delay configurado
-                  $botDelay=min(10,(int)setting_get('saas_bot_delay','0'));
-                  if($botDelay>0)sleep($botDelay);
+                  $botDelay=min(30,(int)setting_get('saas_bot_delay','0'));
+                  if($botDelay>0){
+                    $tend=time()+$botDelay;
+                    while(time()<$tend){
+                      $chTyp=curl_init(rtrim($saasUrl,'/').'/chat/sendPresence/'.rawurlencode($saasInst));
+                      curl_setopt_array($chTyp,[CURLOPT_CUSTOMREQUEST=>'POST',CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>4,CURLOPT_TIMEOUT=>5,CURLOPT_HTTPHEADER=>['apikey: '.$saasKey,'Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode(['number'=>$waNum,'presence'=>'composing','delay'=>3500],JSON_UNESCAPED_UNICODE)]);
+                      curl_exec($chTyp);curl_close($chTyp);
+                      $wait=min(3,$tend-time());if($wait>0)sleep($wait);
+                    }
+                  }
                   // Enviar resposta
                   $ch=curl_init(rtrim($saasUrl,'/').'/message/sendText/'.rawurlencode($saasInst));
                   curl_setopt_array($ch,[CURLOPT_CUSTOMREQUEST=>'POST',CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>5,CURLOPT_TIMEOUT=>30,CURLOPT_HTTPHEADER=>['apikey: '.$saasKey,'Content-Type: application/json'],CURLOPT_POSTFIELDS=>json_encode(['number'=>$waNum,'text'=>$reply,'linkPreview'=>false],JSON_UNESCAPED_UNICODE)]);
@@ -1294,8 +1311,14 @@ case 'webhook_evolution':
                 if($reply!==''){
                   $base=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'rvautomacao.com.br').strtok($_SERVER['REQUEST_URI']??'/cardapio/','?');
                   $reply=str_replace(['{LINK_CARDAPIO}','{NOME_CLIENTE}','{SAUDACAO}'],[$base.'?r=menu',$nome?:'cliente',$saudacao],$reply);
-                  $botDelay=min(10,(int)setting_get('bot_delay','0'));
-                  if($botDelay>0)sleep($botDelay);
+                  $botDelay=min(30,(int)setting_get('bot_delay','0'));
+                  if($botDelay>0){
+                    $tend=time()+$botDelay;
+                    while(time()<$tend){
+                      evolution_request('POST','chat/sendPresence/'.rawurlencode(setting_get('evo_instance','')),['number'=>$waNum,'presence'=>'composing','delay'=>3500]);
+                      $wait=min(3,$tend-time());if($wait>0)sleep($wait);
+                    }
+                  }
                   $sent=evolution_send_text($wa,$reply);
                   if($sent['ok'])db()->prepare("INSERT INTO whatsapp_messages(wa_id,direcao,texto,status) VALUES(?,'saida',?,'enviada')")->execute([$wa,$reply]);
                   if($isHumanReq||$isNoMatch){
@@ -1371,11 +1394,11 @@ case 'admin_fiscal_save':
   if(!require_role('admin')){ redirect('?r=admin'); }
   $tab=$_GET['tab']??'empresa';
   $fields_empresa=['nf_cnpj','nf_razao','nf_fantasia','nf_cep','nf_rua','nf_numero_end','nf_bairro','nf_cidade','nf_uf','nf_cmun','nf_telefone'];
-  $fields_fiscal=['nf_driver','nf_ie','nf_regime','nf_csc','nf_csc_id','nf_serie','nf_numero','nf_ambiente','nf_rodape'];
-  $fields_auto=['nf_auto','nf_auto_print','nf_envio_whatsapp','nf_pedir_cpf','nf_taxa_servico','nf_incluir_frete','nf_nfe_cnpj'];
+  $fields_fiscal=['nf_ie','nf_regime','nf_csc','nf_csc_id','nf_serie','nf_numero','nf_ambiente','nf_rodape','nf_simular'];
+  $fields_auto=['nf_auto','nf_auto_print','nf_pedir_cpf','nf_incluir_frete'];
   $campos=[];
   if($tab==='empresa') $campos=$fields_empresa;
-  elseif($tab==='fiscal'){$campos=$fields_fiscal;foreach(fiscal_emissores() as $k=>$em) foreach($em['campos'] as $c=>$l) $campos[]=$c;}
+  elseif($tab==='fiscal') $campos=$fields_fiscal;
   elseif($tab==='automacao') $campos=$fields_auto;
   foreach($campos as $f){
     if(in_array($f,$fields_auto)){
@@ -1409,6 +1432,54 @@ case 'nota_cancelar': // POST nota_id, justificativa
   if(!require_role('admin')){ redirect('?r=admin'); }
   fiscal_cancelar((int)$_POST['nota_id'], $_POST['justificativa'] ?? 'Cancelamento solicitado');
   redirect('?r=admin_notas');
+  break;
+
+case 'cert_upload': // Upload certificado A1 (.pfx)
+  if(!require_role('admin')){ redirect('?r=admin'); }
+  if(!empty($_FILES['cert_file']['tmp_name'])){
+    $ext = strtolower(pathinfo($_FILES['cert_file']['name'],PATHINFO_EXTENSION));
+    if($ext!=='pfx' && $ext!=='p12'){
+      redirect('?r=admin_fiscal&tab=fiscal&erro=Arquivo deve ser .pfx ou .p12');
+      break;
+    }
+    $dest = __DIR__.'/data/certificado.pfx';
+    if(!is_dir(__DIR__.'/data')) mkdir(__DIR__.'/data',0755,true);
+    move_uploaded_file($_FILES['cert_file']['tmp_name'], $dest);
+    // Testa leitura
+    $senha = trim($_POST['cert_senha'] ?? '');
+    if($senha!=='') setting_set('nf_cert_senha', $senha);
+    $pfx = file_get_contents($dest);
+    $certs = [];
+    if(openssl_pkcs12_read($pfx, $certs, $senha)){
+      $info = openssl_x509_parse($certs['cert']);
+      $cn = $info['subject']['CN'] ?? 'Desconhecido';
+      $valido = date('d/m/Y', $info['validTo_time_t'] ?? 0);
+      redirect('?r=admin_fiscal&tab=fiscal&salvo=1&cert_ok='.urlencode($cn.' (válido até '.$valido.')'));
+    } else {
+      redirect('?r=admin_fiscal&tab=fiscal&erro='.urlencode('Não foi possível ler o certificado. Verifique a senha.'));
+    }
+  } else {
+    redirect('?r=admin_fiscal&tab=fiscal&erro=Selecione o arquivo do certificado');
+  }
+  break;
+
+case 'cert_info': // Consulta info do certificado (JSON)
+  if(!require_role('admin')){ json_out(['ok'=>false]); }
+  require_once __DIR__.'/lib/nfce.php';
+  $cfg = fiscal_config();
+  $nfce = new NFCe($cfg);
+  if($nfce->loadCert()){
+    $info = $nfce->getCertInfo();
+    json_out(['ok'=>true]+$info);
+  }
+  json_out(['ok'=>false,'motivo'=>'Certificado não encontrado ou senha incorreta']);
+  break;
+
+case 'cert_gerar_teste': // Gera certificado A1 de teste para simulação
+  if(!require_role('admin')){ redirect('?r=admin'); }
+  fiscal_gerar_cert_teste();
+  setting_set('nf_simular','1');
+  redirect('?r=admin_fiscal&tab=fiscal&salvo=1&cert_ok='.urlencode('Certificado de TESTE gerado. Modo simulação ativado.'));
   break;
 
 case 'admin_produtos': // aba Cardápio/Produtos
@@ -1478,6 +1549,65 @@ case 'categoria_salvar': // POST nome
     db()->prepare("INSERT INTO categories(nome,ordem) VALUES(?,?)")->execute([trim($_POST['nome']),$o]);
   }
   redirect('?r=admin_produtos');
+  break;
+
+case 'cardapio_foto_analise': // POST multipart fotos[] -> IA analisa e retorna JSON
+  if(!require_role('admin')) json_out(['ok'=>false]);
+  $apiKey=setting_get('anthropic_key','');
+  if($apiKey===''){
+    try{$apiKey=_uaz_cfg('anthropic_key');}catch(\Throwable $e){$apiKey='';}
+  }
+  if($apiKey==='') json_out(['ok'=>false,'erro'=>'Chave da API Anthropic não configurada. Vá em Configurações > Integrações.']);
+  if(empty($_FILES['fotos'])||!is_array($_FILES['fotos']['tmp_name'])) json_out(['ok'=>false,'erro'=>'Envie pelo menos uma foto.']);
+  $images=[];
+  foreach($_FILES['fotos']['tmp_name'] as $i=>$tmp){
+    if(!is_uploaded_file($tmp))continue;
+    $ext=strtolower(pathinfo($_FILES['fotos']['name'][$i],PATHINFO_EXTENSION));
+    $mime=['jpg'=>'image/jpeg','jpeg'=>'image/jpeg','png'=>'image/png','webp'=>'image/webp'][$ext]??'image/jpeg';
+    $b64=base64_encode(file_get_contents($tmp));
+    $images[]=['type'=>'image','source'=>['type'=>'base64','media_type'=>$mime,'data'=>$b64]];
+  }
+  if(!$images) json_out(['ok'=>false,'erro'=>'Nenhuma imagem válida.']);
+  $images[]=['type'=>'text','text'=>'Analise esta(s) foto(s) de cardápio de restaurante. Extraia TODOS os itens visíveis com suas categorias e preços. Retorne APENAS um JSON array, sem markdown, sem explicação. Cada item deve ter: {"categoria":"Nome da Categoria","nome":"Nome do Prato","descricao":"descricao curta ou vazio","preco":29.90}. Se não conseguir ler o preço, use 0. Agrupe por categoria como está no cardápio. Não invente itens, extraia apenas o que está visível.'];
+  $ch=curl_init('https://api.anthropic.com/v1/messages');
+  curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>10,CURLOPT_TIMEOUT=>120,
+    CURLOPT_HTTPHEADER=>['x-api-key: '.$apiKey,'anthropic-version: 2023-06-01','Content-Type: application/json'],
+    CURLOPT_POSTFIELDS=>json_encode(['model'=>'claude-sonnet-4-20250514','max_tokens'=>4096,'messages'=>[['role'=>'user','content'=>$images]]],JSON_UNESCAPED_UNICODE)]);
+  $raw=curl_exec($ch);$code=(int)curl_getinfo($ch,CURLINFO_HTTP_CODE);curl_close($ch);
+  if($code<200||$code>=300) json_out(['ok'=>false,'erro'=>'Erro na API: HTTP '.$code]);
+  $resp=json_decode($raw,true);
+  $text=$resp['content'][0]['text']??'';
+  $text=trim($text);
+  if(strpos($text,'```')!==false) $text=preg_replace('/```(?:json)?\s*/','',preg_replace('/\s*```\s*$/','',$text));
+  $itens=json_decode($text,true);
+  if(!is_array($itens)||!$itens) json_out(['ok'=>false,'erro'=>'A IA não conseguiu extrair itens. Tente com uma foto mais nítida.']);
+  json_out(['ok'=>true,'itens'=>$itens]);
+  break;
+
+case 'cardapio_foto_importar': // POST JSON {itens:[{categoria,nome,descricao,preco}]}
+  if(!require_role('admin')) json_out(['ok'=>false]);
+  $in=json_decode(file_get_contents('php://input'),true)?:[];
+  $itens=$in['itens']??[];
+  if(!$itens) json_out(['ok'=>false,'erro'=>'Nenhum item para importar.']);
+  $catCache=[];
+  foreach(db()->query("SELECT id,nome FROM categories")->fetchAll() as $c) $catCache[mb_strtolower(trim($c['nome']))]=(int)$c['id'];
+  $total=0;
+  foreach($itens as $it){
+    $catNome=trim($it['categoria']??'Geral');
+    $catKey=mb_strtolower($catNome);
+    if(!isset($catCache[$catKey])){
+      $o=(int)db()->query("SELECT COALESCE(MAX(ordem),0)+1 o FROM categories")->fetch()['o'];
+      db()->prepare("INSERT INTO categories(nome,ordem) VALUES(?,?)")->execute([$catNome,$o]);
+      $catCache[$catKey]=(int)db()->lastInsertId();
+    }
+    $catId=$catCache[$catKey];
+    $nome=trim($it['nome']??'');if($nome==='')continue;
+    $desc=trim($it['descricao']??'');
+    $preco=max(0,(float)($it['preco']??0));
+    db()->prepare("INSERT INTO products(category_id,nome,descricao,preco,emoji,ativo) VALUES(?,?,?,?,'🍽',1)")->execute([$catId,$nome,$desc,$preco]);
+    $total++;
+  }
+  json_out(['ok'=>true,'total'=>$total]);
   break;
 
 case 'admin_financeiro': // aba Financeiro (dashboard + fechamento semanal)
@@ -1757,7 +1887,9 @@ case 'admin_feed': // GET -> JSON com pedidos do dia (polling = tempo real)
                            AND NOT (o.canal='garcom' AND o.status IN ('mesa_rascunho','mesa_aberta'))
                          ORDER BY o.id DESC")->fetchAll();
   $items = [];
-  foreach (db()->query("SELECT order_id,nome,qtd FROM order_items")->fetchAll() as $it)
+  $oids=array_column($orders,'id');
+  $oidsPlc=$oids?implode(',',array_map('intval',$oids)):'0';
+  foreach (db()->query("SELECT order_id,nome,qtd FROM order_items WHERE order_id IN ($oidsPlc)")->fetchAll() as $it)
     $items[$it['order_id']][] = $it['qtd'].'× '.$it['nome'];
   foreach ($orders as &$o) $o['itens'] = implode(' · ', $items[$o['id']] ?? []);
   // Pendências de acerto (inclui dias anteriores: não some do painel até acertar)
@@ -1948,7 +2080,7 @@ case 'saas_forgot':
         @evolution_send_text($mc['whatsapp'],"🔐 Recuperação de senha PedeRV\n\nClique no link para criar sua nova senha (válido 1h):\n{$link}");
     }
     // Mesmo sem e-mail cadastrado, mostra mensagem genérica (evita enumeração)
-    render('forgot_sent',['link'=>$link??'']);
+    render('forgot_sent',[]);
     break;
   }
   render('forgot_form',[]);
@@ -2412,17 +2544,8 @@ case 'webhook_uazapi':
       $isHuman=$matchedGatilho!==''&&(mb_strpos($matchedGatilho,'atendente')!==false||mb_strpos($matchedGatilho,'humano')!==false||mb_strpos($matchedGatilho,'representant')!==false);
       if($reply!==''){
         $reply=str_replace(['{NOME}','{SAUDACAO}','{TRIAL_DIAS}','{LINK_SITE}'],[$nome?:'cliente',$saud,$trialDias,$linkSite],$reply);
-        if($delay>0){
-          $chatId=$waNum.'@s.whatsapp.net';
-          $elapsed=0;
-          while($elapsed<$delay){
-            uazapi_instance_request($tok,'POST','/send/presence',['number'=>$chatId,'presence'=>'composing']);
-            $wait=min(3,$delay-$elapsed);
-            sleep($wait);
-            $elapsed+=$wait;
-          }
-        }
-        uazapi_instance_request($tok,'POST','/send/text',['number'=>$waNum,'text'=>$reply,'delay'=>800]);
+        $delayMs=$delay>0?$delay*1000:800;
+        uazapi_instance_request($tok,'POST','/send/text',['number'=>$waNum,'text'=>$reply,'delay'=>$delayMs]);
       } else {
         $notifyReps("📩 *".($nome?:'cliente')."* (+{$wa}) enviou uma mensagem sem resposta:\n_{$text}_");
       }
@@ -2467,20 +2590,11 @@ case 'webhook_uazapi':
         $linkCardapio=setting_get('cardapio_url','');
         if($linkCardapio==='') $linkCardapio=(!empty($_SERVER['HTTPS'])?'https':'http').'://'.($_SERVER['HTTP_HOST']??'pederv.com.br').'/cardapio/'.current_slug();
         $reply=str_replace(['{LINK_CARDAPIO}','{NOME_CLIENTE}','{SAUDACAO}'],[$linkCardapio,$nome?:'cliente',$saudacao],$reply);
-        if($delay>0&&$useSaas){
-          $chatId=$waNum.'@s.whatsapp.net';
-          $elapsed=0;
-          while($elapsed<$delay){
-            uazapi_instance_request($saasTok,'POST','/send/presence',['number'=>$chatId,'presence'=>'composing']);
-            $wait=min(3,$delay-$elapsed);
-            sleep($wait);
-            $elapsed+=$wait;
-          }
-        }
+        $delayMs=$delay>0?$delay*1000:800;
         if($useSaas){
-          $sent=uazapi_instance_request($saasTok,'POST','/send/text',['number'=>$waNum,'text'=>$reply,'delay'=>800]);
+          $sent=uazapi_instance_request($saasTok,'POST','/send/text',['number'=>$waNum,'text'=>$reply,'delay'=>$delayMs]);
         }else{
-          $sent=uaz_r_send_text($wa,$reply);
+          $sent=uaz_r_request('POST','/send/text',['number'=>$waNum,'text'=>$reply,'delay'=>$delayMs]);
         }
         if(!empty($sent['ok']))db()->prepare("INSERT INTO whatsapp_messages(wa_id,direcao,texto,status) VALUES(?,'saida',?,'enviada')")->execute([$wa,$reply]);
       }

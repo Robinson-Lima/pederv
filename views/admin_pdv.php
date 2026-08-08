@@ -256,6 +256,11 @@ $__pdvSlug=current_slug();
       <div class="pdv-actions">
         <button class="pdv-action-btn" id="btnEntrega" onclick="toggleEntrega()"><kbd>E</kbd> Entrega</button>
         <button class="pdv-action-btn" id="btnCpf" onclick="toggleCpf()"><kbd>T</kbd> CPF/CNPJ</button>
+        <?php if(setting_get('nf_auto','0')==='1'): ?>
+        <label class="pdv-action-btn" style="cursor:pointer;display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="pSemNota" style="width:16px;height:16px"> Sem nota
+        </label>
+        <?php endif; ?>
       </div>
 
       <div class="pdv-generate">
@@ -273,7 +278,8 @@ $__pdvSlug=current_slug();
 <div class="pdv-modal" id="chargeModal">
   <div class="pdv-modal-in">
     <div class="pdv-modal-head"><b>Receber pagamento</b><button onclick="closeCharge()">x</button></div>
-    <div class="pdv-charge-total"><span>Total a cobrar</span><b id="chargeTotal">R$ 0,00</b></div>
+    <div class="pdv-charge-total"><span id="chargeLabelTotal">Total a cobrar</span><b id="chargeTotal">R$ 0,00</b></div>
+    <div id="splitHistory" style="display:none;padding:0 16px 8px"></div>
     <div class="pdv-pay-hint">Escolha a forma de pagamento (clique ou tecle <b>1-4</b>)</div>
     <div class="pdv-pay">
       <label><input type="radio" name="pmet" value="dinheiro" checked onchange="payChanged(true)"><span><kbd>1</kbd> Dinheiro</span></label>
@@ -282,7 +288,7 @@ $__pdvSlug=current_slug();
       <label><input type="radio" name="pmet" value="credito" onchange="payChanged(true)"><span><kbd>4</kbd> Credito</span></label>
     </div>
     <div id="cashFields">
-      <label class="pdv-cash-label">Valor recebido do cliente
+      <label class="pdv-cash-label">Valor nesta forma
         <input id="pRecebido" type="number" step="0.01" min="0" inputmode="decimal" placeholder="0,00" oninput="calcTroco()" style="font-size:22px;font-weight:700;padding:12px 14px;letter-spacing:.5px">
       </label>
       <div class="pdv-cash-quick" id="quickCash"></div>
@@ -524,7 +530,11 @@ function formatCpfCnpj(el){
   btn.classList.toggle('cpf-active',v.trim().length>0);
 }
 
-/* Charge */
+/* Charge — split/partial payment */
+let splitPays=[];
+let splitRemaining=0;
+const METLABEL={dinheiro:'Dinheiro',pix:'Pix',debito:'Débito',credito:'Crédito'};
+
 function openCharge(){
   if(!CAIXA_OK)return;
   if(!pname.value.trim()){pname.focus();return alert('Informe o nome do cliente.')}
@@ -538,25 +548,67 @@ function openCharge(){
     if(opt&&opt.dataset.tipo==='bloqueio')return alert('Regiao bloqueada para entrega.');
     if(PAY_OPT==='entrega'){finishDeliveryPending();return}
   }
-  chargeTotal.textContent=fmt(TOTAL);pRecebido.value='';pTroco.textContent=fmt(0);chargeErr.hidden=true;trocoBox.classList.remove('neg');
+  splitPays=[];splitRemaining=TOTAL;
+  chargeTotal.textContent=fmt(TOTAL);
+  document.getElementById('chargeLabelTotal').textContent='Total da comanda';
+  document.getElementById('splitHistory').style.display='none';
+  document.getElementById('splitHistory').innerHTML='';
+  pRecebido.value='';pTroco.textContent=fmt(0);chargeErr.hidden=true;trocoBox.classList.remove('neg');
+  trocoBox.querySelector('span').textContent='Troco';
   const notas=[...new Set([Math.ceil(TOTAL),Math.ceil(TOTAL/5)*5,Math.ceil(TOTAL/10)*10,Math.ceil(TOTAL/50)*50,Math.ceil(TOTAL/100)*100])].filter(v=>v>=TOTAL).slice(0,4);
   quickCash.innerHTML=notas.map(v=>`<button type="button" onclick="pRecebido.value=${v};calcTroco();pRecebido.focus()">${fmt(v)}</button>`).join('');
   chargeModal.classList.add('on');payChanged(false);
   if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
 }
+
+function renderSplitAfter(){
+  const hist=document.getElementById('splitHistory');
+  hist.style.display='block';
+  hist.innerHTML=splitPays.map(p=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:14px"><span>${METLABEL[p.metodo]||p.metodo}</span><b>${fmt(p.valor)}</b></div>`).join('');
+  pRecebido.value='';
+  const notas=[...new Set([Math.ceil(splitRemaining),Math.ceil(splitRemaining/5)*5,Math.ceil(splitRemaining/10)*10,Math.ceil(splitRemaining/50)*50,Math.ceil(splitRemaining/100)*100])].filter(v=>v>=splitRemaining&&v>0).slice(0,4);
+  quickCash.innerHTML=notas.map(v=>`<button type="button" onclick="pRecebido.value=${v};calcTroco();pRecebido.focus()">${fmt(v)}</button>`).join('');
+  calcTroco();
+}
+
 function closeCharge(){chargeModal.classList.remove('on')}
 function payChanged(focus){
-  const din=document.querySelector('[name=pmet]:checked').value==='dinheiro';
-  cashFields.style.display=din?'block':'none';calcTroco();
-  if(focus){if(din){setTimeout(()=>pRecebido.focus(),40)}else{setTimeout(()=>btnConfirm.focus(),40)}}
+  const met=document.querySelector('[name=pmet]:checked').value;
+  const din=met==='dinheiro';
+  if(splitPays.length>0){
+    cashFields.style.display='block';
+    pRecebido.value=splitRemaining.toFixed(2);
+  } else if(din){
+    cashFields.style.display='block';
+    pRecebido.value='';
+  } else {
+    cashFields.style.display='none';
+    pRecebido.value='';
+  }
+  calcTroco();
+  if(focus){setTimeout(()=>(din||splitPays.length)?pRecebido.focus():btnConfirm.focus(),40)}
 }
-function calcTroco(){const r=parseFloat(pRecebido.value)||0;pTroco.textContent=fmt(Math.max(0,r-TOTAL));trocoBox.classList.toggle('neg',r>0&&r<TOTAL)}
+function calcTroco(){
+  const r=parseFloat(pRecebido.value)||0;
+  if(splitPays.length>0){
+    const falta=Math.max(0,splitRemaining-r);
+    pTroco.textContent=r>=splitRemaining?fmt(r-splitRemaining):fmt(falta);
+    trocoBox.querySelector('span').textContent=r>=splitRemaining?'Troco':'Falta';
+    trocoBox.classList.toggle('neg',r>0&&r<splitRemaining);
+  } else {
+    const falta=Math.max(0,TOTAL-r);
+    pTroco.textContent=r>=TOTAL?fmt(r-TOTAL):fmt(falta);
+    trocoBox.querySelector('span').textContent=r>=TOTAL?'Troco':'Falta';
+    trocoBox.classList.toggle('neg',r>0&&r<TOTAL);
+  }
+}
 
 /* Pagar na entrega — cria pedido sem cobranca */
 async function finishDeliveryPending(){
   const cpf_cnpj=document.getElementById('pcpfcnpj')?document.getElementById('pcpfcnpj').value.trim():'';
   const obs=document.getElementById('pobs')?document.getElementById('pobs').value.trim():'';
-  const body={nome:pname.value.trim(),fone:pphone.value,itens:Object.values(pcart),metodo:'na_entrega',valor_recebido:0,cpf_cnpj:cpf_cnpj,obs:obs,pagar_entrega:true,tipo:'entrega'};
+  const semNota=document.getElementById('pSemNota')?document.getElementById('pSemNota').checked:false;
+  const body={nome:pname.value.trim(),fone:pphone.value,itens:Object.values(pcart),metodo:'na_entrega',valor_recebido:0,cpf_cnpj:cpf_cnpj,obs:obs,pagar_entrega:true,tipo:'entrega',sem_nota:semNota};
   body.endereco=document.getElementById('pRua').value.trim()+(document.getElementById('pNumero').value.trim()?', '+document.getElementById('pNumero').value.trim():'');
   body.bairro=document.getElementById('pBairro').value;
   body.referencia=document.getElementById('pRef').value.trim();
@@ -577,13 +629,43 @@ async function finishDeliveryPending(){
 
 async function finishPdv(){
   const met=document.querySelector('[name=pmet]:checked').value;
-  if(met==='pix'){closeCharge();openPixPayment();return}
-  const recebido=met==='dinheiro'?(parseFloat(pRecebido.value)||0):TOTAL;
-  if(met==='dinheiro'&&recebido<TOTAL){chargeErr.textContent='Valor recebido menor que o total.';chargeErr.hidden=false;pRecebido.focus();return}
+  chargeErr.hidden=true;
+  const inputVal=parseFloat(pRecebido.value)||0;
+
+  /* --- PIX direto (sem split) --- */
+  if(met==='pix'&&splitPays.length===0){closeCharge();openPixPayment();return}
+
+  /* --- Split: valor parcial entra como pagamento parcial --- */
+  if(splitPays.length>0||inputVal>0){
+    if(inputVal<=0){chargeErr.textContent='Informe o valor.';chargeErr.hidden=false;pRecebido.focus();return}
+    if(inputVal<splitRemaining-0.009){
+      splitPays.push({metodo:met,valor:inputVal});
+      splitRemaining=Math.max(0,splitRemaining-inputVal);
+      renderSplitAfter();payChanged(true);return;
+    }
+    splitPays.push({metodo:met,valor:inputVal});
+    splitRemaining=0;
+  }
+  /* --- Split finaliza com Pix: registra venda e abre QR para valor do pix --- */
+  if(met==='pix'&&splitPays.length>1){closeCharge();openPixSplit();return}
+
+  /* --- Montar body --- */
   btnConfirm.disabled=true;btnConfirm.textContent='Registrando...';
   const cpf_cnpj=document.getElementById('pcpfcnpj')?document.getElementById('pcpfcnpj').value.trim():'';
   const obs=document.getElementById('pobs')?document.getElementById('pobs').value.trim():'';
-  const body={nome:pname.value.trim(),fone:pphone.value,itens:Object.values(pcart),metodo:met,valor_recebido:recebido,cpf_cnpj:cpf_cnpj,obs:obs};
+  const semNota=document.getElementById('pSemNota')?document.getElementById('pSemNota').checked:false;
+
+  let body;
+  if(splitPays.length>1){
+    const totalRecebido=splitPays.reduce((s,p)=>s+p.valor,0);
+    body={nome:pname.value.trim(),fone:pphone.value,itens:Object.values(pcart),
+      metodo:splitPays[0].metodo,valor_recebido:totalRecebido,
+      pagamentos:splitPays,cpf_cnpj:cpf_cnpj,obs:obs,sem_nota:semNota};
+  } else {
+    const recebido=met==='dinheiro'?inputVal:TOTAL;
+    body={nome:pname.value.trim(),fone:pphone.value,itens:Object.values(pcart),
+      metodo:met,valor_recebido:recebido,cpf_cnpj:cpf_cnpj,obs:obs,sem_nota:semNota};
+  }
   if(IS_ENTREGA){
     body.tipo='entrega';
     body.endereco=document.getElementById('pRua').value.trim()+(document.getElementById('pNumero').value.trim()?', '+document.getElementById('pNumero').value.trim():'');
@@ -597,13 +679,18 @@ async function finishPdv(){
   if(!r.ok){
     if(r.erro==='caixa_fechado')chargeErr.innerHTML='O caixa esta fechado. <a href="?r=admin_caixa">Abrir caixa &rarr;</a>';
     else chargeErr.textContent=r.erro||'Nao foi possivel registrar a venda.';
-    chargeErr.hidden=false;return;
+    chargeErr.hidden=false;
+    if(splitPays.length){splitPays.pop();splitRemaining=TOTAL-splitPays.reduce((s,p)=>s+p.valor,0);}
+    return;
   }
   closeCharge();
+  const totalRecebido=splitPays.length?splitPays.reduce((s,p)=>s+p.valor,0):(met==='dinheiro'?inputVal:TOTAL);
+  const troco=r.troco||0;
+  const metLabel=splitPays.length>1?splitPays.map(p=>(METLABEL[p.metodo]||p.metodo)+' '+fmt(p.valor)).join(' + '):(METLABEL[met]||met);
   if(PRINT_CFG.auto){
     printReceipt({codigo:r.codigo,tipo:IS_ENTREGA?'entrega':'balcao',nome:pname.value.trim(),fone:pphone.value,
       itens:Object.values(pcart),subtotal:SUBTOTAL,taxa_entrega:TAXA_ENTREGA,total:TOTAL,
-      metodo:met,recebido:recebido,troco:r.troco||0,cpf_cnpj:cpf_cnpj,obs:obs,
+      metodo:metLabel,recebido:totalRecebido,troco:troco,cpf_cnpj:cpf_cnpj,obs:obs,
       endereco:IS_ENTREGA?(document.getElementById('pRua').value.trim()+(document.getElementById('pNumero').value.trim()?', '+document.getElementById('pNumero').value.trim():'')):'',
       bairro:IS_ENTREGA?document.getElementById('pBairro').value:'',
       referencia:IS_ENTREGA?document.getElementById('pRef').value.trim():''});
@@ -611,11 +698,41 @@ async function finishPdv(){
   setTimeout(()=>location.reload(),1500);
 }
 
+async function openPixSplit(){
+  const pixVal=splitPays.find(p=>p.metodo==='pix');
+  const pixAmount=pixVal?pixVal.valor:0;
+  const totalRecebido=splitPays.reduce((s,p)=>s+p.valor,0);
+  const cpf_cnpj=document.getElementById('pcpfcnpj')?document.getElementById('pcpfcnpj').value.trim():'';
+  const obs=document.getElementById('pobs')?document.getElementById('pobs').value.trim():'';
+  const semNota=document.getElementById('pSemNota')?document.getElementById('pSemNota').checked:false;
+  const body={nome:pname.value.trim(),fone:pphone.value,itens:Object.values(pcart),
+    metodo:splitPays[0].metodo,valor_recebido:totalRecebido,
+    pagamentos:splitPays,cpf_cnpj:cpf_cnpj,obs:obs,sem_nota:semNota};
+  if(IS_ENTREGA){
+    body.tipo='entrega';
+    body.endereco=document.getElementById('pRua').value.trim()+(document.getElementById('pNumero').value.trim()?', '+document.getElementById('pNumero').value.trim():'');
+    body.bairro=document.getElementById('pBairro').value;
+    body.referencia=document.getElementById('pRef').value.trim();
+  } else {body.tipo='balcao'}
+  const r=await fetch('?r=pdv_create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(x=>x.json()).catch(()=>({ok:false}));
+  if(!r.ok){alert(r.erro||'Erro ao registrar.');return}
+  LAST_ORDER_ID=r.id;
+  document.getElementById('pixTotal').textContent=fmt(pixAmount);
+  const pix=await fetch('?r=order_pix&id='+r.id+'&valor='+pixAmount).then(x=>x.json()).catch(()=>({ok:false}));
+  if(!pix.ok||!pix.payload){alert('Chave PIX nao configurada.');confirmPixPaid();return}
+  document.getElementById('pixCopyCode').value=pix.payload;
+  const qc=document.getElementById('pixQrBox');
+  qc.innerHTML='';
+  new QRCode(qc,{text:pix.payload,width:200,height:200});
+  pixModal.classList.add('on');
+}
+
 /* PIX - abre QR code antes de registrar a venda */
 async function openPixPayment(){
   const cpf_cnpj=document.getElementById('pcpfcnpj')?document.getElementById('pcpfcnpj').value.trim():'';
   const obs=document.getElementById('pobs')?document.getElementById('pobs').value.trim():'';
-  const body={nome:pname.value.trim(),fone:pphone.value,itens:Object.values(pcart),metodo:'pix',valor_recebido:TOTAL,cpf_cnpj:cpf_cnpj,obs:obs};
+  const semNota=document.getElementById('pSemNota')?document.getElementById('pSemNota').checked:false;
+  const body={nome:pname.value.trim(),fone:pphone.value,itens:Object.values(pcart),metodo:'pix',valor_recebido:TOTAL,cpf_cnpj:cpf_cnpj,obs:obs,sem_nota:semNota};
   if(IS_ENTREGA){
     body.tipo='entrega';
     body.endereco=document.getElementById('pRua').value.trim()+(document.getElementById('pNumero').value.trim()?', '+document.getElementById('pNumero').value.trim():'');
@@ -659,7 +776,7 @@ async function showLast(){
       <div class="pdv-last-head"><b>${v.codigo}</b><span>${(v.criado_em||'').substring(11,16)} - ${v.cliente_nome||''}</span></div>
       <div class="pdv-last-items">${(r.itens||[]).map(i=>`<div><span>${i.qtd}x ${i.nome}</span><b>${fmt(i.qtd*i.preco)}</b></div>`).join('')}</div>
       <div class="pdv-last-line"><span>Total</span><b>${fmt(v.total)}</b></div>
-      <div class="pdv-last-line"><span>Pagamento</span><b>${PAYL[v.pagamento_metodo]||v.pagamento_metodo}</b></div>
+      <div class="pdv-last-line"><span>Pagamento</span><b>${v.pagamentos_detalhe?JSON.parse(v.pagamentos_detalhe).map(p=>(METLABEL[p.metodo]||PAYL[p.metodo]||p.metodo)+' '+fmt(p.valor)).join(' + '):(PAYL[v.pagamento_metodo]||v.pagamento_metodo)}</b></div>
       ${+v.troco>0?`<div class="pdv-last-line"><span>Recebido / Troco</span><b>${fmt(v.valor_recebido)} - troco ${fmt(v.troco)}</b></div>`:''}
       ${v.recebido_por?`<div class="pdv-last-line"><span>Operador</span><b>${v.recebido_por}</b></div>`:''}`;
   }

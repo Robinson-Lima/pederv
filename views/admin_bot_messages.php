@@ -50,7 +50,7 @@
       <textarea name="bot_notify_phones" rows="3" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px"><?= e(setting_get('bot_notify_phones','')) ?></textarea>
       <div style="display:flex;gap:16px;margin-top:12px">
         <label style="flex:1">Delay antes de responder<select name="bot_delay" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px">
-          <?php $bd=(int)setting_get('bot_delay','0'); foreach([0=>'Sem delay',1=>'1 segundo',2=>'2 segundos',3=>'3 segundos',5=>'5 segundos'] as $v=>$l): ?>
+          <?php $bd=(int)setting_get('bot_delay','0'); foreach([0=>'Sem delay',1=>'1 segundo',2=>'2 segundos',3=>'3 segundos',5=>'5 segundos',10=>'10 segundos',15=>'15 segundos',20=>'20 segundos',30=>'30 segundos'] as $v=>$l): ?>
           <option value="<?= $v ?>" <?= $bd===$v?'selected':'' ?>><?= $l ?></option>
           <?php endforeach; ?>
         </select></label>

@@ -229,6 +229,8 @@ $toggle=function($key,$label,$help,$def='0')use($ck){ ?>
         <div class="integration-setting"><span class="integration-icon">W</span><div><b>WhatsApp · Evolution API</b><small><?= evolution_configured()?'Configuração informada. Use o teste para confirmar a conexão.':'Aguardando URL, instância e chave.' ?></small></div><a href="?r=admin_whatsapp">Configurar</a></div>
         <div class="integration-setting"><span class="integration-icon ifood">iF</span><div><b>iFood</b><small>Use o simulador até concluir o credenciamento e a integração oficial.</small></div><a href="?r=admin_ifood">Abrir</a></div>
         <div class="integration-setting"><span class="integration-icon">N</span><div><b>Webhook / n8n</b><small>Envie eventos de pedidos e entregas para suas automações.</small></div><a href="?r=admin_settings">Ajustes</a></div>
+        <div class="integration-setting"><span class="integration-icon" style="background:#d97706;color:#fff">AI</span><div><b>IA · Importar cardápio por foto</b><small><?= setting_get('anthropic_key','')!==''?'Chave configurada ✓':'Informe a chave para ativar a importação por foto.' ?></small></div></div>
+        <label class="setting-field">Chave API Anthropic<input type="password" name="s[anthropic_key]" value="<?= e(setting_get('anthropic_key','')) ?>" placeholder="sk-ant-..."></label>
       <?php else: ?>
         <h3>10. Segurança e acessos</h3><p>Cada funcionário deve usar seu próprio login e enxergar somente sua função.</p>
         <?php $toggle('security_individual_login','Exigir acesso individual','Mantém o responsável registrado em pedidos, caixa e cancelamentos.','1'); ?>

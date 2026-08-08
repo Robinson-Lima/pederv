@@ -13,7 +13,10 @@ $expected=(float)$cash['saldo_inicial']+$tot['venda']+$tot['suprimento']-$tot['r
   <div style="background:#fff;border:1px solid #ddd;border-radius:14px;padding:18px;overflow:auto;margin-top:18px">
     <h3>Vendas do caixa (<?= count(array_filter($sales,fn($s)=>$s['tipo']==='venda')) ?>)</h3>
     <table style="width:100%;border-collapse:collapse"><thead><tr style="background:#111827;color:#fff"><th>Venda</th><th>Hora</th><th>Cliente</th><th>Pagamento</th><th>Total</th><th>Status</th><th>Itens</th></tr></thead><tbody>
-    <?php foreach($sales as $s): if($s['tipo']!=='venda')continue; ?><tr style="border-bottom:1px solid #ddd"><td><?= e($s['codigo']?:'#'.$s['order_id']) ?></td><td><?= e(substr($s['criado_em'],11,5)) ?></td><td><?= e($s['cliente_nome']?:'Consumidor') ?></td><td><?= e(payment_label($s['pagamento_metodo'])) ?></td><td><?= money($s['valor']) ?></td><td><?= e($s['pagamento_status']==='pago'?'Finalizada':'Pendente') ?></td><td><details><summary>Ver itens</summary><?php foreach($items[$s['order_id']]??[] as $it): ?><div><?= (int)$it['qtd'] ?>× <?= e($it['nome']) ?> — <?= money($it['qtd']*$it['preco']) ?></div><?php endforeach; ?></details></td></tr><?php endforeach; ?>
+    <?php foreach($sales as $s): if($s['tipo']!=='venda')continue;
+      $pagDet='';
+      if(!empty($s['order_id'])){$pd=db()->prepare("SELECT pagamentos_detalhe FROM orders WHERE id=?");$pd->execute([$s['order_id']]);$pdr=$pd->fetch();if($pdr&&!empty($pdr['pagamentos_detalhe'])){$pgs=json_decode($pdr['pagamentos_detalhe'],true);if($pgs&&count($pgs)>1){$pagDet=implode(' + ',array_map(fn($p)=>payment_label($p['metodo']??'').' '.money($p['valor']??0),$pgs));}}}
+    ?><tr style="border-bottom:1px solid #ddd"><td><?= e($s['codigo']?:'#'.$s['order_id']) ?></td><td><?= e(substr($s['criado_em'],11,5)) ?></td><td><?= e($s['cliente_nome']?:'Consumidor') ?></td><td><?= $pagDet?e($pagDet):e(payment_label($s['pagamento_metodo'])) ?></td><td><?= money($s['valor']) ?></td><td><?= e($s['pagamento_status']==='pago'?'Finalizada':'Pendente') ?></td><td><details><summary>Ver itens</summary><?php foreach($items[$s['order_id']]??[] as $it): ?><div><?= (int)$it['qtd'] ?>× <?= e($it['nome']) ?> — <?= money($it['qtd']*$it['preco']) ?></div><?php endforeach; ?></details></td></tr><?php endforeach; ?>
     </tbody></table>
   </div>
 </div>

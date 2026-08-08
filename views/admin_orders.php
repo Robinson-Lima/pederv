@@ -66,7 +66,7 @@ function renderOrder(o){
   else if(o.status==='saiu_entrega'&&o.tipo==='entrega'&&MOTOBOY_OFF) action=`<button class="adv" onclick="marcarEntregue(${o.id})">✓ Marcar entregue</button>`;
   const edit=canEditPayment(o)?`<button class="edit-card" onclick="togglePayment(${o.id})" title="Editar forma de pagamento">✎</button>`:'';
   let acerto='';
-  if(o.acerto_status==='pendente'){
+  if(o.acerto_status==='pendente'&&['entregue','concluido'].includes(o.status)){
     acerto=`<div class="acerto-pend"><b>⚠ AGUARDANDO ACERTO NO CAIXA</b><button onclick="confirmAcerto(${o.id})">✔ Confirmar · marcar PAGO</button></div>`;
   } else if(o.acerto_status==='ok'&&['entregue','concluido'].includes(o.status)&&['dinheiro','cartao_entrega','pix_entrega'].includes(o.pagamento_metodo)){
     acerto=`<div class="acerto-ok">✔ Acerto conferido no caixa</div>`;
